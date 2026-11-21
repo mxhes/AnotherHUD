@@ -1,7 +1,7 @@
 local h = ...
 
 local function load()
-  local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Options.lua" })
+  local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua", "Core/Options.lua" })
   ns.db, ns.chardb = ns.DB.init(nil, nil)
   return ns
 end
@@ -70,7 +70,7 @@ end)
 local function germanNs(strings)
   local saved = _G.GetLocale
   _G.GetLocale = function() return "deDE" end
-  local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Options.lua" })
+  local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua", "Core/Options.lua" })
   _G.GetLocale = saved
   ns.Locale.register("deDE", strings, "deDE")
   return ns

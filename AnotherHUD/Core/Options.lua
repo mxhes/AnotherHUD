@@ -51,8 +51,7 @@ function Options.set(id, key, value)
   if type(modules[id]) ~= "table" then modules[id] = {} end
   modules[id][key] = value
   if spec.apply then
-    -- Task 5: route through ns.Combat.after("apply:" .. id, ...) here.
-    spec.apply(spec, key, value)
+    ns.Combat.after("apply:" .. id, function() spec.apply(spec, key, value) end)
   end
   return true
 end

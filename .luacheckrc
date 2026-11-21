@@ -22,6 +22,7 @@ globals = {
   "AnotherHUDDB", "AnotherHUDCharDB",
 }
 
--- WoW API the addon reads (nothing yet).
+-- WoW API the addon reads.
 read_globals = {
+  "InCombatLockdown", "CreateFrame", "geterrorhandler",
 }

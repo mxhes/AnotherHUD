@@ -15,5 +15,6 @@ Locales/deDE.lua
 Core/Theme.lua
 Core/DB.lua
 Core/Modules.lua
+Core/Combat.lua
 Core/Options.lua
 Boot.lua

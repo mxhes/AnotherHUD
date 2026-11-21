@@ -68,10 +68,13 @@ end
 
 -- The section title row: the library's Divider when it has one, else an
 -- open Expander (its state lives here, for this panel only), else a
--- disabled checkbox line carrying the name.
+-- disabled checkbox line carrying the name. Every header has a get / set
+-- (no-op where nothing is stored), so a library Reset Settings that calls
+-- set on every row cannot error.
 local function header(name, types)
   if types.Divider ~= nil then
-    return { name = name, kind = types.Divider }
+    return { name = name, kind = types.Divider,
+      get = function() return nil end, set = function() end }
   end
   if types.Expander ~= nil then
     local open = true

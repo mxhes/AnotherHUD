@@ -35,7 +35,7 @@ local function with(opts, fn)
     if not silent then error("no library " .. tostring(name)) end
   end
   local ok, err = pcall(function()
-    local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
+    local ns = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua" })
     ns.db, ns.chardb = ns.DB.init(nil, nil)
     fn(ns, lem, client)
@@ -153,6 +153,76 @@ h.test("onMove snaps to the screen edge and other frames", function()
   end)
 end)
 
+h.test("arrow-key nudge leaves a snap line, a drag still snaps", function()
+  with({}, function(ns, lem)
+    local a = define(ns, "a")
+    ns.EditMode.Glue.registerAll()
+    a.frame._left, a.frame._bottom, a.frame._width, a.frame._height = 4, 300, 100, 50
+    lem.callbacks[a.frame](a.frame, "Modern", "LEFT", 4, -215)
+    h.eq(ns.db.positions.Modern.a, { point = "LEFT", x = 0, y = -215 })
+    -- one arrow-key step (1 px on one axis) off the snapped edge: kept
+    a.frame._left = 1
+    lem.callbacks[a.frame](a.frame, "Modern", "LEFT", 1, -215)
+    h.eq(ns.db.positions.Modern.a, { point = "LEFT", x = 1, y = -215 })
+    -- the library re-reads the position from the frame: float noise on the
+    -- other axis is still a nudge
+    a.frame._left = 2
+    lem.callbacks[a.frame](a.frame, "Modern", "LEFT", 2, -215.000001)
+    h.eq(ns.db.positions.Modern.a, { point = "LEFT", x = 2, y = -215.000001 })
+    -- a drag (both axes) within the threshold snaps again
+    a.frame._left, a.frame._bottom = 5, 310
+    lem.callbacks[a.frame](a.frame, "Modern", "LEFT", 5, -205)
+    h.eq(ns.db.positions.Modern.a, { point = "LEFT", x = 0, y = -205 })
+  end)
+end)
+
+h.test("snap distance comes from Theme.sizes", function()
+  with({}, function(ns, lem)
+    local a = define(ns, "a")
+    ns.EditMode.Glue.registerAll()
+    ns.Theme.sizes.snapDistance = 2
+    a.frame._left, a.frame._bottom, a.frame._width, a.frame._height = 4, 300, 100, 50
+    lem.callbacks[a.frame](a.frame, "Modern", "LEFT", 4, -215)
+    h.eq(ns.db.positions.Modern.a, { point = "LEFT", x = 4, y = -215 })
+  end)
+end)
+
+h.test("layout rename moves its positions, delete drops them", function()
+  with({}, function(ns, lem)
+    local a = define(ns, "a")
+    ns.EditMode.Glue.registerAll()
+    h.eq(#lem.events.rename, 1)
+    h.eq(#lem.events.delete, 1)
+    ns.db.positions["Layout 2"] = { a = { point = "LEFT", x = 20, y = 30 } }
+    ns.db.positions.Other = { a = { point = "TOP", x = 1, y = 2 } }
+    ns.db.lastLayout = "Layout 2"
+    lem:fire("rename", "Layout 2", "Raid", 3)
+    h.eq(ns.db.positions["Layout 2"], nil)
+    h.eq(ns.db.positions.Raid, { a = { point = "LEFT", x = 20, y = 30 } })
+    h.eq(ns.db.lastLayout, "Raid")
+    -- renaming a layout that is not the last one seen keeps lastLayout
+    lem:fire("rename", "Other", "Solo", 4)
+    h.eq(ns.db.positions.Solo, { a = { point = "TOP", x = 1, y = 2 } })
+    h.eq(ns.db.lastLayout, "Raid")
+    -- a rename of a layout with nothing saved changes nothing
+    lem:fire("rename", "Empty", "Still empty", 5)
+    h.eq(ns.db.positions["Still empty"], nil)
+    lem:fire("delete", "Solo")
+    h.eq(ns.db.positions.Solo, nil)
+    h.eq(ns.db.positions.Raid.a.x, 20)
+    h.eq(a.frame ~= nil, true)
+  end)
+end)
+
+h.test("Edit Mode name is translated", function()
+  with({}, function(ns, lem)
+    rawset(ns.L, "Label a", "Beschriftung a")
+    define(ns, "a")
+    ns.EditMode.Glue.registerAll()
+    h.eq(lem.frames[1].name, "Beschriftung a")
+  end)
+end)
+
 h.test("new layout uses default position", function()
   with({}, function(ns, lem)
     local a = define(ns, "a", { defaultPosition = { point = "TOP", x = 0, y = -100 } })
@@ -247,7 +317,7 @@ h.test("works without LibEditMode", function()
   local prevStub = rawget(_G, "LibStub")
   _G.LibStub = nil
   local ok, err = pcall(function()
-    local ns = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
+    local ns = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua" })
     ns.db, ns.chardb = ns.DB.init(nil, nil)
     local a = define(ns, "a")
@@ -261,7 +331,7 @@ end)
 
 h.test("Core.init loads saved state and registers", function()
   with({}, function(ns, lem)
-    local core = h.load({ "Core/Util.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
+    local core = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua", "Core/Core.lua" })
     define(core, "a")
     local prevDB, prevChar = rawget(_G, "AnotherHUDDB"), rawget(_G, "AnotherHUDCharDB")

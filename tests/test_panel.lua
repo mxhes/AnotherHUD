@@ -79,6 +79,23 @@ h.test("one header per section", function()
   h.eq(headers, 2)
 end)
 
+h.test("header rows take get and set (library Reset Settings)", function()
+  local ns, spec = load()
+  for _, types in ipairs({ TYPES, BASIC, { Expander = "expander", Slider = 2 } }) do
+    local headers = 0
+    for _, s in ipairs(ns.EditMode.Panel.build(spec, types)) do
+      if s.name == "Size" or s.name == "Look" then
+        headers = headers + 1
+        h.eq(type(s.get), "function", s.name)
+        h.eq(type(s.set), "function", s.name)
+        s.set("Modern", s.default, true)
+        s.get("Modern")
+      end
+    end
+    h.eq(headers, 2)
+  end
+end)
+
 h.test("set writes through Options.set", function()
   local ns, spec = load()
   local applied = {}

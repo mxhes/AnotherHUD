@@ -2,8 +2,9 @@ local ADDON, ns = ...
 
 -- Edit Mode glue: registers every enabled module's frame with LibEditMode
 -- (frame, settings panel, buttons), stores positions per Edit Mode layout
--- in db.positions[layoutName][moduleId] = { point, x, y } and snaps our own
--- frames in our own move callback. Without LibEditMode the frames are placed
+-- in db.positions[layoutName][moduleId] = { point, x, y } (moved on a layout
+-- rename, dropped on delete) and snaps our own frames in our own move
+-- callback. Without LibEditMode the frames are placed
 -- at their saved (last layout seen) or default positions and nothing else
 -- happens. Every reposition goes through Combat.after("pos:" .. id).
 ns.EditMode = ns.EditMode or {}
@@ -11,7 +12,12 @@ local Glue = {}
 
 local L = ns.L
 
-local SNAP_THRESHOLD = 8
+-- An arrow-key step: at most this far on one axis and not at all on the
+-- other (the library nudges by 1 px, 10 px with Shift, 0.1 px with Alt).
+-- Below NUDGE_NOISE counts as "not at all": the library re-reads the
+-- position from the frame, which leaves float noise.
+local NUDGE_MAX = 10
+local NUDGE_NOISE = 0.01
 -- Positions saved while the library knows no layout name yet.
 local FALLBACK_LAYOUT = "Default"
 local CENTER = { point = "CENTER", x = 0, y = 0 }
@@ -97,7 +103,8 @@ local function snapShift(spec)
   end
   -- UNVERIFIED (check in client): no readable API for Blizzard's Edit Mode
   -- grid spacing is known, so there is no grid snap (opts.grid = nil).
-  local x, y = ns.EditMode.Snap.snap(rect, targets, { grid = nil, threshold = SNAP_THRESHOLD })
+  local threshold = ns.Theme.sizes.snapDistance
+  local x, y = ns.EditMode.Snap.snap(rect, targets, { grid = nil, threshold = threshold })
   return x - rect.x, y - rect.y
 end
 
@@ -106,15 +113,25 @@ local function isDefault(spec, point, x, y)
   return point == d.point and x == d.x and y == d.y
 end
 
+-- Whether (point, x, y) is an arrow-key step away from the saved position.
+local function isNudge(spec, layoutName, point, x, y)
+  local saved = Glue.position(spec, layoutName)
+  if saved.point ~= point then return false end
+  local dx, dy = math.abs(x - saved.x), math.abs(y - saved.y)
+  return (dx < NUDGE_NOISE and dy >= NUDGE_NOISE and dy <= NUDGE_MAX)
+      or (dy < NUDGE_NOISE and dx >= NUDGE_NOISE and dx <= NUDGE_MAX)
+end
+
 -- LibEditMode's move callback: the library has already placed the frame at
 -- (point, x, y). Snap it (unless it is the default position, as the
--- library's own Reset Position passes), then save under the layout.
+-- library's own Reset Position passes, or an arrow-key nudge, which must be
+-- able to leave a snap line), then save under the layout.
 local function onMove(frame, layoutName, point, x, y)
   local spec = byFrame[frame]
   if not spec or type(point) ~= "string" or not ns.Util.isNumber(x) or not ns.Util.isNumber(y) then return end
   if type(layoutName) ~= "string" or layoutName == "" then layoutName = activeLayout() end
   local pos = { point = point, x = x, y = y }
-  if not isDefault(spec, point, x, y) then
+  if not isDefault(spec, point, x, y) and not isNudge(spec, layoutName, point, x, y) then
     local dx, dy = snapShift(spec)
     if dx ~= 0 or dy ~= 0 then
       local s = frame:GetScale() or 1
@@ -132,6 +149,24 @@ local function onLayout(layoutName)
   if type(layoutName) ~= "string" or layoutName == "" then return end
   ns.db.lastLayout = layoutName
   for _, spec in ipairs(order) do placeForLayout(spec, layoutName) end
+end
+
+-- A renamed Edit Mode layout keeps its positions under the new name. (For
+-- the active layout the library fires "layout" with the new name after.)
+local function onRename(oldName, newName)
+  if type(oldName) ~= "string" or type(newName) ~= "string" or oldName == newName then return end
+  local positions = ns.db.positions
+  if positions[oldName] ~= nil then
+    positions[newName] = positions[oldName]
+    positions[oldName] = nil
+  end
+  if ns.db.lastLayout == oldName then ns.db.lastLayout = newName end
+end
+
+-- A deleted Edit Mode layout's positions go with it.
+local function onDelete(name)
+  if type(name) ~= "string" then return end
+  ns.db.positions[name] = nil
 end
 
 local function openSettings(spec)
@@ -159,7 +194,7 @@ local function register(spec)
   order[#order + 1] = spec
   byFrame[spec.frame] = spec
   if lem then
-    lem:AddFrame(spec.frame, onMove, defaultOf(spec), spec.label)
+    lem:AddFrame(spec.frame, onMove, defaultOf(spec), L[spec.label])
     lem:AddFrameSettings(spec.frame, ns.EditMode.Panel.build(spec, lem.SettingType))
     lem:AddFrameSettingsButtons(spec.frame, buttons(spec))
   end
@@ -186,6 +221,8 @@ function Glue.registerAll(lib)
   if lem and not layoutHooked then
     layoutHooked = true
     lem:RegisterCallback("layout", onLayout)
+    lem:RegisterCallback("rename", onRename)
+    lem:RegisterCallback("delete", onDelete)
   end
 end
 

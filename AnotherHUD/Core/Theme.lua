@@ -87,9 +87,9 @@ Theme.sizes = {
   -- past its list.
   studSize = 10,
   listBoxPad = 3,
-  -- How close (px) an edge or the center has to be to an Edit Mode grid
-  -- line to snap onto it.
-  gridSnapDistance = 12,
+  -- How close (px) an edge or the center of a dragged AnotherHUD frame has
+  -- to be to a screen line or another AnotherHUD frame to snap onto it.
+  snapDistance = 8,
 }
 
 -- Pure. A color with r, g, b multiplied by `k` (clamped to 0..1); alpha kept.

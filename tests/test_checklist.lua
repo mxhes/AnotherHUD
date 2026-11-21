@@ -11,6 +11,13 @@ local function load()
   return ns
 end
 
+local function lastPoint(frame)
+  for i = #frame.calls, 1, -1 do
+    local c = frame.calls[i]
+    if c[1] == "SetPoint" then return c end
+  end
+end
+
 local function define(ns, id, extra)
   local spec = {
     id = id, label = "Label " .. id, kind = "misc",
@@ -70,8 +77,12 @@ h.test("toggle on creates a module that was off at login", function()
     ns.Modules.setEnabled("a", false)
     ns.EditMode.Glue.registerAll()
     h.eq(a.frame, nil)
+    local said
+    ns.Util.say = function(msg) said = msg end
     ns.EditMode.Checklist.toggle("a", true)
     h.eq(a.frame ~= nil, true)
+    -- the library makes it selectable only from the next Edit Mode open
+    h.eq(said, "Reopen Edit Mode to move it")
   end)
 end)
 
@@ -145,16 +156,41 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
     local prevManager = rawget(_G, "EditModeManagerFrame")
     _G.EditModeManagerFrame = nil
     h.eq(ns.EditMode.Checklist.attach(), false)
-    _G.EditModeManagerFrame = fakes.frame("EditModeManagerFrame")
-    local hooked
-    _G.EditModeManagerFrame.HookScript = function(self, ev, fn) hooked = { ev, fn } end
+    local manager = fakes.frame("EditModeManagerFrame")
+    manager._shown = false
+    _G.EditModeManagerFrame = manager
+    local hooked = {}
+    manager.HookScript = function(self, ev, fn) hooked[ev] = fn end
+    -- record what the box is parented to
+    local made = {}
+    local create = _G.CreateFrame
+    _G.CreateFrame = function(kind, name, parent, template)
+      local f = create(kind, name, parent, template)
+      made[#made + 1] = { frame = f, parent = parent, template = template }
+      return f
+    end
     local ok, err = pcall(function()
       h.eq(ns.EditMode.Checklist.attach(), true)
-      h.eq(hooked[1], "OnShow")
-      hooked[2](_G.EditModeManagerFrame)
-      hooked[2](_G.EditModeManagerFrame) -- built once, refreshed after
+      h.eq(#made, 0) -- window not shown yet: nothing built
+      h.eq(type(hooked.OnShow), "function")
+      h.eq(type(hooked.OnHide), "function")
+      hooked.OnShow(manager)
+      local box = made[1]
+      h.eq(box.template, "BackdropTemplate")
+      -- parented to UIParent (not Blizzard's window), anchored under it
+      h.eq(box.parent, UIParent)
+      h.eq(rawget(box.frame, "ignoreInLayout"), nil)
+      h.eq(lastPoint(box.frame), { "SetPoint", "TOPLEFT", manager, "BOTTOMLEFT", 0, -4 })
+      h.eq(box.frame:IsShown(), true)
+      hooked.OnHide(manager)
+      h.eq(box.frame:IsShown(), false)
+      local count = #made
+      hooked.OnShow(manager) -- built once, shown and refreshed after
+      h.eq(#made, count)
+      h.eq(box.frame:IsShown(), true)
       h.eq(ns.EditMode.Checklist.attach(), false)
     end)
+    _G.CreateFrame = create
     _G.EditModeManagerFrame = prevManager
     if not ok then error(err, 0) end
   end)

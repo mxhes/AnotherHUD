@@ -53,3 +53,9 @@ h.test("body text is readable on the panel", function()
   local c, p = Theme.colors.ink, Theme.colors.panelTint
   h.eq(Theme.contrast(c[1], c[2], c[3], p[1], p[2], p[3]) >= 7, true)
 end)
+
+h.test("snap distance lives in Theme.sizes", function()
+  local Theme = load().Theme
+  h.eq(Theme.sizes.snapDistance, 8)
+  h.eq(Theme.sizes.gridSnapDistance, nil)
+end)

@@ -62,3 +62,21 @@ Shared rules (all mockups):
 - Target of Target 120 x 26, no power bar, name only (10 pt), ring without
   level badge; Gilded studs only on rings of 40 px and up.
 - Pet 120 x 34, power 6, name + health % (10 pt), no level badge.
+
+## 3. Party and Boss frames (`3-party-boss.html`)
+
+- Party variant: **A, small rings**. Vertical, 5 frames (player included),
+  8 px gap; frame 160 x 40, power 5; ring = the Player rule at 92% Portrait
+  Scale (46 px); no level badge.
+- Role icon: our own glyphs (tank: blue shield, healer: green cross, damage:
+  silver sword with red hilt) on a 15 px round badge (ring lines, panel fill)
+  at the ring's lower left. Leader: gold crown (12 px) on top of the ring.
+- Auras: 20 px icons, 2 px gap, 6 px right of the frame, vertically centered;
+  debuffs first, then my buffs (same icon rules as mockup 2).
+- States: out of range = whole frame at 55% opacity; dead = grey bar
+  (0.35, 0.35, 0.35), "Dead" in grey text, empty power; offline = grey bar
+  (0.3, 0.3, 0.3), "Offline"; dispellable debuff = 2 px edge plus 8 px glow
+  around the frame in the debuff type color.
+- Boss: 180 x 42, power 6, mirrored like the Target, gold (elite) ring,
+  14 px "??" level badge, 74 px apart, cast bar 180 x 16 under each (icon
+  left), my debuffs 22 px to the left of the frame growing leftward.

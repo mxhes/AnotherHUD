@@ -64,7 +64,26 @@ pass / fail, what was seen).
   reopening Edit Mode it is selectable and drags, with no taint lines.
 - The checklist box shows under the Edit Mode window and hides with it.
 
-Results: *(not run yet)*
+Results:
+
+- 2026-11-21, first run (LibEditMode MINOR 19 from the `package-dry-run`
+  artifact, FlareUI still enabled):
+  - **Fail, fixed:** the library check printed `true`, but AnotherHUD fell
+    back to "no LibEditMode": `Glue.lib()` expected `LibStub` to be a
+    function, while the real one is a callable table. Fixed by looking it up
+    with `LibStub:GetLibrary` (merge request 3).
+  - **Pass after the fix:** the test frame is selectable and draggable in
+    Edit Mode with its panel; the layout callback works (`lastLayout` saved
+    as the active layout); the "AnotherHUD look" setting on Action Bar 1
+    stores its value; BugGrabber recorded no AnotherHUD errors.
+  - **Pass (by sight only):** combat on a target dummy with Action Bar 1
+    after using the checklist and the Action Bar 1 setting showed no
+    "Interface action failed" / blocked message. The taint log was not
+    captured (`taintLog` was not on), so "no AnotherHUD lines in the taint
+    log" is still open.
+  - Still open: everything else in the list above (snapping, per-layout
+    positions after a drag, Reset Settings, combat Width change, the
+    checklist box and toggle details, rename / delete).
 
 ## Release steps
 

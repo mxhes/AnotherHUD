@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: AnotherHUD
+## Notes: Unit frames and action bars with Edit Mode support.
+## Version: @project-version@
+## Author: Maximilian Henjes
+## X-Website: https://gitlab.com/mhhenjes/anotherhud
+## SavedVariables: AnotherHUDDB
+## SavedVariablesPerCharacter: AnotherHUDCharDB
+## OptionalDeps: LibStub, CallbackHandler-1.0, LibEditMode
+
+embeds.xml
+Boot.lua

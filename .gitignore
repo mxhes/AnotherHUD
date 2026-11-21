@@ -1,0 +1,4 @@
+.superpowers/
+# Libraries fetched by the packager (.pkgmeta externals)
+AnotherHUD/Libs/
+.release/

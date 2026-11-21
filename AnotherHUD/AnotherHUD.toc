@@ -20,6 +20,7 @@ Core/Options.lua
 Core/UnitText.lua
 Core/UnitColor.lua
 Core/UnitState.lua
+Core/UnitLayout.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua

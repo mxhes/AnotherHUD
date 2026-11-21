@@ -61,6 +61,7 @@ PowerShell; nothing here is done by the build.
 | `Core/Modules.lua` | module registry |
 | `Core/Combat.lua` | combat-lockdown queue |
 | `Core/UnitText.lua`, `Core/UnitColor.lua`, `Core/UnitState.lua` | pure unit frame rules: bar / level texts, health / ring / power / cast colors, fading, visibility conditions |
+| `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, studs, aura rows |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |

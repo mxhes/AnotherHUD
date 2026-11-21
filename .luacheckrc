@@ -11,6 +11,7 @@ exclude_files = { "AnotherHUD/Libs/" }
 ignore = {
   "212",      -- unused argument (handlers keep the full event signature)
   "211/ADDON", -- `local ADDON, ns = ...` at the top of every file
+  "211/ns",    -- `local ADDON, ns = ...` at the top of every file
   "421",      -- shadowing a local
   "431",      -- shadowing an upvalue
   "432",      -- shadowing an upvalue argument

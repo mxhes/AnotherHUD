@@ -44,6 +44,10 @@ pass / fail, what was seen).
   message; `/console taintLog 1` log shows no AnotherHUD lines.
 - `BackdropTemplate` on the test frame and the checklist box draws the round
   edge; "Show border" off leaves the flat fill.
+- Turn the test frame off, /reload, open Edit Mode, turn it on: it appears,
+  is selectable and drags, with no taint lines.
+- Blizzard's Edit Mode window keeps its size with the checklist box attached
+  (`box.ignoreInLayout = true` in `EditMode/Checklist.lua`).
 
 Results: *(not run yet)*
 

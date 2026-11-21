@@ -31,7 +31,7 @@ PowerShell; nothing here is done by the build.
 3. Start the game, enable AnotherHUD in the AddOns list, log in. `/console
    taintLog 1`, then `/reload` once so logging starts clean.
 4. Run the "Edit Mode spike" checks in `docs/CHECKLIST.md`. The taint log is
-   `<WoW>\_forever_\Logs	aint.log` (written on logout / `/reload`): search it
+   `C:\Program Files (x86)\World of Warcraft\_forever_\Logs\taint.log` (written on logout / `/reload`): search it
    for `AnotherHUD`.
 5. Write the results under "Results" in `docs/CHECKLIST.md`. If the checklist
    or the Action Bar setting taints, the fallback from the design applies:

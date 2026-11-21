@@ -142,6 +142,8 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
   withClient(function(ns)
     define(ns, "a")
     -- no Edit Mode window in this client
+    local prevManager = rawget(_G, "EditModeManagerFrame")
+    _G.EditModeManagerFrame = nil
     h.eq(ns.EditMode.Checklist.attach(), false)
     _G.EditModeManagerFrame = fakes.frame("EditModeManagerFrame")
     local hooked
@@ -153,7 +155,7 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
       hooked[2](_G.EditModeManagerFrame) -- built once, refreshed after
       h.eq(ns.EditMode.Checklist.attach(), false)
     end)
-    _G.EditModeManagerFrame = nil
+    _G.EditModeManagerFrame = prevManager
     if not ok then error(err, 0) end
   end)
 end)
@@ -168,7 +170,8 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
   function lem:RegisterCallback() end
   function lem:GetActiveLayoutName() return "Modern" end
   local prev = { LibStub = rawget(_G, "LibStub"), Enum = rawget(_G, "Enum"),
-    db = rawget(_G, "AnotherHUDDB"), char = rawget(_G, "AnotherHUDCharDB") }
+    db = rawget(_G, "AnotherHUDDB"), char = rawget(_G, "AnotherHUDCharDB"),
+    manager = rawget(_G, "EditModeManagerFrame") }
   _G.LibStub = function(name) if name == "LibEditMode" then return lem end end
   _G.Enum = { EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { MainBar = 1 } }
   _G.AnotherHUDDB, _G.AnotherHUDCharDB = nil, nil
@@ -186,14 +189,15 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
   client.restore()
   _G.LibStub, _G.Enum = prev.LibStub, prev.Enum
   _G.AnotherHUDDB, _G.AnotherHUDCharDB = prev.db, prev.char
-  _G.EditModeManagerFrame = nil
+  _G.EditModeManagerFrame = prev.manager
   if not ok then error(err, 0) end
 end)
 
 h.test("German checklist texts fit 24 glyphs", function()
+  local prevLocale = rawget(_G, "GetLocale")
   _G.GetLocale = function() return "deDE" end
   local ok, ns = pcall(h.load, h.toc())
-  _G.GetLocale = nil
+  _G.GetLocale = prevLocale
   assert(ok, ns)
   for _, text in ipairs({ "AnotherHUD look", "AnotherHUD Test", "Show border", "Width", "Height",
     "Size", "Look", "Type /reload to apply" }) do

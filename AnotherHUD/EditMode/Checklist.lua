@@ -36,6 +36,9 @@ function Checklist.toggle(id, on)
       if on then frame:Show() else frame:Hide() end
     end)
   elseif spec and on then
+    -- UNVERIFIED (check in client): registerAll -> LibEditMode AddFrame
+    -- while Edit Mode is open (the frame appears, is selectable and drags,
+    -- no taint).
     ns.EditMode.Glue.registerAll()
   end
   if needsReload then ns.Util.say(L["Type /reload to apply"]) end
@@ -58,6 +61,9 @@ local function build(manager)
   local T = ns.Theme
   local entries = Checklist.entries()
   box = CreateFrame("Frame", nil, manager, "BackdropTemplate")
+  -- Our own frame's field: Blizzard's layout code skips it, so the window
+  -- keeps its size. UNVERIFIED (check in client).
+  box.ignoreInLayout = true
   box:SetPoint("TOPLEFT", manager, "BOTTOMLEFT", 0, -4)
   box:SetSize(BOX_WIDTH, T.sizes.padding * 2 + ROW_HEIGHT * (#entries + 1))
   box:SetBackdrop(T.backdropSpec("round"))

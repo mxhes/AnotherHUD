@@ -18,6 +18,35 @@ and remove both once it is confirmed.
 - Edit Mode: nudging a frame with the arrow keys near another frame or a
   screen line snaps it back (our snap runs on every move callback).
 
+### Edit Mode spike (Plan 1, Task 7)
+
+Setup first: link the addon and copy the libraries as in
+`docs/DEVELOPMENT.md` (Setup, "Spike check"). Results go here (date,
+pass / fail, what was seen).
+
+- Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
+  drags, snaps to grid / screen / Blizzard frames, panel opens next to it with
+  the sections (Size, Look) and the three buttons; positions differ per
+  layout. (Grid and Blizzard-frame snap are not built yet, see above: expect
+  screen and AnotherHUD-frame snap only.)
+- Checklist checkbox appears under Blizzard's list and toggles the test frame
+  (`EditMode/Checklist.lua`: `EditModeManagerFrame:HookScript("OnShow")`, a
+  `BackdropTemplate` box anchored under the window, `UICheckButtonTemplate`
+  rows).
+- "AnotherHUD look" checkbox appears in Action Bar 1's Edit Mode panel
+  (`EditMode/SystemSettings.lua`: `LibEditMode:AddSystemSettings` with
+  `Enum.EditModeSystem.ActionBar` and
+  `Enum.EditModeActionBarSystemIndices.MainBar`); clicking it prints
+  "AnotherHUD look: on / off".
+- **Taint:** after opening Edit Mode, changing both, saving and leaving:
+  `/reload`-free combat on a target dummy, cast from Action Bar 1, open the
+  spellbook and talents in combat — no "Interface action failed" / blocked
+  message; `/console taintLog 1` log shows no AnotherHUD lines.
+- `BackdropTemplate` on the test frame and the checklist box draws the round
+  edge; "Show border" off leaves the flat fill.
+
+Results: *(not run yet)*
+
 ## Release steps
 
 1. `main` is green: `lua tests/run.lua` passes locally and the `test` jobs

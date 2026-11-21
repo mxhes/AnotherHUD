@@ -16,6 +16,30 @@ filled in as the code lands. The design and its reasons are in
   CallbackHandler-1.0 and LibEditMode into `AnotherHUD/Libs/` (git-ignored).
 - Tools: Lua 5.4 (local), luacheck, glab.
 
+**Spike check (Edit Mode, Plan 1 Task 7).** Run once by the player, in
+PowerShell; nothing here is done by the build.
+
+1. Close the game. Link the addon (WoW folder as above):
+   `New-Item -ItemType Junction -Path "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\AnotherHUD" -Target "D:\GitRepos\AnotherHUD\AnotherHUD"`
+   (if the folder exists from an installed release, move it away first).
+2. Libraries: create `D:\GitRepos\AnotherHUD\AnotherHUD\Libs\` and put in it
+   `LibStub\LibStub.lua`, `CallbackHandler-1.0\` (with
+   `CallbackHandler-1.0.xml`) and `LibEditMode\` (with `embed.xml`), the
+   paths `embeds.xml` loads. Take them from the packager dry run (`.release/`)
+   or from the libraries' own releases (LibEditMode by p3lim); never from
+   FlareUI (its copy is modified).
+3. Start the game, enable AnotherHUD in the AddOns list, log in. `/console
+   taintLog 1`, then `/reload` once so logging starts clean.
+4. Run the "Edit Mode spike" checks in `docs/CHECKLIST.md`. The taint log is
+   `<WoW>\_forever_\Logs	aint.log` (written on logout / `/reload`): search it
+   for `AnotherHUD`.
+5. Write the results under "Results" in `docs/CHECKLIST.md`. If the checklist
+   or the Action Bar setting taints, the fallback from the design applies:
+   action bar look goes into our own panel (opened from the Settings window),
+   module toggles live only in the Settings window; note it here and in
+   Plan 5's notes.
+6. `/console taintLog 0` when done.
+
 ## Code layout
 
 | Folder / file | What it holds |
@@ -32,6 +56,8 @@ filled in as the code lands. The design and its reasons are in
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
 | `EditMode/Snap.lua` | snapping to grid, screen and frames |
 | `EditMode/Checklist.lua` | module toggles in the Edit Mode window |
+| `EditMode/SystemSettings.lua` | spike: one checkbox in Action Bar 1's Edit Mode panel |
+| `Spike/SpikeModule.lua` | spike: "AnotherHUD Test" frame; deleted when Plan 3's Player module lands |
 | `Units/Base.lua` | shared unit frame parts (health, power, portrait, texts, cast bar, auras, icons) |
 | `Units/Player.lua` ... `Units/Boss.lua` | one module per unit |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |
@@ -82,6 +108,23 @@ saves; the default position (the library's own Reset Position) is saved
 unsnapped. Every reposition goes through `Combat.after("pos:" .. id)`.
 Without LibEditMode the frames go to their positions in the last layout
 seen (`db.lastLayout`) or their defaults, and nothing else happens.
+
+With LibEditMode, `Core.init` then attaches two spike pieces (taint test,
+results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
+`EditModeManagerFrame` with `HookScript("OnShow")` (no writes into Blizzard
+tables); on the first show it builds a small box under the window with one
+checkbox per module (`Checklist.entries()`: define order, `Modules.isEnabled`),
+and every show re-reads the checks. A click runs `Checklist.toggle`:
+`Modules.setEnabled`, then shows / hides the frame (`Combat.after("show:" ..
+id)`) or, for a module that was off at login, `Glue.registerAll` creates it;
+a module that hides Blizzard frames prints a `/reload` hint.
+`EditMode/SystemSettings.lua` adds one checkbox, "AnotherHUD look", to Action
+Bar 1's panel (`AddSystemSettings(Enum.EditModeSystem.ActionBar, ...,
+Enum.EditModeActionBarSystemIndices.MainBar)`); its value is
+`profile.spike.abLook` and only prints a line. The test frame itself is the
+module `spike` in `Spike/SpikeModule.lua` (Size: width, height; Look: Show
+border). To remove the spike: delete `Spike/` and its `.toc` line;
+`EditMode/SystemSettings.lua` either becomes the real bar look or goes too.
 
 *(Filled in as built.)* Planned topics: secret values and how texts are formatted, hiding
 Blizzard frames, party header attributes, sample data in Edit Mode, skinning

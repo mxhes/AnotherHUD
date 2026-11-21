@@ -20,5 +20,8 @@ Core/Options.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua
+EditMode/Checklist.lua
+EditMode/SystemSettings.lua
+Spike/SpikeModule.lua
 Core/Core.lua
 Boot.lua

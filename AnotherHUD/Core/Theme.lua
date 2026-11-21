@@ -69,6 +69,27 @@ Theme.colors = {
   tipHint = { 0.25, 0.90, 0.25, 1 },
 }
 
+-- Unit frame colors (approved art). Elite uses colors.gold and normal uses
+-- colors.panelBorder for the ring (see Core/UnitColor.lua).
+Theme.unitColors = {
+  healthDefault = { 0.16, 0.62, 0.22, 1 },
+  hostile = { 0.85, 0.20, 0.15, 1 },
+  neutral = { 0.95, 0.82, 0.20, 1 },
+  friendly = { 0.25, 0.75, 0.25, 1 },
+  rare = { 0.78, 0.78, 0.81, 1 },
+  cast = { 1.00, 0.74, 0.12, 1 },
+  channel = { 0.35, 0.75, 0.35, 1 },
+  interrupted = { 0.85, 0.20, 0.15, 1 },
+  uninterruptible = { 0.60, 0.60, 0.62, 1 },
+  debuff = {
+    Magic = { 0.20, 0.60, 1.00, 1 },
+    Curse = { 0.60, 0.00, 1.00, 1 },
+    Poison = { 0.00, 0.60, 0.00, 1 },
+    Disease = { 0.60, 0.40, 0.00, 1 },
+    none = { 0.80, 0.00, 0.00, 1 },
+  },
+}
+
 Theme.sizes = {
   padding = 8,
   -- Bronze buttons: edge thickness, fill inset, glyph padding of icon buttons.

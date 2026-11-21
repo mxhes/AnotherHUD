@@ -24,4 +24,7 @@ ns.Locale.register("deDE", {
   ["Width of the test frame."] = "Breite des Testrahmens.",
   ["Height of the test frame."] = "Höhe des Testrahmens.",
   ["Draw the frame's border."] = "Zeichnet den Rahmen.",
+  -- Unit texts (Core/UnitText.lua)
+  ["Dead"] = "Tot",
+  ["Offline"] = "Offline",
 })

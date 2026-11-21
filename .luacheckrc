@@ -26,5 +26,5 @@ globals = {
 read_globals = {
   "InCombatLockdown", "CreateFrame", "geterrorhandler",
   "LibStub", "UIParent", "CreateColor", "EditModeManagerFrame",
-  "Enum",
+  "Enum", "C_ClassColor", "PowerBarColor",
 }

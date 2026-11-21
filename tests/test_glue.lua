@@ -81,7 +81,8 @@ h.test("registers every enabled module", function()
     h.eq(#lem.settings[a.frame], 2) -- header + width
     local texts = {}
     for _, button in ipairs(lem.buttons[a.frame]) do texts[#texts + 1] = button.text end
-    h.eq(texts, { "Settings", "Reset Settings", "Reset To Default Position" })
+    -- only Settings: the library adds its own Reset Settings / Reset Position
+    h.eq(texts, { "Settings" })
     h.eq(#lem.events.layout, 1)
     -- a second call registers nothing twice and creates nothing again
     ns.EditMode.Glue.registerAll()
@@ -184,10 +185,9 @@ h.test("positions queue in combat", function()
   end)
 end)
 
-h.test("buttons reset settings and position", function()
+h.test("settings button opens the settings window", function()
   with({}, function(ns, lem)
-    local applied = 0
-    local a = define(ns, "a", { apply = function() applied = applied + 1 end })
+    local a = define(ns, "a")
     ns.EditMode.Glue.registerAll()
     local buttons = lem.buttons[a.frame]
     -- Settings: no Settings window yet, a chat line instead
@@ -199,19 +199,36 @@ h.test("buttons reset settings and position", function()
     ns.UI = { Settings = { open = function(id) opened = id end } }
     buttons[1].click()
     h.eq(opened, "a")
-    -- Reset Settings keeps the on/off flag
-    ns.Modules.setEnabled("a", true)
+  end)
+end)
+
+h.test("library reset rows go through Options.set and onMove", function()
+  with({}, function(ns, lem)
+    local a = define(ns, "a")
+    ns.EditMode.Glue.registerAll()
+    -- the library's Reset Settings calls set(layout, default, true) per row
     ns.Options.set("a", "width", 300)
-    applied = 0
-    buttons[2].click()
-    h.eq(ns.DB.profile().modules.a, { enabled = true })
+    for _, row in ipairs(lem.settings[a.frame]) do
+      if row.set and row.default ~= nil then row.set("Modern", row.default, true) end
+    end
     h.eq(ns.Options.get("a", "width"), 200)
-    h.eq(applied, 1)
-    -- Reset To Default Position
+    -- its Reset Position calls our move callback with the default
     ns.db.positions.Modern = { a = { point = "LEFT", x = 20, y = 30 } }
-    buttons[3].click()
-    h.eq(ns.db.positions.Modern.a, nil)
-    h.eq(lastPoint(a.frame), { "SetPoint", "CENTER", UIParent, "CENTER", 0, -100 })
+    a.frame._left, a.frame._bottom, a.frame._width, a.frame._height = 2, 2, 100, 50
+    lem.callbacks[a.frame](a.frame, "Modern", "CENTER", 0, -100)
+    h.eq(ns.db.positions.Modern.a, { point = "CENTER", x = 0, y = -100 })
+  end)
+end)
+
+h.test("frames anchor to their parent", function()
+  with({}, function(ns, lem)
+    local holder = fakes.frame("Holder")
+    local a = define(ns, "a", { create = function(spec)
+      spec.frame = CreateFrame("Frame", "AnotherHUDTest_a", holder)
+      spec.frame._parent = holder -- the fake CreateFrame ignores the parent
+    end })
+    ns.EditMode.Glue.registerAll()
+    h.eq(lastPoint(a.frame), { "SetPoint", "CENTER", holder, "CENTER", 0, -100 })
   end)
 end)
 
@@ -278,12 +295,13 @@ h.test("Boot starts the addon on its ADDON_LOADED", function()
   if not ok then error(err, 0) end
 end)
 
-h.test("German button labels fit 24 glyphs", function()
+h.test("German button label fits 24 glyphs", function()
+  local prevLocale = rawget(_G, "GetLocale")
   _G.GetLocale = function() return "deDE" end
   local ok, ns = pcall(h.load, h.toc())
-  _G.GetLocale = nil
+  _G.GetLocale = prevLocale
   assert(ok, ns)
-  for _, text in ipairs({ "Settings", "Reset Settings", "Reset To Default Position" }) do
+  for _, text in ipairs({ "Settings" }) do
     h.eq(ns.L[text] ~= text, true, text .. " translated")
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])
   end

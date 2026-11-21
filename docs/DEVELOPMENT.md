@@ -97,15 +97,18 @@ enabled module it creates the frame if needed (`spec.create`, queued with
 with our move callback and `spec.defaultPosition`, `AddFrameSettings` with
 the rows `EditMode/Panel.build` makes from `spec.settings` (one Divider row
 per section, a disabled line when the library has no Divider type; every
-setter goes through `Options.set`), and three buttons (Settings, Reset
-Settings, Reset To Default Position). Positions live in
+setter goes through `Options.set`), and one Settings button (the library's
+dialog brings its own Reset Settings, which calls every row's setter with
+its default, and Reset Position, which calls our move callback with the
+default position). Positions live in
 `db.positions[layoutName][id] = { point, x, y }`; the library's `layout`
 callback places every frame for the new layout, or at its default position
 when that layout has none saved. The move callback snaps our own frames
 (`EditMode/Snap.lua`, 8 px, to the screen edges and centre lines and to the
 other AnotherHUD frames; no grid snap yet, see `docs/CHECKLIST.md`) and
 saves; the default position (the library's own Reset Position) is saved
-unsnapped. Every reposition goes through `Combat.after("pos:" .. id)`.
+unsnapped. Every reposition goes through `Combat.after("pos:" .. id)` and
+anchors to the frame's parent (as the library does).
 Without LibEditMode the frames go to their positions in the last layout
 seen (`db.lastLayout`) or their defaults, and nothing else happens.
 

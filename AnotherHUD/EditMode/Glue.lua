@@ -55,8 +55,10 @@ end
 local function place(spec, pos)
   local frame = spec.frame
   ns.Combat.after("pos:" .. spec.id, function()
+    -- relative to the parent, as the library anchors it
+    local parent = frame:GetParent() or UIParent
     frame:ClearAllPoints()
-    frame:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+    frame:SetPoint(pos.point, parent, pos.point, pos.x, pos.y)
   end)
 end
 
@@ -142,31 +144,12 @@ local function openSettings(spec)
   say(L["Settings window comes later"])
 end
 
--- Back to the module's defaults; the on/off flag stays. apply(spec) with no
--- key redraws everything.
-local function resetSettings(spec)
-  local modules = ns.DB.profile().modules
-  local saved = modules[spec.id]
-  local fresh = {}
-  if type(saved) == "table" then fresh.enabled = saved.enabled end
-  modules[spec.id] = fresh
-  if spec.apply then
-    ns.Combat.after("apply:" .. spec.id, function() spec.apply(spec) end)
-  end
-  if lem and lem.RefreshFrameSettings then lem:RefreshFrameSettings(spec.frame) end
-end
-
-local function resetPosition(spec)
-  local layout = ns.db.positions[activeLayout()]
-  if type(layout) == "table" then layout[spec.id] = nil end
-  place(spec, defaultOf(spec))
-end
-
+-- Only Settings: the library's dialog has its own Reset Settings (calls each
+-- row's set with its default -> Options.set) and Reset Position (calls
+-- onMove with the default position, saved unsnapped).
 local function buttons(spec)
   return {
     { text = L["Settings"], click = function() openSettings(spec) end },
-    { text = L["Reset Settings"], click = function() resetSettings(spec) end },
-    { text = L["Reset To Default Position"], click = function() resetPosition(spec) end },
   }
 end
 

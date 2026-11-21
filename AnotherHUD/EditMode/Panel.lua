@@ -59,6 +59,9 @@ local function setting(spec, control, types)
     s.minValue, s.maxValue, s.valueStep = control.min, control.max, control.step
   elseif control.type == "dropdown" then
     s.values = dropdownValues(control)
+  elseif isColor then
+    local alpha = type(default) == "table" and default[4]
+    s.hasOpacity = control.hasOpacity == true or (type(alpha) == "number" and alpha < 1)
   end
   return s
 end

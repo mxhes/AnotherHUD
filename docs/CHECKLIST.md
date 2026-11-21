@@ -13,8 +13,8 @@ and remove both once it is confirmed.
 - Edit Mode grid: find a readable API for Blizzard's grid spacing; until
   then our frames don't snap to the grid (`opts.grid = nil` in `EditMode/Glue.lua`).
 - Edit Mode panel: the section titles show as Divider rows with the packaged
-  LibEditMode (else the disabled-checkbox fallback shows), and our three
-  buttons don't clash with the library's own reset buttons.
+  LibEditMode (else the disabled-checkbox fallback shows); our Settings
+  button sits next to the library's own Reset Settings / Reset Position.
 - Edit Mode: nudging a frame with the arrow keys near another frame or a
   screen line snaps it back (our snap runs on every move callback).
 
@@ -26,7 +26,7 @@ pass / fail, what was seen).
 
 - Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
   drags, snaps to grid / screen / Blizzard frames, panel opens next to it with
-  the sections (Size, Look) and the three buttons; positions differ per
+  the sections (Size, Look), our Settings button and the library's reset buttons; positions differ per
   layout. (Grid and Blizzard-frame snap are not built yet, see above: expect
   screen and AnotherHUD-frame snap only.)
 - Checklist checkbox appears under Blizzard's list and toggles the test frame

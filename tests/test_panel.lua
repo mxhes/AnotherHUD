@@ -49,6 +49,16 @@ h.test("slider maps min/max/step", function()
   h.eq(find(settings, "Tint").kind, TYPES.ColorPicker)
 end)
 
+h.test("colour opacity from the control or the default alpha", function()
+  local ns, spec = load()
+  h.eq(find(ns.EditMode.Panel.build(spec, TYPES), "Tint").hasOpacity, false)
+  spec.settings[2].controls[2].hasOpacity = true
+  h.eq(find(ns.EditMode.Panel.build(spec, TYPES), "Tint").hasOpacity, true)
+  spec.settings[2].controls[2].hasOpacity = nil
+  spec.defaults.tint = { 1, 0, 0, 0.5 }
+  h.eq(find(ns.EditMode.Panel.build(spec, TYPES), "Tint").hasOpacity, true)
+end)
+
 h.test("one header per section", function()
   local ns, spec = load()
   local settings = ns.EditMode.Panel.build(spec, TYPES)

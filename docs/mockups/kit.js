@@ -141,12 +141,12 @@ const K = (() => {
 
   // Page scaffolding: a skin picker + zoom; render(skin) returns html of one cell.
   function page(opts) {
-    const state = { skins: ['classic', 'forge'], zoom: 2 };
+    const state = { skins: ['classic', 'forge'], zoom: opts.zoom || 2 };
     const root = document.getElementById('cells');
     const pick = document.getElementById('skins');
     pick.innerHTML = Object.keys(SKINS).map(k =>
       `<label><input type="checkbox" value="${k}" ${state.skins.includes(k) ? 'checked' : ''}> ${SKINS[k].label}</label>`).join('') +
-      ` <span class="sep">|</span> Zoom <select id="zoom"><option value="1">1x</option><option value="1.5">1.5x</option><option value="2" selected>2x</option></select>`;
+      ` <span class="sep">|</span> Zoom <select id="zoom">${[1, 1.5, 2].map(z => `<option value="${z}" ${z === state.zoom ? 'selected' : ''}>${z}x</option>`).join('')}</select>`;
     function draw() {
       root.innerHTML = opts.variants.map(v => `<section class="variant"><h2>${v.title}</h2><p class="note">${v.note || ''}</p><div class="row">` +
         state.skins.map(sk => `<figure><figcaption>${SKINS[sk].label}</figcaption><div class="stage" style="width:${v.w * state.zoom}px;height:${v.h * state.zoom}px"><div class="scene" style="width:${v.w}px;height:${v.h}px;transform:scale(${state.zoom})">${v.render(sk)}</div></div></figure>`).join('') +

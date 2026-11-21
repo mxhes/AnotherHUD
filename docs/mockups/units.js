@@ -4,10 +4,10 @@ const U = (() => {
   const { C, sc, css } = K;
 
   // A level badge: small round coin with the level in gold.
-  function badge(skin, cx, cy, lvl, dia = 18) {
-    const r = K.ring(skin, cx, cy, dia, { studs: false });
+  function badge(skin, cx, cy, lvl, dia = 18, col) {
+    const r = K.ring(skin, cx, cy, dia, { studs: false, col });
     return `<i class="portrait" style="left:${cx - dia / 2}px;top:${cy - dia / 2}px;width:${dia}px;height:${dia}px;background:${css(C.panel)}"></i>${r.html}` +
-      `<span class="txt" style="left:${cx}px;top:${cy - 6}px;transform:translateX(-50%);font-size:10px;color:${css(C.gold)}">${lvl}</span>`;
+      `<span class="txt" style="left:${cx}px;top:${cy - dia * 0.33}px;transform:translateX(-50%);font-size:${Math.round(dia * 0.55)}px;color:${css(C.gold)}">${lvl}</span>`;
   }
 
   // p: {x, y, w, h, powerH, layout: inset|overhang|coin|none, mirror, ps (portrait scale),
@@ -59,17 +59,33 @@ const U = (() => {
     // portrait + ring
     if (layout !== 'none') {
       const cx = p.mirror ? w - ringCx : ringCx;
-      const r = K.ring(skin, cx, ringCy, ringDia);
+      const r = K.ring(skin, cx, ringCy, ringDia, { col: p.ringCol, studs: ringDia >= 40 });
       html += `<i class="portrait" style="left:${cx - ringDia / 2 - 1}px;top:${ringCy - ringDia / 2 - 1}px;width:${ringDia + 2}px;height:${ringDia + 2}px;background:rgba(0,0,0,.6)"></i>`;
       html += K.portrait(cx, ringCy, ringDia - 2 * r.width + 2, p.hue);
       html += r.html;
       if (layout !== 'inset' && p.level) {
         const bx = cx + (p.mirror ? -1 : 1) * ringDia * 0.33, by = ringCy + ringDia * 0.36;
-        html += badge(skin, bx, by, p.level);
+        html += badge(skin, bx, by, p.level, p.badge || 18, p.badgeCol);
       }
     }
     if (p.extra) html += p.extra;
     return `<div class="unit" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px">${html}</div>`;
+  }
+
+  // Debuff type edge colors (the game's own).
+  const DEBUFF = { magic: [0.2, 0.6, 1], curse: [0.6, 0, 1], poison: [0, 0.6, 0], disease: [0.6, 0.4, 0], none: [0.8, 0, 0] };
+  // One aura icon. a: {kind: buff|magic|curse|poison|disease|none, hue, time, count, mine}
+  function aura(skin, x, y, size, a) {
+    const edge = a.kind === 'buff' ? C.border : DEBUFF[a.kind];
+    const ew = a.kind === 'buff' ? 1 : 2;
+    let html = `<i class="icon" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:radial-gradient(circle at 38% 32%, hsl(${a.hue},70%,78%), hsl(${a.hue},65%,42%) 50%, hsl(${a.hue},60%,14%) 95%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.8), inset 0 0 0 ${ew + 1}px ${css(edge)}${a.mine === false ? ';filter:saturate(.35) brightness(.8)' : ''}"></i>`;
+    const fs = Math.max(8, Math.round(size * 0.42));
+    if (a.time) html += K.text(x + size / 2, y + size - fs * 0.75, a.time, { size: fs, align: 'center' });
+    if (a.count) html += `<span class="txt" style="left:${x}px;width:${size - 1}px;text-align:right;top:${y - 2}px;font-size:${fs}px">${a.count}</span>`;
+    return html;
+  }
+  function auras(skin, x, y, size, gap, list, rtl) {
+    return list.map((a, i) => aura(skin, rtl ? x - (i + 1) * size - i * gap : x + i * (size + gap), y, size, a)).join('');
   }
 
   // Cast bar. p: {x, y, w, h, v, spell, time, icon, color, state: cast|channel|fail|shield}
@@ -99,5 +115,5 @@ const U = (() => {
     return `<div class="unit" style="left:${p.x}px;top:${p.y}px;width:${w}px;height:${h}px">${html}</div>`;
   }
 
-  return { frame, cast, badge };
+  return { frame, cast, badge, aura, auras, DEBUFF };
 })();

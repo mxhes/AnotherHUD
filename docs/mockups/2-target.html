@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnotherHUD mockup 2: Target, Focus, Target of Target, Pet</title>
+<link rel="stylesheet" href="kit.css"></head>
+<body>
+<h1>Mockup 2: Target, Focus, Target of Target, Pet</h1>
+<p class="lead">Smaller variants of the approved Player frame (overhanging ring, Smooth bars). Sizes: Target 200 x 60 (power 15, cast bar 200 x 18, debuffs 22 px), Focus 160 x 40 (power 8), Target of Target 120 x 26 (no power bar), Pet 120 x 34 (power 6). Health of NPCs in reaction colors (hostile red, neutral yellow, friendly green), players in class color. The small frames drop the level badge and the power text.</p>
+<div id="skins"></div>
+<div id="cells"></div>
+
+<div class="pick" id="pick">
+  <b>Approved (2026-11-21):</b> A, Target mirrored; classification as ring tint (elite gold, rare silver, rare elite silver ring with a gold level badge); small frame sizes as shown.
+</div>
+
+<script src="kit.js"></script>
+<script src="units.js"></script>
+<script>
+const R = K.REACT;
+const player = { w: 200, h: 60, powerH: 15, layout: 'overhang', name: 'Arthelis', level: 80, hp: 0.72,
+  hpText: '72.4K / 100K', pp: 0.55, ppText: '55%', hpColor: K.CLASS.paladin, hue: 28 };
+const target = { w: 200, h: 60, powerH: 15, layout: 'overhang', name: 'Overlord Kraxis', level: 82, hp: 0.46,
+  hpText: '46%', pp: 0.8, ppText: '', ppColor: K.POWER.rage, hpColor: R.hostile, hue: 110 };
+const debuffs = [
+  { kind: 'none', hue: 20, time: '12' }, { kind: 'magic', hue: 210, time: '6', count: 3 },
+  { kind: 'curse', hue: 280, time: '24' }, { kind: 'poison', hue: 120, time: '3' },
+  { kind: 'none', hue: 40, time: '1m', mine: false },
+];
+function screen(s, mirror) {
+  const tx = 392;
+  const tdir = mirror ? 1 : 0;
+  return U.frame(s, Object.assign({}, player, { x: 30, y: 24 })) +
+    U.cast(s, { x: 30, y: 104, w: 200, h: 18, v: 0.62, spell: 'Flash of Light', time: '0.9' }) +
+    U.frame(s, { x: 30, y: 146, w: 120, h: 34, powerH: 6, layout: 'overhang', name: 'Felguard', hp: 0.9,
+      hpText: '90%', pp: 0.4, ppColor: K.POWER.energy, hpColor: R.friendly, hue: 200 }) +
+    U.frame(s, Object.assign({}, target, { x: tx, y: 24, mirror, ringCol: K.C.gold })) +
+    U.cast(s, { x: tx, y: 104, w: 200, h: 18, v: 0.3, spell: 'Shadow Bolt Volley', time: '2.1', state: 'cast' }) +
+    U.auras(s, mirror ? tx + 200 : tx, 128, 22, 2, debuffs, mirror) +
+    U.frame(s, { x: mirror ? tx : tx + 80, y: 162, w: 120, h: 26, powerH: 0, layout: 'overhang', mirror, name: 'Arthelis',
+      hp: 0.72, hpColor: K.CLASS.paladin, hue: 28, fs: 10 }) +
+    U.frame(s, { x: 210, y: 202, w: 160, h: 40, powerH: 8, layout: 'overhang', name: 'Shadeweaver', hp: 0.88,
+      hpText: '88%', pp: 0.6, ppColor: K.POWER.mana, hpColor: R.neutral, hue: 260, badge: 14, level: 80, fs: 10 });
+}
+K.page({ zoom: 1.5, variants: [
+  { title: 'A. Target mirrored (approved)', note: 'Player left, Target right with the portrait on the outside. Target cast bar and debuffs (mine bright, others greyed) under it, growing away from the portrait side. Target of Target under the debuffs, Pet under the player, Focus in the middle below.',
+    w: 640, h: 262, render: s => screen(s, true) },
+  { title: 'B. Target same way as Player', note: 'Every frame has its portrait on the left. Simpler, but the Target portrait points into the screen center.',
+    w: 640, h: 262, render: s => screen(s, false) },
+  { title: 'Classification on the ring', note: 'Left to right: normal (ring in the border color), elite (gold ring), rare (silver ring), rare elite (silver ring, gold badge). Shown on the mirrored target.',
+    w: 940, h: 104, render: s => [
+      { ringCol: null, name: 'Bog Lurker', level: 80 },
+      { ringCol: K.C.gold, name: 'Overlord Kraxis', level: 82 },
+      { ringCol: [0.78, 0.78, 0.81], name: 'Grimtusk', level: 81 },
+      { ringCol: [0.78, 0.78, 0.81], name: 'Vexxa the Pale', level: '??', badgeCol: K.C.gold },
+    ].map((c, i) => U.frame(s, Object.assign({}, target, c, { x: 16 + i * 232, y: 20, mirror: true }))).join('') },
+  { title: 'Small frames at real size', note: 'Target of Target, Pet and Focus side by side with every skin border (thick borders eat into the bar height; the bars keep at least 10 px).',
+    w: 560, h: 70, render: s =>
+      U.frame(s, { x: 16, y: 16, w: 120, h: 26, powerH: 0, layout: 'overhang', name: 'Arthelis', hp: 0.72, hpColor: K.CLASS.paladin, hue: 28, fs: 10 }) +
+      U.frame(s, { x: 176, y: 12, w: 120, h: 34, powerH: 6, layout: 'overhang', name: 'Felguard', hp: 0.9, hpText: '90%', pp: 0.4, ppColor: K.POWER.energy, hpColor: R.friendly, hue: 200, fs: 10 }) +
+      U.frame(s, { x: 352, y: 10, w: 160, h: 40, powerH: 8, layout: 'overhang', name: 'Shadeweaver', hp: 0.88, hpText: '88%', pp: 0.6, hpColor: R.neutral, hue: 260, badge: 14, level: 80, fs: 10 }) },
+]});
+</script>
+</body></html>

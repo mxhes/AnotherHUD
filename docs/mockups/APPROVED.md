@@ -41,3 +41,24 @@ Shared rules (all mockups):
 - Bar texture default: **Smooth** (top 125% lighter, mid the color, bottom
   72%); Flat and Gloss stay choosable. Bar background: the bar color at 18%.
 - Health: class color (option on); off = green (0.16, 0.62, 0.22).
+
+## 2. Target, Focus, Target of Target, Pet (`2-target.html`)
+
+- Variant: **A, Target mirrored** (portrait on the right). Its cast bar sits
+  under it (8 px gap, icon left as on the Player), debuffs under the cast bar
+  growing away from the portrait side, Target of Target under the debuffs on
+  the portrait side.
+- Target 200 x 60, power 15, cast bar 200 x 18 (same rules as the Player).
+- Debuff icons 22 px, 2 px gap; 2 px edge in the game's debuff type color
+  (magic 0.2/0.6/1, curse 0.6/0/1, poison 0/0.6/0, disease 0.6/0.4/0, none
+  0.8/0/0); buffs 1 px `panelBorder` edge; other players' auras desaturated;
+  time centered at the bottom, stacks top right (about 42% of the icon size).
+- Classification on the ring tint: normal `panelBorder`; elite `gold`
+  (1, 0.82, 0); rare silver (0.78, 0.78, 0.81); rare elite silver ring with
+  a gold-ringed level badge.
+- Health: NPCs in reaction colors (hostile 0.85/0.2/0.15, neutral
+  0.95/0.82/0.2, friendly 0.25/0.75/0.25), players in class color.
+- Focus 160 x 40, power 8, 14 px level badge, 10 pt name + health %.
+- Target of Target 120 x 26, no power bar, name only (10 pt), ring without
+  level badge; Gilded studs only on rings of 40 px and up.
+- Pet 120 x 34, power 6, name + health % (10 pt), no level badge.

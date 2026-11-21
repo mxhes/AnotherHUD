@@ -208,7 +208,7 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
   local prev = { LibStub = rawget(_G, "LibStub"), Enum = rawget(_G, "Enum"),
     db = rawget(_G, "AnotherHUDDB"), char = rawget(_G, "AnotherHUDCharDB"),
     manager = rawget(_G, "EditModeManagerFrame") }
-  _G.LibStub = function(name) if name == "LibEditMode" then return lem end end
+  _G.LibStub = fakes.libstub({ LibEditMode = lem })
   _G.Enum = { EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { MainBar = 1 } }
   _G.AnotherHUDDB, _G.AnotherHUDCharDB = nil, nil
   _G.EditModeManagerFrame = fakes.frame("EditModeManagerFrame")

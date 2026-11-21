@@ -30,10 +30,7 @@ local function with(opts, fn)
   local client = fakes.client{}
   local lem = not opts.noLem and fakeLem(opts.active or "Modern") or nil
   local prevStub = rawget(_G, "LibStub")
-  _G.LibStub = function(name, silent)
-    if name == "LibEditMode" and lem then return lem end
-    if not silent then error("no library " .. tostring(name)) end
-  end
+  _G.LibStub = fakes.libstub({ LibEditMode = lem })
   local ok, err = pcall(function()
     local ns = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua" })

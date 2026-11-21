@@ -102,3 +102,25 @@ Shared rules (all mockups):
 - Proc glow: **1, Gold pulse**: a halo 5 px outside the button (2 px
   `goldLine` line, 10 px outer glow at 75%, 8 px inner glow at 60%) that
   breathes between 55% and 100% opacity and 100-106% size, 1.1 s per cycle.
+
+## 5. Class resources and totem bar (`5-resources.html`)
+
+- Resource variant: **B, segmented bar** (the player's choice; Claude had
+  suggested round gems). One panel in the skin border, split into equal
+  segments by 1 px dividers in the skin's Lines pick; each segment a Smooth
+  bar in the resource color, background the color at 18%.
+- Attached under the Player frame: 4 px under it, starting right of the
+  portrait ring and as wide as the health / power column (136 x 18 at the
+  default Player size); the Player cast bar moves down below it. Detached
+  default: 200 x 20.
+- Partial points (recharging runes, shard fragments, regenerating essence)
+  fill left to right at 55% of the color, with the seconds left (9 pt)
+  centered on the segment.
+- Colors: combo points (0.95, 0.35, 0.2), holy power (1, 0.82, 0.25), runes
+  (0.85, 0.2, 0.25; frost / unholy specs may use 0.3/0.7/1 and 0.4/0.85/0.3),
+  soul shards (0.62, 0.35, 0.95), chi (0.45, 0.95, 0.75), arcane charges
+  (0.45, 0.55, 1), essence (0.35, 0.85, 0.8).
+- Totem bar: **as shown**. Four 32 px slots, 4 px apart, in the approved
+  action button look (skin border); time left in `gold` 11 pt at the bottom of
+  the icon; a 3 px `goldLine` bar under each slot that drains with the time
+  left; an empty slot is a faint panel (50%) with a dim 1 px edge.

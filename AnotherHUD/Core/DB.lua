@@ -3,6 +3,8 @@ local ADDON, ns = ...
 -- Saved state. Account (AnotherHUDDB):
 --   profiles[name] = { modules = { [moduleId] = { ...settings } } }
 --   positions[layoutName][moduleId] = { point, x, y }   (Edit Mode layouts)
+--   lastLayout = layoutName   (last Edit Mode layout seen; positions are
+--                              taken from it when LibEditMode is missing)
 -- Character (AnotherHUDCharDB):
 --   profile = "Default"                                  (active profile name)
 -- DB.init works on the tables it is given and touches no globals; Boot

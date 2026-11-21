@@ -1,7 +1,10 @@
 # AnotherHUD development
 
-Status: **planned architecture**. Nothing here is built yet; sections are
-filled in as the code lands. The design and its reasons are in
+Status: Plan 1 is built: the core (saved state, options, module registry,
+combat queue, theme, texts), the Edit Mode glue (frames, settings panels,
+snapping, positions per layout, checklist toggles) and the Edit Mode spike
+(test frame, one Action Bar 1 setting). Unit frames and bars are not built
+yet; their rows below are the plan. The design and its reasons are in
 `docs/superpowers/specs/2026-11-21-anotherhud-design.md`.
 
 ## Setup
@@ -25,11 +28,17 @@ PowerShell; nothing here is done by the build.
 2. Libraries: create `D:\GitRepos\AnotherHUD\AnotherHUD\Libs\` and put in it
    `LibStub\LibStub.lua`, `CallbackHandler-1.0\` (with
    `CallbackHandler-1.0.xml`) and `LibEditMode\` (with `embed.xml`), the
-   paths `embeds.xml` loads. Take them from the packager dry run (`.release/`)
-   or from the libraries' own releases (LibEditMode by p3lim); never from
-   FlareUI (its copy is modified).
-3. Start the game, enable AnotherHUD in the AddOns list, log in. `/console
-   taintLog 1`, then `/reload` once so logging starts clean.
+   paths `embeds.xml` loads. Easiest source: the artifact of the CI
+   `package-dry-run` job (its zip holds `AnotherHUD/Libs/...`; copy that
+   `Libs` folder over). Or copy https://github.com/p3lim-wow/LibEditMode
+   (the whole repo; `embed.xml` sits at its root, checked against upstream)
+   into `AnotherHUD\Libs\LibEditMode\`, plus LibStub and CallbackHandler-1.0
+   from their own releases. Never from FlareUI (its copy is modified).
+3. Start the game, enable AnotherHUD in the AddOns list, log in. First check
+   the library loaded: `/dump LibStub and LibStub("LibEditMode", true) ~= nil`
+   must print `true` (else the files are not where `embeds.xml` looks; fix
+   step 2 before going on). Then `/console taintLog 1` and `/reload` once
+   so logging starts clean.
 4. Run the "Edit Mode spike" checks in `docs/CHECKLIST.md`. The taint log is
    `C:\Program Files (x86)\World of Warcraft\_forever_\Logs\taint.log` (written on logout / `/reload`): search it
    for `AnotherHUD`.
@@ -71,19 +80,29 @@ PowerShell; nothing here is done by the build.
 
 ```lua
 ns.Modules.define{
-  id = "player", label = L["Player"], kind = "unit",
+  id = "player", label = "Player", kind = "unit",
   defaults = { width = 200, height = 60, portraitScale = 100, powerHeight = 15 },
   settings = {               -- sections, drawn by Edit Mode panel and Settings window
-    { section = L["Size"], controls = {
-      { key = "width",  type = "slider", min = 80, max = 400, step = 1 },
+    { section = "Size", controls = {
+      { key = "width",  type = "slider", label = "Width", min = 80, max = 400, step = 1 },
       ...
     }},
   },
   blizzard = { "PlayerFrame" },   -- hidden while the module is on
   create = function(mod) ... end, -- once, out of combat
-  apply  = function(mod) ... end, -- redraw from settings (queued in combat)
+  apply  = function(mod, key, value) ... end, -- redraw from settings (queued in combat)
 }
 ```
+
+Labels and section names are English keys, not `L[...]`: they are
+translated where they are drawn (`EditMode/Panel.lua`,
+`EditMode/Checklist.lua`, `EditMode/Glue.lua`). Add the German text to
+`Locales/deDE.lua`.
+
+`apply(spec, key, value)`: `key` / `value` say what changed and are
+informational only; `apply` must redraw the whole module from its settings,
+because the combat queue keeps only the last call per module (earlier
+changes made in combat arrive folded into that one call).
 
 A new replaced frame is a new file with one `Modules.define` and a `.toc`
 line; nothing else names it.
@@ -103,24 +122,31 @@ its default, and Reset Position, which calls our move callback with the
 default position). Positions live in
 `db.positions[layoutName][id] = { point, x, y }`; the library's `layout`
 callback places every frame for the new layout, or at its default position
-when that layout has none saved. The move callback snaps our own frames
-(`EditMode/Snap.lua`, 8 px, to the screen edges and centre lines and to the
-other AnotherHUD frames; no grid snap yet, see `docs/CHECKLIST.md`) and
-saves; the default position (the library's own Reset Position) is saved
-unsnapped. Every reposition goes through `Combat.after("pos:" .. id)` and
+when that layout has none saved; on `rename` the layout's positions (and
+`db.lastLayout`) move to the new name, on `delete` they are dropped. The
+move callback snaps our own frames (`EditMode/Snap.lua`,
+`Theme.sizes.snapDistance` px, to the screen edges and centre lines and to
+the other AnotherHUD frames; no grid snap yet, see `docs/CHECKLIST.md`) and
+saves; the default position (the library's own Reset Position) and an
+arrow-key nudge (at most 10 px on one axis, none on the other, against the
+saved position) are saved unsnapped, so a nudge can leave a snap line.
+Every reposition goes through `Combat.after("pos:" .. id)` and
 anchors to the frame's parent (as the library does).
 Without LibEditMode the frames go to their positions in the last layout
 seen (`db.lastLayout`) or their defaults, and nothing else happens.
 
 With LibEditMode, `Core.init` then attaches two spike pieces (taint test,
 results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
-`EditModeManagerFrame` with `HookScript("OnShow")` (no writes into Blizzard
-tables); on the first show it builds a small box under the window with one
-checkbox per module (`Checklist.entries()`: define order, `Modules.isEnabled`),
-and every show re-reads the checks. A click runs `Checklist.toggle`:
-`Modules.setEnabled`, then shows / hides the frame (`Combat.after("show:" ..
-id)`) or, for a module that was off at login, `Glue.registerAll` creates it;
-a module that hides Blizzard frames prints a `/reload` hint.
+`EditModeManagerFrame` with `HookScript("OnShow")` and `HookScript("OnHide")`
+(no writes into Blizzard tables or frames); on the first show it builds a
+small box on `UIParent`, anchored under the window, with one checkbox per
+module (`Checklist.entries()`: define order, `Modules.isEnabled`); the box
+shows (re-reading the checks) and hides with the window. A click runs
+`Checklist.toggle`: `Modules.setEnabled`, then shows / hides the frame
+(`Combat.after("show:" .. id)`) or, for a module that was off at login,
+`Glue.registerAll` creates it and prints "Reopen Edit Mode to move it" (the
+library makes it selectable from the next open); a module that hides
+Blizzard frames prints a `/reload` hint.
 `EditMode/SystemSettings.lua` adds one checkbox, "AnotherHUD look", to Action
 Bar 1's panel (`AddSystemSettings(Enum.EditModeSystem.ActionBar, ...,
 Enum.EditModeActionBarSystemIndices.MainBar)`); its value is
@@ -137,6 +163,9 @@ Blizzard action buttons.
 
 - Health, power and cast values may be secret in combat: no arithmetic,
   comparisons or string math on them; hand them to widgets.
+- Type guards such as `Util.isNumber` compare what they check (NaN and
+  infinity tests): never pass client health, power or cast values through them (they
+  are for saved settings and positions only).
 - Secure frames change only out of combat (`ns.Combat.after`).
 - Never write into Blizzard tables; `hooksecurefunc` only.
 

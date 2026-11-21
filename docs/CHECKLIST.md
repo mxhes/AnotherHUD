@@ -15,8 +15,11 @@ and remove both once it is confirmed.
 - Edit Mode panel: the section titles show as Divider rows with the packaged
   LibEditMode (else the disabled-checkbox fallback shows); our Settings
   button sits next to the library's own Reset Settings / Reset Position.
-- Edit Mode: nudging a frame with the arrow keys near another frame or a
-  screen line snaps it back (our snap runs on every move callback).
+- Edit Mode: nudging a snapped frame with the arrow keys moves it off the
+  snap line (a nudge is saved unsnapped, `EditMode/Glue.lua`); a drag near a
+  line still snaps.
+- Edit Mode layouts: rename a layout with a moved test frame, the frame stays
+  put under the new name; delete a layout, no Lua error.
 
 ### Edit Mode spike (Plan 1, Task 7)
 
@@ -24,6 +27,12 @@ Setup first: link the addon and copy the libraries as in
 `docs/DEVELOPMENT.md` (Setup, "Spike check"). Results go here (date,
 pass / fail, what was seen).
 
+- **First:** the library loaded: `/dump LibStub and LibStub("LibEditMode", true) ~= nil`
+  prints `true`. Library source: the CI `package-dry-run` job artifact (its
+  zip holds `AnotherHUD/Libs/...`) or https://github.com/p3lim-wow/LibEditMode
+  copied into `AnotherHUD/Libs/LibEditMode/`; its entry file `embed.xml`
+  (at the repo root upstream) is what `embeds.xml` loads. If this prints
+  `false`, nothing below can pass.
 - Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
   drags, snaps to grid / screen / Blizzard frames, panel opens next to it with
   the sections (Size, Look), our Settings button and the library's reset buttons; positions differ per
@@ -31,8 +40,8 @@ pass / fail, what was seen).
   screen and AnotherHUD-frame snap only.)
 - Checklist checkbox appears under Blizzard's list and toggles the test frame
   (`EditMode/Checklist.lua`: `EditModeManagerFrame:HookScript("OnShow")`, a
-  `BackdropTemplate` box anchored under the window, `UICheckButtonTemplate`
-  rows).
+  `BackdropTemplate` box on `UIParent` anchored under the window,
+  `UICheckButtonTemplate` rows).
 - "AnotherHUD look" checkbox appears in Action Bar 1's Edit Mode panel
   (`EditMode/SystemSettings.lua`: `LibEditMode:AddSystemSettings` with
   `Enum.EditModeSystem.ActionBar` and
@@ -41,13 +50,19 @@ pass / fail, what was seen).
 - **Taint:** after opening Edit Mode, changing both, saving and leaving:
   `/reload`-free combat on a target dummy, cast from Action Bar 1, open the
   spellbook and talents in combat — no "Interface action failed" / blocked
-  message; `/console taintLog 1` log shows no AnotherHUD lines.
+  message; `/console taintLog 1` log shows no AnotherHUD lines. If taint
+  lines point at `Checklist`, report it: the fallback moves the module
+  toggles to the Settings window.
+- With Edit Mode open, start a fight (target dummy) and change Width: no
+  error, the size applies when combat ends.
+- Reset Settings (the library's button) returns width / height / border to
+  their defaults with no Lua error.
 - `BackdropTemplate` on the test frame and the checklist box draws the round
   edge; "Show border" off leaves the flat fill.
-- Turn the test frame off, /reload, open Edit Mode, turn it on: it appears,
-  is selectable and drags, with no taint lines.
-- Blizzard's Edit Mode window keeps its size with the checklist box attached
-  (`box.ignoreInLayout = true` in `EditMode/Checklist.lua`).
+- Turn the test frame off, /reload, open Edit Mode, turn it on: it appears
+  and the chat says "Reopen Edit Mode to move it"; after closing and
+  reopening Edit Mode it is selectable and drags, with no taint lines.
+- The checklist box shows under the Edit Mode window and hides with it.
 
 Results: *(not run yet)*
 
@@ -69,8 +84,8 @@ Results: *(not run yet)*
    each, about ten bullets at most, small fixes together in one "Fixes:"
    bullet; no internals (refactors, tests, caches), no option details or
    reasons (those go in `README.md`).
-6. Tag `main` with the version as a maintainer (`git tag -a v0.4.2 -m ...`,
-   then `git push origin v0.4.2`). `v*` tags are protected tags (maintainers
+6. Tag `main` with the version as a maintainer (`git tag -a v0.1.0 -m ...`,
+   then `git push origin v0.1.0`). `v*` tags are protected tags (maintainers
    only), which is what gives the tag pipeline the protected, masked CI/CD
    variable `CF_API_KEY` (the CurseForge API token). The `package` job builds
    the zip (the `.toc` version comes from the tag), uploads it to CurseForge

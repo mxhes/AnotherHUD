@@ -31,11 +31,8 @@ end
 -- LibEditMode), restoring the globals even on failure.
 local function withClient(fn)
   local client = fakes.client{}
-  local prevStub = rawget(_G, "LibStub")
-  _G.LibStub = nil
-  local ok, err = pcall(function() fn(load(), client) end)
+  local ok, err = pcall(fakes.withGlobals, { LibStub = fakes.NIL }, function() fn(load(), client) end)
   client.restore()
-  _G.LibStub = prevStub
   if not ok then error(err, 0) end
 end
 
@@ -108,10 +105,9 @@ end
 
 h.test("system setting adds one checkbox to Action Bar 1", function()
   local ns = load()
-  local prevEnum = rawget(_G, "Enum")
-  _G.Enum = { EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { MainBar = 1 } }
   local lem = fakeLem()
-  local ok, err = pcall(function()
+  fakes.withGlobals({ Enum = { EditModeSystem = { ActionBar = 0 },
+    EditModeActionBarSystemIndices = { MainBar = 1 } } }, function()
     h.eq(ns.EditMode.SystemSettings.attach(lem), true)
     h.eq(#lem.added, 1)
     local added = lem.added[1]
@@ -131,45 +127,38 @@ h.test("system setting adds one checkbox to Action Bar 1", function()
     h.eq(ns.EditMode.SystemSettings.attach(lem), false)
     h.eq(#lem.added, 1)
   end)
-  _G.Enum = prevEnum
-  if not ok then error(err, 0) end
 end)
 
 h.test("system setting needs the library and the client enums", function()
   local ns = load()
-  local prevEnum = rawget(_G, "Enum")
-  _G.Enum = nil
   local lem = fakeLem()
-  local ok, err = pcall(function()
+  fakes.withGlobals({ Enum = fakes.NIL }, function()
     h.eq(ns.EditMode.SystemSettings.attach(lem), false)
     h.eq(#lem.added, 0)
     h.eq(ns.EditMode.SystemSettings.attach({ SettingType = {} }), false)
   end)
-  _G.Enum = prevEnum
-  if not ok then error(err, 0) end
 end)
 
 h.test("checklist attach waits for Blizzard's Edit Mode window", function()
   withClient(function(ns)
     define(ns, "a")
     -- no Edit Mode window in this client
-    local prevManager = rawget(_G, "EditModeManagerFrame")
-    _G.EditModeManagerFrame = nil
-    h.eq(ns.EditMode.Checklist.attach(), false)
+    fakes.withGlobals({ EditModeManagerFrame = fakes.NIL }, function()
+      h.eq(ns.EditMode.Checklist.attach(), false)
+    end)
     local manager = fakes.frame("EditModeManagerFrame")
     manager._shown = false
-    _G.EditModeManagerFrame = manager
     local hooked = {}
     manager.HookScript = function(self, ev, fn) hooked[ev] = fn end
     -- record what the box is parented to
     local made = {}
     local create = _G.CreateFrame
-    _G.CreateFrame = function(kind, name, parent, template)
+    local wrapped = function(kind, name, parent, template)
       local f = create(kind, name, parent, template)
       made[#made + 1] = { frame = f, parent = parent, template = template }
       return f
     end
-    local ok, err = pcall(function()
+    fakes.withGlobals({ EditModeManagerFrame = manager, CreateFrame = wrapped }, function()
       h.eq(ns.EditMode.Checklist.attach(), true)
       h.eq(#made, 0) -- window not shown yet: nothing built
       h.eq(type(hooked.OnShow), "function")
@@ -190,9 +179,6 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
       h.eq(box.frame:IsShown(), true)
       h.eq(ns.EditMode.Checklist.attach(), false)
     end)
-    _G.CreateFrame = create
-    _G.EditModeManagerFrame = prevManager
-    if not ok then error(err, 0) end
   end)
 end)
 
@@ -205,16 +191,15 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
   function lem:AddFrameSettingsButtons() end
   function lem:RegisterCallback() end
   function lem:GetActiveLayoutName() return "Modern" end
-  local prev = { LibStub = rawget(_G, "LibStub"), Enum = rawget(_G, "Enum"),
-    db = rawget(_G, "AnotherHUDDB"), char = rawget(_G, "AnotherHUDCharDB"),
-    manager = rawget(_G, "EditModeManagerFrame") }
-  _G.LibStub = fakes.libstub({ LibEditMode = lem })
-  _G.Enum = { EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { MainBar = 1 } }
-  _G.AnotherHUDDB, _G.AnotherHUDCharDB = nil, nil
-  _G.EditModeManagerFrame = fakes.frame("EditModeManagerFrame")
+  local manager = fakes.frame("EditModeManagerFrame")
   local hooked = false
-  _G.EditModeManagerFrame.HookScript = function() hooked = true end
-  local ok, err = pcall(function()
+  manager.HookScript = function() hooked = true end
+  local ok, err = pcall(fakes.withGlobals, {
+    LibStub = fakes.libstub({ LibEditMode = lem }),
+    Enum = { EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { MainBar = 1 } },
+    AnotherHUDDB = fakes.NIL, AnotherHUDCharDB = fakes.NIL,
+    EditModeManagerFrame = manager,
+  }, function()
     local ns = h.load(h.toc())
     ns.Core.init()
     h.eq(lem.frames, 1) -- the spike test frame
@@ -223,18 +208,12 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
     h.eq(hooked, true)
   end)
   client.restore()
-  _G.LibStub, _G.Enum = prev.LibStub, prev.Enum
-  _G.AnotherHUDDB, _G.AnotherHUDCharDB = prev.db, prev.char
-  _G.EditModeManagerFrame = prev.manager
   if not ok then error(err, 0) end
 end)
 
 h.test("German checklist texts fit 24 glyphs", function()
-  local prevLocale = rawget(_G, "GetLocale")
-  _G.GetLocale = function() return "deDE" end
-  local ok, ns = pcall(h.load, h.toc())
-  _G.GetLocale = prevLocale
-  assert(ok, ns)
+  local ns
+  fakes.withGlobals({ GetLocale = function() return "deDE" end }, function() ns = h.load(h.toc()) end)
   for _, text in ipairs({ "AnotherHUD look", "AnotherHUD Test", "Show border", "Width", "Height",
     "Size", "Look", "Type /reload to apply" }) do
     h.eq(ns.L[text] ~= text, true, text .. " translated")

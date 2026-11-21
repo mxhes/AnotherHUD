@@ -48,8 +48,29 @@ function methods.GetValue(self) return self._value end
 function methods.SetText(self, t) self._text = t end
 function methods.GetText(self) return self._text end
 function methods.SetScript(self, ev, fn) self._scripts[ev] = fn end
+-- HookScript chains: the earlier handler (if any) runs first, then fn.
+function methods.HookScript(self, ev, fn)
+  local prev = self._scripts[ev]
+  if not prev then self._scripts[ev] = fn; return end
+  self._scripts[ev] = function(...) prev(...); fn(...) end
+end
 function methods.GetScript(self, ev) return self._scripts[ev] end
 function methods.RegisterEvent(self, ev) self._events[ev] = true end
+function methods.RegisterUnitEvent(self, ev) self._events[ev] = true end
+-- SetFormattedText keeps the format and the arguments as given (they may be
+-- secret values) and clears _text.
+function methods.SetFormattedText(self, fmt, ...)
+  self._fmt, self._args, self._text = fmt, { ... }, nil
+end
+function methods.SetAttribute(self, k, v) self._attrs[k] = v end
+function methods.GetAttribute(self, k) return self._attrs[k] end
+function methods.SetAlpha(self, a) self._alpha = a end
+function methods.GetAlpha(self) return self._alpha or 1 end
+function methods.SetAlphaFromBoolean(self, b, yes, no) self._alphaFrom = { b, yes, no } end
+function methods.SetTimerDuration(self, d, interp, dir) self._timer = { d, interp, dir } end
+function methods.SetSize(self, w, h) self._width, self._height = w, h end
+function methods.SetWidth(self, w) self._width = w end
+function methods.SetHeight(self, h) self._height = h end
 function methods.UnregisterEvent(self, ev) self._events[ev] = nil end
 function methods.UnregisterAllEvents(self) self._events = {} end
 -- Geometry: a test places a frame by setting _left / _bottom / _width /
@@ -61,7 +82,7 @@ function methods.GetHeight(self) return self._height end
 function methods.GetScale(self) return self._scale or 1 end
 
 function fakes.frame(name)
-  local f = { calls = {}, _scripts = {}, _events = {}, _shown = true, _name = name }
+  local f = { calls = {}, _scripts = {}, _events = {}, _attrs = {}, _shown = true, _name = name }
   setmetatable(f, { __index = function(_, k)
     local m = methods[k]
     if m then return m end
@@ -72,8 +93,24 @@ function fakes.frame(name)
   return f
 end
 
+-- Sentinel for withGlobals: set this global to nil.
+fakes.NIL = {}
+
+-- Sets every _G[k] = v from tbl (fakes.NIL clears one), runs fn(), restores
+-- all of them even when fn throws, then rethrows.
+function fakes.withGlobals(tbl, fn)
+  local previous = {}
+  for k, v in pairs(tbl) do
+    previous[k] = rawget(_G, k)
+    if v == fakes.NIL then _G[k] = nil else _G[k] = v end
+  end
+  local ok, err = pcall(fn)
+  for k in pairs(tbl) do _G[k] = previous[k] end
+  if not ok then error(err, 0) end
+end
+
 local GLOBALS = { "CreateFrame", "UIParent", "InCombatLockdown", "hooksecurefunc",
-  "C_Timer", "issecretvalue" }
+  "C_Timer", "issecretvalue", "RegisterStateDriver", "UnregisterStateDriver" }
 
 -- Installs the client globals into _G (UIParent is opts.width x opts.height,
 -- 1920 x 1080 by default). C_Timer.After runs its callback
@@ -101,6 +138,10 @@ function fakes.client(opts)
   _G.InCombatLockdown = function() return inCombat end
   _G.issecretvalue = fakes.isSecret
   _G.C_Timer = { After = function(_, fn) fn() end }
+  -- handle.drivers[frame] = { attr, cond } while a state driver is registered.
+  local drivers = {}
+  _G.RegisterStateDriver = function(frame, attr, cond) drivers[frame] = { attr = attr, cond = cond } end
+  _G.UnregisterStateDriver = function(frame) drivers[frame] = nil end
   -- hooksecurefunc([tbl,] name, hook): wraps the original, runs the hook after.
   _G.hooksecurefunc = function(a, b, c)
     local tbl, name, hook = _G, a, b
@@ -113,7 +154,7 @@ function fakes.client(opts)
     end
   end
 
-  local handle = {}
+  local handle = { drivers = drivers }
   function handle.fire(event, ...)
     for _, f in ipairs(created) do
       local fn = f._scripts.OnEvent
@@ -126,6 +167,115 @@ function fakes.client(opts)
       if f._name and rawget(_G, f._name) == f then _G[f._name] = nil end
     end
     for _, k in ipairs(GLOBALS) do _G[k] = previous[k] end
+  end
+  return handle
+end
+
+local UNIT_GLOBALS = { "UnitExists", "UnitName", "UnitClass", "UnitLevel", "UnitEffectiveLevel",
+  "UnitClassification", "UnitReaction", "UnitIsPlayer", "UnitIsDeadOrGhost", "UnitIsConnected",
+  "UnitHealth", "UnitHealthMax", "UnitHealthPercent", "UnitPower", "UnitPowerMax", "UnitPowerPercent",
+  "UnitPowerType", "UnitCastingInfo", "UnitChannelInfo", "UnitCastingDuration", "UnitChannelDuration",
+  "SetPortraitTexture", "RegisterStateDriver", "UnregisterStateDriver", "AbbreviateNumbers",
+  "CurveConstants", "C_ClassColor", "PowerBarColor", "Enum", "GameTooltip" }
+
+-- Installs the client's unit API globals reading from
+-- map[unit] = { exists, name, class, level, classification, reaction, isPlayer,
+--   dead, connected, health, healthMax, healthPct, power, powerMax, powerPct,
+--   powerToken, casting = { name, texture, notInterruptible, duration,
+--   startMs, endMs, castID, spellID, isTradeskill }, channel = { same } }.
+-- Values are returned as given (secrets are never wrapped or unwrapped).
+-- Retail return orders: UnitCastingInfo = name, text, texture, startTimeMs,
+-- endTimeMs, isTradeSkill, castID, notInterruptible, spellId; UnitChannelInfo
+-- = name, text, texture, startTimeMs, endTimeMs, isTradeSkill,
+-- notInterruptible, spellId. Unknown units / missing fields answer nil
+-- (UnitExists answers false). Handle: set(unit, field, value), calls[global]
+-- (call counts), restore(). RegisterStateDriver / UnregisterStateDriver are
+-- plain no-ops here (fakes.client records them).
+function fakes.units(map)
+  local handle = { calls = {}, map = map }
+  local previous = {}
+  for _, k in ipairs(UNIT_GLOBALS) do previous[k] = rawget(_G, k) end
+
+  local function unit(u) return map[u] or {} end
+  local function count(name) handle.calls[name] = (handle.calls[name] or 0) + 1 end
+  local function field(name, key)
+    _G[name] = function(u)
+      count(name)
+      return unit(u)[key]
+    end
+  end
+  _G.UnitExists = function(u)
+    count("UnitExists")
+    return unit(u).exists and true or false
+  end
+  field("UnitName", "name")
+  _G.UnitClass = function(u)
+    count("UnitClass")
+    local c = unit(u).class
+    return c, c
+  end
+  field("UnitLevel", "level")
+  field("UnitEffectiveLevel", "level")
+  field("UnitClassification", "classification")
+  field("UnitReaction", "reaction")
+  field("UnitIsPlayer", "isPlayer")
+  field("UnitIsDeadOrGhost", "dead")
+  field("UnitIsConnected", "connected")
+  field("UnitHealth", "health")
+  field("UnitHealthMax", "healthMax")
+  field("UnitHealthPercent", "healthPct")
+  field("UnitPower", "power")
+  field("UnitPowerMax", "powerMax")
+  field("UnitPowerPercent", "powerPct")
+  _G.UnitPowerType = function(u)
+    count("UnitPowerType")
+    return nil, unit(u).powerToken
+  end
+  _G.UnitCastingInfo = function(u)
+    count("UnitCastingInfo")
+    local c = unit(u).casting
+    if not c then return end
+    return c.name, c.name, c.texture, c.startMs, c.endMs, c.isTradeskill, c.castID,
+      c.notInterruptible, c.spellID
+  end
+  _G.UnitChannelInfo = function(u)
+    count("UnitChannelInfo")
+    local c = unit(u).channel
+    if not c then return end
+    return c.name, c.name, c.texture, c.startMs, c.endMs, c.isTradeskill,
+      c.notInterruptible, c.spellID
+  end
+  _G.UnitCastingDuration = function(u)
+    count("UnitCastingDuration")
+    local c = unit(u).casting
+    return c and c.duration
+  end
+  _G.UnitChannelDuration = function(u)
+    count("UnitChannelDuration")
+    local c = unit(u).channel
+    return c and c.duration
+  end
+  _G.SetPortraitTexture = function(tex, u) tex._portraitUnit = u end
+  _G.RegisterStateDriver = previous.RegisterStateDriver or function() end
+  _G.UnregisterStateDriver = previous.UnregisterStateDriver or function() end
+  _G.AbbreviateNumbers = function(n) return n end
+  _G.CurveConstants = { ScaleTo100 = "ScaleTo100", ZeroToOne = "ZeroToOne" }
+  _G.C_ClassColor = { GetClassColor = function() return { r = 1, g = 1, b = 1 } end }
+  _G.PowerBarColor = {}
+  -- Keep whatever Enum the test already installed and add the status bar enums.
+  local enum = {}
+  for k, v in pairs(previous.Enum or {}) do enum[k] = v end
+  enum.StatusBarInterpolation = { Immediate = 0, ExponentialEaseOut = 1 }
+  enum.StatusBarTimerDirection = { ElapsedTime = 0, RemainingTime = 1 }
+  _G.Enum = enum
+  _G.GameTooltip = fakes.frame("GameTooltip")
+
+  function handle.set(u, key, value)
+    map[u] = map[u] or {}
+    map[u][key] = value
+  end
+  function handle.restore()
+    for _, k in ipairs(UNIT_GLOBALS) do _G[k] = previous[k] end
   end
   return handle
 end

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnotherHUD mockup 1: Player frame</title>
+<link rel="stylesheet" href="kit.css"></head>
+<body>
+<h1>Mockup 1: Player frame</h1>
+<p class="lead">Default size 200 x 60, power bar 15 high, cast bar 200 x 18 under it. Colors and skin lines from AnotherLedger's Theme (dark leather panel, bronze border, gold lines). The portrait ring is the skin's border bent into a circle: Classic a soft round edge, Forge the bevel, Slate the thin line, Gilded the double line with studs. The line between health and power follows the skin's Lines pick (gold / groove / plain / dotted). Text uses the game font (shown here with a stand-in serif).</p>
+<div id="skins"></div>
+<div id="cells"></div>
+
+<div class="pick">
+  <b>Approved (2026-11-21):</b> B, overhanging ring, with the Smooth bar texture as default (Flat and Gloss stay choosable under Look).
+</div>
+
+<script src="kit.js"></script>
+<script src="units.js"></script>
+<script>
+const base = { w: 200, h: 60, powerH: 15, name: 'Arthelis', level: 80, hp: 0.72,
+  hpText: '72.4K / 100K', pp: 0.55, ppText: '55%', hpColor: K.CLASS.paladin, ppColor: K.POWER.mana, hue: 28 };
+function scene(skin, layout, ox, extra) {
+  const castY = 60 + 8 + (layout === 'overhang' ? 6 : 0);
+  return U.frame(skin, Object.assign({}, base, { layout, x: ox, y: 14 }, extra || {})) +
+    U.cast(skin, { x: ox, y: 14 + castY, w: 200, h: 18, v: 0.62, spell: 'Flash of Light', time: '0.9' });
+}
+K.page({ variants: [
+  { title: 'A. Inset ring', note: 'Portrait inside the frame on the left, as tall as the frame. Level in gold before the name. Most compact.',
+    w: 236, h: 120, render: s => scene(s, 'inset', 18) },
+  { title: 'B. Overhanging ring (my pick)', note: 'Ring 125% of the frame height, centered over the left end, so it stands out above and below. Level on a small coin badge on the ring. Portrait Scale grows / shrinks the ring only.',
+    w: 236, h: 130, render: s => scene(s, 'overhang', 18) },
+  { title: 'C. Ring beside the frame', note: 'Ring as tall as the frame, left of it; the bars use the full 200 px. Level badge on the ring.',
+    w: 290, h: 120, render: s => scene(s, 'coin', 78) },
+  { title: 'Bar textures (Look: bar texture)', note: 'Left to right: Smooth (soft top light, darker bottom), Flat, Gloss (bright top half, glassy). Bottom row: same with green health (Class color off).',
+    w: 700, h: 170, render: s => ['smooth', 'flat', 'gloss'].map((t, i) =>
+      U.frame(s, Object.assign({}, base, { layout: 'overhang', x: 18 + i * 232, y: 14, tex: t })) +
+      U.frame(s, Object.assign({}, base, { layout: 'overhang', x: 18 + i * 232, y: 96, tex: t, hpColor: [0.16, 0.62, 0.22] }))).join('') },
+  { title: 'States (shown on B)', note: 'Low health, out of range / dead (texts only), a channel and an uninterruptible cast (shield on the icon), an interrupted cast.',
+    w: 700, h: 130, render: s =>
+      U.frame(s, Object.assign({}, base, { layout: 'overhang', x: 18, y: 14, hp: 0.18, hpText: '18.0K / 100K', pp: 0.9, ppText: '90%' })) +
+      U.cast(s, { x: 18, y: 88, w: 200, h: 18, v: 0.35, spell: 'Divine Toll', time: '1.6', state: 'channel' }) +
+      U.frame(s, Object.assign({}, base, { layout: 'overhang', x: 250, y: 14, hp: 0, hpText: '<span style="color:#aaa">Dead</span>', pp: 0, ppText: '' })) +
+      U.cast(s, { x: 250, y: 88, w: 200, h: 18, v: 0.5, spell: 'Hearthstone', time: '5.0', state: 'shield' }) +
+      U.frame(s, Object.assign({}, base, { layout: 'overhang', x: 482, y: 14, hp: 1, hpText: '100K / 100K', pp: 1, ppText: '100%' })) +
+      U.cast(s, { x: 482, y: 88, w: 200, h: 18, v: 0.4, spell: 'Holy Light', state: 'fail' }) },
+]});
+</script>
+</body></html>

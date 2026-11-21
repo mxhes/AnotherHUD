@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnotherHUD mockup 3: Party and Boss frames</title>
+<link rel="stylesheet" href="kit.css"></head>
+<body>
+<h1>Mockup 3: Party and Boss frames</h1>
+<p class="lead">Party: vertical, 5 members (player included, "Show Player" on), 6 px gap, class-colored health, role icon (tank / healer / damage, our own glyphs on a small round badge), leader crown, and an aura row (debuffs first, then my buffs on them) beside each frame on the side away from the portrait. States shown (a 6th frame added below the 5 to show Offline): out of range (faded to 55%), dead, offline, and a dispellable magic debuff (frame edge lit in the debuff color). Boss: up to 5 mirrored frames on the right with a thin cast bar each and my debuffs on the left.</p>
+<div id="skins"></div>
+<div id="cells"></div>
+
+<div class="pick" id="pick">
+  <b>Approved (2026-11-21):</b> A, party with small rings; Boss frames as shown.
+</div>
+
+<script src="kit.js"></script>
+<script src="units.js"></script>
+<script>
+const { C, css, sc } = K;
+// Role glyphs (own simple shapes): shield, cross, sword. 24 x 24 viewBox.
+const GLYPH = {
+  tank: '<path d="M12 2 L20 5 L19 13 Q17 19 12 22 Q7 19 5 13 L4 5 Z" fill="#4aa3ff" stroke="#0b1a2e" stroke-width="1.5"/><path d="M12 5 V19" stroke="#cfe6ff" stroke-width="1.5"/>',
+  healer: '<path d="M9 3 H15 V9 H21 V15 H15 V21 H9 V15 H3 V9 H9 Z" fill="#46d65a" stroke="#0b2410" stroke-width="1.5"/>',
+  dps: '<path d="M18 3 L21 3 L21 6 L10 17 L7 14 Z" fill="#e8e8ee" stroke="#2a1010" stroke-width="1.2"/><path d="M5 13 L11 19 M4 20 L7 17" stroke="#d24a3a" stroke-width="2.4" stroke-linecap="round"/>',
+};
+function role(skin, cx, cy, r, dia = 14) {
+  const ring = K.ring(skin, cx, cy, dia, { studs: false });
+  return `<i class="portrait" style="left:${cx - dia / 2}px;top:${cy - dia / 2}px;width:${dia}px;height:${dia}px;background:${css(C.panel)}"></i>${ring.html}` +
+    `<svg class="abs" style="left:${cx - dia * 0.36}px;top:${cy - dia * 0.36}px" width="${dia * 0.72}" height="${dia * 0.72}" viewBox="0 0 24 24">${GLYPH[r]}</svg>`;
+}
+function crown(x, y, s = 12) {
+  return `<svg class="abs" style="left:${x}px;top:${y}px" width="${s}" height="${s * 0.75}" viewBox="0 0 24 18"><path d="M2 16 L3 4 L8 9 L12 2 L16 9 L21 4 L22 16 Z" fill="${css(C.gold)}" stroke="#3a2600" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+const members = [
+  { name: 'Arthelis', cls: 'paladin', role: 'tank', hp: 0.84, lead: true, hue: 28,
+    auras: [{ kind: 'buff', hue: 50, time: '42' }] },
+  { name: 'Lunaria', cls: 'priest', role: 'healer', hp: 0.97, hue: 300, mana: 0.7,
+    auras: [{ kind: 'buff', hue: 120, time: '8' }, { kind: 'buff', hue: 190, time: '15' }] },
+  { name: 'Brakka', cls: 'warrior', role: 'dps', hp: 0.41, hue: 10, debuff: 'magic',
+    auras: [{ kind: 'magic', hue: 220, time: '6' }, { kind: 'buff', hue: 120, time: '3' }] },
+  { name: 'Ssylith', cls: 'mage', role: 'dps', hp: 0.66, hue: 200, far: true, auras: [] },
+  { name: 'Torvald', cls: 'hunter', role: 'dps', hp: 0, hue: 90, dead: true, auras: [] },
+];
+function party(skin, ox, oy, mode, w, h, gap) {
+  let out = '';
+  members.forEach((m, i) => {
+    const y = oy + i * (h + gap);
+    const hpText = m.dead ? '<span style="color:#bbb">Dead</span>' : Math.round(m.hp * 100) + '%';
+    const base = { x: ox, y, w, h, powerH: mode === 'ring' ? 5 : 4, name: m.name, hp: m.hp, hpText,
+      pp: m.dead ? 0 : (m.mana || 0.6), ppColor: m.mana ? K.POWER.mana : (m.role === 'tank' ? K.POWER.mana : K.POWER.rage),
+      hpColor: m.dead ? [0.35, 0.35, 0.35] : K.CLASS[m.cls], hue: m.hue, fs: 10,
+      layout: mode === 'ring' ? 'overhang' : 'none', ps: mode === 'ring' ? 0.92 : 1, alpha: 0.92 };
+    let f = U.frame(skin, base);
+    let extra = '';
+    if (m.debuff) {
+      const col = U.DEBUFF[m.debuff];
+      extra += `<i class="abs" style="left:${ox - 1}px;top:${y - 1}px;width:${w + 2}px;height:${h + 2}px;border-radius:${skin === 'classic' ? 6 : 1}px;box-shadow:0 0 0 2px ${css(col)}, 0 0 8px 2px ${css(col, .7)}"></i>`;
+    }
+    if (mode === 'ring') {
+      const dia = Math.round(h * 1.25 * 0.92), cx = ox + Math.round(dia * 0.32), cy = y + h / 2;
+      extra += role(skin, cx - dia * 0.33, cy + dia * 0.33, m.role, 15);
+      if (m.lead) extra += crown(cx - 6, cy - dia / 2 - 7);
+    } else {
+      extra += role(skin, ox, y + h / 2, m.role, 14);
+      if (m.lead) extra += crown(ox + 4, y - 7);
+    }
+    extra += U.auras(skin, ox + w + 6, y + (h - 20) / 2, 20, 2, m.auras);
+    const fade = m.far ? 'opacity:.55;' : '';
+    out += `<div class="abs" style="${fade}left:0;top:0">${f}${extra}</div>`;
+  });
+  return out;
+}
+function offline(skin, ox, oy, mode, w, h) {
+  return U.frame(skin, { x: ox, y: oy, w, h, powerH: mode === 'ring' ? 5 : 4, name: 'Quill', hp: 1, hpText: '<span style="color:#bbb">Offline</span>',
+    pp: 0, hpColor: [0.3, 0.3, 0.3], hue: 0, fs: 10, layout: mode === 'ring' ? 'overhang' : 'none', ps: 0.92 });
+}
+// Boss: mirrored, ring tinted gold (bosses are elite), thin cast bar, my debuffs left.
+function bosses(skin, ox, oy, n) {
+  let out = '';
+  const names = ['Vyrastra', 'Ironmaw', 'The Hollow King'];
+  for (let i = 0; i < n; i++) {
+    const y = oy + i * 74;
+    out += U.frame(skin, { x: ox, y, w: 180, h: 42, powerH: 6, layout: 'overhang', mirror: true, ringCol: C.gold,
+      name: names[i], hp: [0.62, 0.88, 0.31][i], hpText: ['62%', '88%', '31%'][i], pp: 0.5, ppColor: K.POWER.energy,
+      hpColor: K.REACT.hostile, hue: [140, 20, 260][i], fs: 10, badge: 14, level: '??' });
+    if (i !== 1) out += U.cast(skin, { x: ox, y: y + 46, w: 180, h: 16, v: [0.55, 0, 0.8][i], spell: ['Searing Breath', '', 'Soul Rend'][i], time: ['1.4', '', '0.4'][i], state: i === 2 ? 'shield' : 'cast' });
+    out += U.auras(skin, ox - 4, y + 10, 22, 2, [{ kind: 'none', hue: 30, time: '9' }, { kind: 'none', hue: 0, time: '14', count: 2 }].slice(0, 2 - (i % 2)), true);
+  }
+  return out;
+}
+K.page({ zoom: 1.5, variants: [
+  { title: 'A. Party with small rings (approved)', note: 'Frame 160 x 40, power 5. Ring 92% of the Player rule (46 px), role icon on the ring\'s lower left, leader crown on top of the ring. Auras 20 px to the right.',
+    w: 300, h: 320, render: s => party(s, 22, 18, 'ring', 160, 40, 8) + offline(s, 22, 268, 'ring', 160, 40) },
+  { title: 'B. Party without portraits', note: 'Frame 150 x 34, power 4. Role icon on the left edge, crown above the top-left corner, level hidden. Denser, more bar.',
+    w: 260, h: 260, render: s => party(s, 16, 14, 'bars', 150, 34, 6) + offline(s, 16, 214, 'bars', 150, 34) },
+  { title: 'Boss frames', note: 'Boss 180 x 42, power 6, mirrored like the Target, gold (elite) ring, "??" badge. Cast bar 180 x 16 under each (here: a cast, none, an uninterruptible one). My debuffs on the left, 22 px. 74 px apart.',
+    w: 300, h: 230, render: s => bosses(s, 90, 16, 3) },
+]});
+</script>
+</body></html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnotherHUD mockup 5: Class resources and totem bar</title>
+<link rel="stylesheet" href="kit.css"></head>
+<body>
+<h1>Mockup 5: Class resources and totem bar</h1>
+<p class="lead">The class resource bar is its own Edit Mode frame, attached under the Player frame by default (200 px wide). Each resource has its own color; partly filled points (runes recharging, soul shard fragments, essence regenerating) fill up dimmed with the time on them. Totem bar: one slot per totem / guardian, using the approved action button look, the time left on the icon and a thin bar under it that drains.</p>
+<div id="skins"></div>
+<div id="cells"></div>
+
+<div class="pick" id="pick">
+  <b>Approved (2026-11-21):</b> B, segmented bar (the player's choice over my gem pick); totem bar as shown.
+</div>
+
+<script src="kit.js"></script>
+<script src="units.js"></script>
+<script>
+const { C, css, sc, mix } = K;
+const RES = {
+  combo: { label: 'Combo points (5 of 7)', col: [0.95, 0.35, 0.2], max: 7, v: [1, 1, 1, 1, 1, 0, 0] },
+  holy: { label: 'Holy power (3 of 5)', col: [1, 0.82, 0.25], max: 5, v: [1, 1, 1, 0, 0] },
+  runes: { label: 'Runes (4 ready, 2 recharging)', col: [0.85, 0.2, 0.25], max: 6, v: [1, 1, 1, 1, 0.6, 0.2], t: [0, 0, 0, 0, '3', '8'] },
+  shards: { label: 'Soul shards (3.4 of 5)', col: [0.62, 0.35, 0.95], max: 5, v: [1, 1, 1, 0.4, 0] },
+  chi: { label: 'Chi (4 of 6)', col: [0.45, 0.95, 0.75], max: 6, v: [1, 1, 1, 1, 0, 0] },
+  arcane: { label: 'Arcane charges (2 of 4)', col: [0.45, 0.55, 1], max: 4, v: [1, 1, 0, 0] },
+  essence: { label: 'Essence (3 of 5, 1 regenerating)', col: [0.35, 0.85, 0.8], max: 5, v: [1, 1, 1, 0.55, 0], t: [0, 0, 0, '2', 0] },
+};
+// B: segmented bar.
+function segments(skin, x, y, w, h, r) {
+  const e = K.edgeWidth(K.SKINS[skin].border);
+  let html = K.panel(skin, { w, h, x: 0, y: 0, studs: false });
+  const iw = w - 2 * e - 2, n = r.max, sw = (iw - (n - 1)) / n;
+  r.v.forEach((v, i) => {
+    const sx = e + 1 + i * (sw + 1);
+    const partial = v > 0 && v < 1;
+    const col = partial ? sc(r.col, 0.55) : r.col;
+    html += K.bar(sx, e + 1, sw, h - 2 * e - 2, v, col, 'smooth');
+    if (i < n - 1) html += K.rule(skin, sx + sw, e + 1, h - 2 * e - 2, true);
+    if (r.t && r.t[i]) html += K.text(sx + sw / 2, (h - 11) / 2, r.t[i], { size: 9, align: 'center' });
+  });
+  return `<div class="unit" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${html}</div>`;
+}
+// A: round gems with the skin ring.
+function gems(skin, x, y, w, dia, r) {
+  const n = r.max, gap = Math.min(10, (w - n * dia) / Math.max(1, n - 1));
+  const total = n * dia + (n - 1) * gap, ox = (w - total) / 2;
+  let html = '';
+  r.v.forEach((v, i) => {
+    const cx = ox + i * (dia + gap) + dia / 2, cy = dia / 2;
+    const ring = K.ring(skin, cx, cy, dia, { studs: false });
+    const ins = dia - 2 * ring.width;
+    html += `<i class="portrait" style="left:${cx - dia / 2}px;top:0;width:${dia}px;height:${dia}px;background:${css(sc(r.col, 0.15))}"></i>`;
+    if (v > 0) {
+      const col = v < 1 ? sc(r.col, 0.55) : r.col;
+      html += `<i class="portrait" style="left:${cx - ins / 2}px;top:${cy - ins / 2}px;width:${ins}px;height:${ins}px;background:radial-gradient(circle at 38% 32%, ${css(mix(col, [1, 1, 1], .6))} 0 12%, ${css(col)} 45%, ${css(sc(col, .45))} 100%);clip-path:inset(${Math.round((1 - v) * 100)}% 0 0 0)"></i>`;
+    }
+    html += ring.html;
+    if (r.t && r.t[i]) html += K.text(cx, cy - 6, r.t[i], { size: 9, align: 'center' });
+  });
+  return `<div class="unit" style="left:${x}px;top:${y}px;width:${w}px;height:${dia}px">${html}</div>`;
+}
+function list(skin, kind) {
+  return Object.keys(RES).map((k, i) => {
+    const y = 10 + i * 34;
+    const lab = `<span class="txt" style="left:226px;top:${y + 2}px;font-size:10px;color:#cbbfa8;text-shadow:none;font-family:Segoe UI">${RES[k].label}</span>`;
+    return (kind === 'seg' ? segments(skin, 16, y - 2, 200, 20, RES[k]) : gems(skin, 16, y - 2, 200, 20, RES[k])) + lab;
+  }).join('');
+}
+// Totem bar: approved button look (skin border), time on the icon, drain bar under.
+function totem(skin, x, y, s, hue, time, v) {
+  const e = K.edgeWidth(K.SKINS[skin].border) - (K.SKINS[skin].border === 'round' ? 1 : 0);
+  const r = K.SKINS[skin].border === 'round' ? 4 : 0;
+  const edges = { round: [0.35, 1, 1], thin: [0.2, 1], bevel: [0.2, 1.7, 1, 1, 0.2], gilded: [0.2, 1.7, 0.2, 0.2, 1.7, 0.2] }[K.SKINS[skin].border];
+  const shadow = edges.map((k, i) => `inset 0 0 0 ${i + 1}px ${css(sc(C.border, k))}`).join(', ');
+  let html = `<div class="abs" style="left:0;top:0;width:${s}px;height:${s}px;border-radius:${r}px;background:${css(C.panel)};box-shadow:${shadow}"></div>`;
+  html += `<i class="icon" style="left:${e}px;top:${e}px;width:${s - 2 * e}px;height:${s - 2 * e}px;background:radial-gradient(circle at 45% 40%, hsl(${hue},90%,80%) 0 8%, hsl(${hue},75%,50%) 35%, hsl(${hue + 20},65%,18%) 100%)"></i>`;
+  html += `<span class="txt" style="left:0;width:${s}px;text-align:center;bottom:${e - 1}px;font-size:11px;color:${css(C.gold)}">${time}</span>`;
+  html += K.bar(0, s + 2, s, 3, v, C.goldLine, 'flat');
+  return `<div class="unit" style="left:${x}px;top:${y}px;width:${s}px;height:${s + 5}px">${html}</div>`;
+}
+function totems(skin, x, y) {
+  return [[20, '1:42', 0.85], [200, '24', 0.4], [100, '8', 0.13], [300, '', 0]].map((t, i) =>
+    t[1] ? totem(skin, x + i * 36, y, 32, t[0], t[1], t[2]) :
+      `<div class="unit" style="left:${x + i * 36}px;top:${y}px;width:32px;height:32px"><div class="abs" style="left:0;top:0;width:32px;height:32px;background:${css(C.panel, .5)};box-shadow:inset 0 0 0 1px ${css(sc(C.border, .5), .6)}"></div></div>`).join('');
+}
+const player = { w: 200, h: 60, powerH: 15, layout: 'overhang', name: 'Arthelis', level: 80, hp: 0.72,
+  hpText: '72.4K / 100K', pp: 0.55, ppText: '55%', hpColor: K.CLASS.paladin, hue: 28 };
+K.page({ zoom: 1.5, variants: [
+  { title: 'A. Round gems', note: 'One 20 px gem per point in the skin ring (like the portrait), up to 10 px apart, centered under the frame. Partial points fill from the bottom, dimmed.',
+    w: 400, h: 250, render: s => list(s, 'gem') },
+  { title: 'B. Segmented bar (approved)', note: 'One 200 x 20 panel in the skin border, split into equal segments by the skin\'s Lines pick. Partial points fill left to right, dimmed, with the time on runes / essence.',
+    w: 400, h: 250, render: s => list(s, 'seg') },
+  { title: 'In place under the Player frame, with the totem bar', note: 'Resource bar under the health / power column (it starts right of the ring, 136 px wide), 4 px under the frame; the cast bar moves down. Left: gems, right: segments. Totem bar: four 32 px slots, 4 px apart, empty slots faint; time left in gold on the icon, a 3 px gold bar under each that drains.',
+    w: 640, h: 160, render: s => [['gem', 22], ['seg', 262]].map(([k, x]) => U.frame(s, Object.assign({}, player, { x, y: 12 })) +
+      (k === 'gem' ? gems(s, x + 64, 76, 136, 18, RES.holy) : segments(s, x + 64, 76, 136, 18, RES.holy)) +
+      U.cast(s, { x, y: 102, w: 200, h: 18, v: 0.62, spell: 'Flash of Light', time: '0.9' })).join('') +
+      totems(s, 490, 40) },
+]});
+</script>
+</body></html>

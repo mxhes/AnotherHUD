@@ -80,3 +80,25 @@ Shared rules (all mockups):
 - Boss: 180 x 42, power 6, mirrored like the Target, gold (elite) ring,
   14 px "??" level badge, 74 px apart, cast bar 180 x 16 under each (icon
   left), my debuffs 22 px to the left of the frame growing leftward.
+
+## 4. Action buttons and proc glow (`4-buttons.html`)
+
+- Edge variant: **A, skin border**: the frames' border lines around the icon
+  (Classic soft round 3 px with 4 px corner radius, Forge bevel 5 px, Slate
+  2 px, Gilded 6 px plus 7 px corner studs), `panelTint` behind. Icon cropped
+  to fill the inside.
+- Buttons pick shading inside the edge: Bronze = 1 px dark line
+  (`panelBorder` x 0.3) plus a faint warm top light; Raised = 1 px light
+  top / left (`panelBorder` x 1.9) and dark bottom / right (x 0.25); Flat =
+  nothing.
+- States: hover = edge lines in `goldLine` plus a 16% warm overlay; pressed =
+  icon at 70% brightness; active / toggled = 2 px `gold` inner edge with a
+  soft gold inner glow; empty slot = panel at 75% with a dark inner shadow.
+- Tints: out of range red (0.8, 0.1, 0.1) multiplied on the icon and the
+  hotkey in red; no mana blue (0.5, 0.5, 1); unusable grey (desaturated,
+  ~55% brightness). Cooldown: 72% black swipe, time centered in `gold` 15 pt.
+- Texts (at 40 px): hotkey top right 10 pt white; count / charges bottom
+  right 12 pt; macro name bottom center 9 pt cream (0.93, 0.87, 0.72).
+- Proc glow: **1, Gold pulse**: a halo 5 px outside the button (2 px
+  `goldLine` line, 10 px outer glow at 75%, 8 px inner glow at 60%) that
+  breathes between 55% and 100% opacity and 100-106% size, 1.1 s per cycle.

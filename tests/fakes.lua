@@ -52,6 +52,13 @@ function methods.GetScript(self, ev) return self._scripts[ev] end
 function methods.RegisterEvent(self, ev) self._events[ev] = true end
 function methods.UnregisterEvent(self, ev) self._events[ev] = nil end
 function methods.UnregisterAllEvents(self) self._events = {} end
+-- Geometry: a test places a frame by setting _left / _bottom / _width /
+-- _height (UIParent units; SetPoint does not move it). _scale defaults to 1.
+function methods.GetLeft(self) return self._left end
+function methods.GetBottom(self) return self._bottom end
+function methods.GetWidth(self) return self._width end
+function methods.GetHeight(self) return self._height end
+function methods.GetScale(self) return self._scale or 1 end
 
 function fakes.frame(name)
   local f = { calls = {}, _scripts = {}, _events = {}, _shown = true, _name = name }
@@ -68,7 +75,8 @@ end
 local GLOBALS = { "CreateFrame", "UIParent", "InCombatLockdown", "hooksecurefunc",
   "C_Timer", "issecretvalue" }
 
--- Installs the client globals into _G. C_Timer.After runs its callback
+-- Installs the client globals into _G (UIParent is opts.width x opts.height,
+-- 1920 x 1080 by default). C_Timer.After runs its callback
 -- immediately (no queue: tests assert right after the call). Returns a handle:
 --   fire(event, ...)  calls OnEvent of every frame that registered `event`
 --   setCombat(bool)   changes what InCombatLockdown answers
@@ -88,6 +96,8 @@ function fakes.client(opts)
     return f
   end
   _G.UIParent = fakes.frame("UIParent")
+  _G.UIParent._left, _G.UIParent._bottom = 0, 0
+  _G.UIParent._width, _G.UIParent._height = opts.width or 1920, opts.height or 1080
   _G.InCombatLockdown = function() return inCombat end
   _G.issecretvalue = fakes.isSecret
   _G.C_Timer = { After = function(_, fn) fn() end }

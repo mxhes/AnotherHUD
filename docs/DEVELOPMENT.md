@@ -27,6 +27,7 @@ filled in as the code lands. The design and its reasons are in
 | `Core/DB.lua`, `Core/Options.lua`, `Core/Profiles.lua` | saved state, settings, profiles |
 | `Core/Modules.lua` | module registry |
 | `Core/Combat.lua` | combat-lockdown queue |
+| `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
 | `EditMode/Snap.lua` | snapping to grid, screen and frames |
@@ -38,7 +39,7 @@ filled in as the code lands. The design and its reasons are in
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
-| `Boot.lua` | last: `Core.init` |
+| `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
 
 ## Extending: modules
 
@@ -63,8 +64,26 @@ line; nothing else names it.
 
 ## How things work
 
-*(Filled in as built.)* Planned topics: Edit Mode flow (enter / exit / layout
-change callbacks), secret values and how texts are formatted, hiding
+**Edit Mode.** `Boot.lua` calls `Core.init` on the addon's `ADDON_LOADED`:
+`DB.init` on the saved variables, then `EditMode/Glue.registerAll`. For every
+enabled module it creates the frame if needed (`spec.create`, queued with
+`Combat.after("create:" .. id)`), then hands it to LibEditMode: `AddFrame`
+with our move callback and `spec.defaultPosition`, `AddFrameSettings` with
+the rows `EditMode/Panel.build` makes from `spec.settings` (one Divider row
+per section, a disabled line when the library has no Divider type; every
+setter goes through `Options.set`), and three buttons (Settings, Reset
+Settings, Reset To Default Position). Positions live in
+`db.positions[layoutName][id] = { point, x, y }`; the library's `layout`
+callback places every frame for the new layout, or at its default position
+when that layout has none saved. The move callback snaps our own frames
+(`EditMode/Snap.lua`, 8 px, to the screen edges and centre lines and to the
+other AnotherHUD frames; no grid snap yet, see `docs/CHECKLIST.md`) and
+saves; the default position (the library's own Reset Position) is saved
+unsnapped. Every reposition goes through `Combat.after("pos:" .. id)`.
+Without LibEditMode the frames go to their positions in the last layout
+seen (`db.lastLayout`) or their defaults, and nothing else happens.
+
+*(Filled in as built.)* Planned topics: secret values and how texts are formatted, hiding
 Blizzard frames, party header attributes, sample data in Edit Mode, skinning
 Blizzard action buttons.
 

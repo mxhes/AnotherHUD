@@ -25,4 +25,5 @@ globals = {
 -- WoW API the addon reads.
 read_globals = {
   "InCombatLockdown", "CreateFrame", "geterrorhandler",
+  "LibStub", "UIParent", "CreateColor", "EditModeManagerFrame",
 }

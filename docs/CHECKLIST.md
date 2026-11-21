@@ -8,7 +8,15 @@ and remove both once it is confirmed.
 
 ## Open checks
 
-Nothing open yet.
+- Edit Mode snapping (`EditMode/Glue.lua`): `EditModeManagerFrame:IsSnapEnabled()`
+  exists on Forever and turning Blizzard's Snap off stops our snapping.
+- Edit Mode grid: find a readable API for Blizzard's grid spacing; until
+  then our frames don't snap to the grid (`opts.grid = nil` in `EditMode/Glue.lua`).
+- Edit Mode panel: the section titles show as Divider rows with the packaged
+  LibEditMode (else the disabled-checkbox fallback shows), and our three
+  buttons don't clash with the library's own reset buttons.
+- Edit Mode: nudging a frame with the arrow keys near another frame or a
+  screen line snaps it back (our snap runs on every move callback).
 
 ## Release steps
 

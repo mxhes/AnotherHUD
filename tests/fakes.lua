@@ -130,4 +130,16 @@ function fakes.client(opts)
   return handle
 end
 
+-- A LibStub shaped like the real one: a table (not a function) made callable
+-- through __call, with GetLibrary(name, silent). `libs` maps name -> library.
+function fakes.libstub(libs)
+  local stub = { libs = libs or {}, minors = {} }
+  function stub:GetLibrary(name, silent)
+    local lib = self.libs[name]
+    if not lib and not silent then error("Cannot find a library instance of " .. tostring(name), 2) end
+    return lib, self.minors[name]
+  end
+  return setmetatable(stub, { __call = stub.GetLibrary })
+end
+
 return fakes

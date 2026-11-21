@@ -28,10 +28,13 @@ local byFrame = {}    -- frame -> spec
 local lem             -- the library once registerAll found it
 local layoutHooked = false
 
--- LibEditMode or nil (no LibStub, or the library is missing).
+-- LibEditMode or nil (no LibStub, or the library is missing). The real LibStub
+-- is a table made callable by a metatable, not a function: look it up through
+-- GetLibrary.
 function Glue.lib()
-  if type(LibStub) ~= "function" then return nil end
-  return LibStub("LibEditMode", true)
+  local stub = LibStub
+  if type(stub) ~= "table" or type(stub.GetLibrary) ~= "function" then return nil end
+  return (stub:GetLibrary("LibEditMode", true))
 end
 
 local function activeLayout()

@@ -38,13 +38,13 @@ function h.near(a, b, eps)
 end
 
 -- Loads each file into one shared ns table. Paths resolve under AnotherHUD/
--- unless they start with "tests/". Locale.lua (ns.L, needed by every file
+-- unless they start with "tests/". Core/Locale.lua (ns.L, needed by every file
 -- with texts) is loaded first unless the list names it.
 function h.load(files)
   local ns = {}
   local list, hasLocale = {}, false
-  for _, file in ipairs(files) do if file == "Locale.lua" then hasLocale = true end end
-  if not hasLocale then list[1] = "Locale.lua" end
+  for _, file in ipairs(files) do if file == "Core/Locale.lua" then hasLocale = true end end
+  if not hasLocale then list[1] = "Core/Locale.lua" end
   for _, file in ipairs(files) do list[#list + 1] = file end
   for _, file in ipairs(list) do
     local path = file

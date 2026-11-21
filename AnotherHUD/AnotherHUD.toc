@@ -9,4 +9,9 @@
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibEditMode
 
 embeds.xml
+Core/Util.lua
+Core/Locale.lua
+Locales/deDE.lua
+Core/Theme.lua
+Core/DB.lua
 Boot.lua

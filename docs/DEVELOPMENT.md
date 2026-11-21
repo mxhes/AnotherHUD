@@ -37,6 +37,7 @@ filled in as the code lands. The design and its reasons are in
 | `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
+| `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
 | `Boot.lua` | last: `Core.init` |
 
 ## Extending: modules

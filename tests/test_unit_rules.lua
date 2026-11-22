@@ -147,6 +147,8 @@ h.test("power and cast colors", function()
     h.near(r, 1); h.near(g, 0); h.near(b, 0)
     r, g, b = UnitColor.power("MANA")
     h.near(r, 0); h.near(b, 0.87)
+    r, g, b = UnitColor.power(fakes.secret("RAGE"))
+    h.near(r, 0); h.near(b, 0.87)
   end, { PowerBarColor = { RAGE = { r = 1, g = 0, b = 0 } } })
 end)
 

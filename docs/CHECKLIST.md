@@ -20,6 +20,15 @@ and remove both once it is confirmed.
   line still snaps.
 - Edit Mode layouts: rename a layout with a moved test frame, the frame stays
   put under the new name; delete a layout, no Lua error.
+- Unit colors (`Core/UnitColor.lua`): `C_ClassColor.GetClassColor(classFile)`
+  returns a color with `GetRGB` on Forever; `PowerBarColor[token]` holds
+  `r, g, b` for every power token.
+- Unit frame parts (`Units/Parts/`): the panel's `BackdropTemplate` child
+  frame shows the Round edge and fill; a `MaskTexture` with the Disc file
+  (`CLAMPTOBLACKADDITIVE`) clips the portrait to a circle;
+  `SetPortraitTexture(tex, unit, true)` draws for units with secret identity
+  (instances) without an error; `SetFormattedText` takes secret health,
+  power and level arguments.
 
 ### Edit Mode spike (Plan 1, Task 7)
 

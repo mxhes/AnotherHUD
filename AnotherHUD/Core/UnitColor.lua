@@ -21,6 +21,8 @@ function UnitColor.health(info)
   if isPlayer == true then
     local class = plain(info.class)
     if info.classColor and type(class) == "string" then
+      -- UNVERIFIED (check in client): C_ClassColor.GetClassColor(classFile)
+      -- returns a ColorMixin on Forever.
       local cc = _G.C_ClassColor and _G.C_ClassColor.GetClassColor(class)
       if cc then
         local r, g, b = cc:GetRGB()
@@ -51,9 +53,12 @@ function UnitColor.ring(classification)
 end
 
 -- Power token ("MANA", "RAGE", ...) -> r, g, b; mana blue when unknown.
+-- UNVERIFIED (check in client): PowerBarColor[token] holds { r, g, b } on
+-- Forever. A secret token counts as unknown.
 function UnitColor.power(token)
+  token = plain(token)
   local t = _G.PowerBarColor
-  local c = type(t) == "table" and t[token]
+  local c = token ~= nil and type(t) == "table" and t[token]
   if c then return c.r or c[1], c.g or c[2], c.b or c[3] end
   return MANA[1], MANA[2], MANA[3]
 end

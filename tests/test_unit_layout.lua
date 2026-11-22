@@ -8,6 +8,8 @@ end
 h.test("player 200x60 classic", function()
   local UL = load().UnitLayout
   local L = UL.frame({ w = 200, h = 60, powerH = 15, portraitScale = 100, mirror = false, edge = 4, badge = 18 })
+  h.eq(L.w, 200)
+  h.eq(L.h, 60)
   h.eq(L.ring.dia, 75)
   h.eq(L.ring.cx, 24)
   h.eq(L.ring.cy, 30)

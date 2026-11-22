@@ -70,6 +70,7 @@ PowerShell; nothing here is done by the build.
 | `EditMode/SystemSettings.lua` | spike: one checkbox in Action Bar 1's Edit Mode panel |
 | `Spike/SpikeModule.lua` | spike: "AnotherHUD Test" frame; deleted when Plan 3's Player module lands |
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
+| `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Base.lua` | shared unit frame parts (health, power, portrait, texts, cast bar, auras, icons) |
 | `Units/Player.lua` ... `Units/Boss.lua` | one module per unit |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |

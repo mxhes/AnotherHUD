@@ -28,6 +28,8 @@ Theme.textures = {
   disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
   spark = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Spark",
   shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
+  -- A plain white tile for 1 px lines (unit frame edges and dividers).
+  line = "Interface\\Buttons\\WHITE8X8",
 }
 
 -- Bar fill textures. The files are grey-scale vertical gradients normalized to
@@ -95,6 +97,8 @@ Theme.unitColors = {
   channel = { 0.35, 0.75, 0.35, 1 },
   interrupted = { 0.85, 0.20, 0.15, 1 },
   uninterruptible = { 0.60, 0.60, 0.62, 1 },
+  -- The dark 1 px halo behind the portrait ring.
+  ringShadow = { 0, 0, 0, 0.6 },
   debuff = {
     Magic = { 0.20, 0.60, 1.00, 1 },
     Curse = { 0.60, 0.00, 1.00, 1 },
@@ -128,8 +132,13 @@ Theme.sizes = {
   -- Unit frames.
   unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
     castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
-    interruptHold = 0.6 },
+    interruptHold = 0.6, badgeFont = 10 },
 }
+
+-- The portrait ring's line shades (outside in) for the Round border, which
+-- has no edge lines: the mockup's soft tooltip-like edge. The other borders
+-- use the shades of Theme.edgeRects.
+Theme.ringRoundShades = { 0.35, 1, 1, 0.45 }
 
 -- Pure. The color to give a status bar with texture `textureName`: the color
 -- times the texture's tint, each channel clamped to 1. An unknown name is

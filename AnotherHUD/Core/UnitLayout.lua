@@ -13,13 +13,14 @@ function UnitLayout.edgeWidth(border)
 end
 
 -- o = { w, h, powerH, portraitScale (percent), mirror, edge, badge (px or nil), fontSize }
+-- L.w, L.h repeat the frame size (parts anchor right-side points to it).
 function UnitLayout.frame(o)
   local w, h, edge = o.w, o.h, o.edge
   local powerH = o.powerH or 0
   local ps = (o.portraitScale or 100) / 100
   local dia = round(h * 1.25 * ps)
   local cx = round(dia * 0.32)
-  local L = {}
+  local L = { w = w, h = h }
 
   local bottom = h - edge - 1
   local bars

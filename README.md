@@ -6,7 +6,7 @@ AnotherHUD replaces the default unit frames and action bars of WoW Forever with 
 
 ## Unit frames
 
-AnotherHUD draws five unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box under the Edit Mode window; turning one back to Blizzard's needs a /reload.
+AnotherHUD draws five unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box under the Edit Mode window: the frame goes away at once and stays away until you turn it back on. Getting Blizzard's frame back in its place needs a /reload.
 
 | Frame | Shows | Replaces |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ AnotherHUD draws five unit frames and hides Blizzard's in their place. Turn sing
 
 Move every frame in Edit Mode: with Edit Mode open each one shows sample data, so you can place it without a target. Click a frame to open its settings panel. The sections are:
 
-- **Size**: width and height.
+- **Size**: width and height, portrait scale and power bar height.
 - **Text**: what the name, health and power texts show, and the text size.
 - **Look**: skin, class colors and bar texture.
 - **Behaviour**: whether the frame also shows in a vehicle.
@@ -28,4 +28,8 @@ Move every frame in Edit Mode: with Edit Mode open each one shows sample data, s
 
 Not every frame has every section; a section only appears where it makes sense. The Player's cast bar can be detached ("Detach cast bar" in the Cast Bar section) and then moves as its own frame, "Player Cast Bar". Left off, it hangs under the Player frame.
 
-Target, Target of Target and Focus only show while you have that unit; right click opens the unit menu, and hovering shows the tooltip.
+Target, Target of Target and Focus only show while you have that unit, and Pet only while you have a pet; right click opens the unit menu, and hovering shows the tooltip.
+
+## Known gaps
+
+- Class resources (combo points, holy power, runes, soul shards, chi, essence, arcane charges), totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. They come back with AnotherHUD's own resource bar.

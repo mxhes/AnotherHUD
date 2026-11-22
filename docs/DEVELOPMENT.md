@@ -169,8 +169,9 @@ results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
 small box on `UIParent`, anchored under the window, with one checkbox per
 module (`Checklist.entries()`: define order, `Modules.isEnabled`); the box
 shows (re-reading the checks) and hides with the window. A click runs
-`Checklist.toggle`: `Modules.setEnabled`, then shows / hides the frame
-(`Combat.after("show:" .. id)`) or, for a module that was off at login,
+`Checklist.toggle`: `Modules.setEnabled`, then the module's `apply` (which
+must honor `Modules.isEnabled`; a module without `apply` is shown / hidden
+with `Combat.after("show:" .. id)`) or, for a module that was off at login,
 `Glue.registerAll` creates it and prints "Reopen Edit Mode to move it" (the
 library makes it selectable from the next open); a module that hides
 Blizzard frames prints a `/reload` hint.
@@ -194,11 +195,14 @@ unit's change event (`PLAYER_TARGET_CHANGED`, `PLAYER_FOCUS_CHANGED`,
 and `PLAYER_REGEN_DISABLED` / `_ENABLED` for fading. `targettarget` gets no
 unit events: it refreshes every 0.2 s from `OnUpdate` while shown (values
 only while `UnitGUID` stays the same; a new or secret GUID and
-`UNIT_TARGET` update everything). Health /
+`UNIT_TARGET` / `PLAYER_TARGET_CHANGED` update everything). Every unit
+frame also runs a full `Base.update` from `HookScript("OnShow")`. Health /
 power events update only values and texts; the others (and the change
 events) also colors, portrait and level. `Base.update` passes every client
 value through untouched (`UnitHealthPercent` / `UnitPowerPercent` with
-`CurveConstants.ScaleTo100` for the percent texts); only the dead /
+`CurveConstants.ScaleTo100` for the percent texts; without that API the
+text mode falls back, "Percent" to "None" and "Value + Percent" to
+"Value"); only the dead /
 connected flags, the power token, reaction and classification are read, and
 only when plain. `Base.apply(spec)` reads the options and, in one
 `Combat.after("unit:" .. id)`, sizes the frame, lays out the parts
@@ -211,7 +215,12 @@ or `L.below` under the frame, and sets the state driver
 `onEditMode`) the driver goes, the frame shows a plain sample (health 72%,
 power 55%, the unit's label or the player's name, the cast bar and aura
 samples) at full opacity; on close the driver comes back and `Base.update`
-runs (and a running cast is picked up). `Base.hideBlizzard(names)` hides
+runs (and a running cast is picked up). A module turned off
+(`Modules.isEnabled` false) makes `Base.apply` and `Base.editMode` only
+drop the sample, unregister the driver and hide the frame (queued under
+`unit:<id>` and `unit:<id>:edit`); turned on again while Edit Mode is
+open, `Base.apply` starts the sample. The detached cast bar holder is off
+while the Player is off. `Base.hideBlizzard(names)` hides
 each Blizzard frame once it exists, out of combat: `UnregisterAllEvents` on
 it and its child bars (`healthbar`, `manabar`, `spellbar`, `totFrame`,
 `powerBarAlt`), reparent to one hidden frame of ours (made on first use),

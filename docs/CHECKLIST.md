@@ -42,7 +42,16 @@ Frames and Edit Mode:
 - Right click (`*type2 = "togglemenu"`) opens the unit menu, also with the
   gamepad UI; the tooltip shows on hover and another addon's tooltip is not
   hidden on leave (`GameTooltip:IsOwned`).
-- Target of Target follows its unit within 0.2 s.
+- Target of Target follows its unit within 0.2 s and shows the new unit's
+  name right on a target change (`PLAYER_TARGET_CHANGED`, `OnShow` update).
+- A frame turned off in the AnotherHUD box hides at once, stays hidden after
+  leaving and reopening Edit Mode and on unit changes, and comes back (with
+  its values, or its sample in Edit Mode) when turned on; Player off also
+  hides a detached cast bar.
+- Expected, not a bug: with the Player frame on, the class resource bars
+  (combo points, holy power, runes, shards, chi, essence, arcane charges),
+  the totem bar and the alternate power bar are gone with `PlayerFrame`
+  until Plan 6.
 - The state driver (`[petbattle] hide; [vehicleui] hide; [@unit,exists] show;
   hide`) hides the frames in pet battles and, with Show in vehicle off, in
   vehicles.
@@ -58,6 +67,8 @@ Colors, bars and texts:
 - `UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)` and
   `UnitPowerPercent(unit, type, false, CurveConstants.ScaleTo100)` give the
   percent texts 0-100 (`Units/Base.lua`).
+- `AbbreviateNumbers` accepts secret health / power values (Player health
+  text 'Value', `Units/Base.lua`).
 
 Portrait ring:
 
@@ -91,6 +102,8 @@ Auras (`Units/Parts/Auras.lua`):
 - `Blizzard_AuraContainer` loads and
   `CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")`
   works when created at login.
+- Auras show after /reload in combat and after toggling a frame on
+  (containers made after login may be refused).
 - The `HARMFUL|!PLAYER` / `HELPFUL|!PLAYER` filters show only other players'
   / NPCs' auras.
 - `SetIcon`, `SetDurationCooldown`, `SetApplicationCount`, `SetDurationText`

@@ -8,7 +8,7 @@ ns.Units.defineGroup({
   units = { "player", "party1", "party2", "party3", "party4" },
   visibility = ns.GroupLayout.partyVisibility,
   auras = true, auraMode = "line", auraSide = "right",
-  range = true, role = true, dispel = true, roles = true,
+  range = true, role = true, dispel = true, roles = true, roster = true,
   samples = {
     { name = "Arthelis", class = "PALADIN", role = "TANK", leader = true, healthPct = 84 },
     { name = "Lunaria", class = "PRIEST", role = "HEALER", healthPct = 97 },
@@ -21,5 +21,6 @@ ns.Units.defineGroup({
   defaults = { width = 160, height = 40, portraitScale = 92, powerHeight = 5, fontSize = 10,
     healthText = "Percent", powerText = "None", auraSize = 20 },
   blizzard = { "PartyFrame", "CompactPartyFrame" },
+  blizzardHooks = { "CompactPartyFrame_Generate" },
   defaultPosition = { point = "LEFT", x = 40, y = 120 },
 })

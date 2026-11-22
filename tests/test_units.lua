@@ -234,6 +234,7 @@ h.test("party hides both Blizzard party frames", function()
     for _, name in ipairs({ "PartyFrame", "CompactPartyFrame" }) do
       h.eq(blizzard[name]:IsShown(), false, name .. " hidden")
     end
+    h.eq(ns.Modules.get("party").members[2]._events.GROUP_ROSTER_UPDATE, true, "members follow the roster")
   end)
 end)
 
@@ -241,6 +242,7 @@ h.test("boss hides the Blizzard boss container", function()
   withInit({}, function(ns, _, _, blizzard)
     h.eq(ns.Modules.get("boss").blizzard, { "BossTargetFrameContainer" })
     h.eq(blizzard.BossTargetFrameContainer:IsShown(), false)
+    h.eq(ns.Modules.get("boss").members[1]._events.GROUP_ROSTER_UPDATE, nil, "no roster event")
   end)
 end)
 

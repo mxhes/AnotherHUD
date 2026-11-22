@@ -32,19 +32,22 @@ local BOSS_SAMPLES = {
   { name = "Sister Vexa", healthPct = 77, reaction = 2, classification = "elite" },
 }
 
-local function party(ns)
-  local spec = ns.Units.defineGroup({
+-- extra: more defineGroup options (blizzard, blizzardHooks).
+local function party(ns, extra)
+  local o = {
     id = "party", label = "Party", name = "AHTestParty",
     units = { "player", "party1", "party2", "party3", "party4" },
     visibility = ns.GroupLayout.partyVisibility,
     auras = true, auraMode = "line", auraSide = "right", range = true, role = true, dispel = true,
-    roles = true, samples = PARTY_SAMPLES,
+    roles = true, roster = true, samples = PARTY_SAMPLES,
     parts = { "Group", "Size", "Text", "Look", "Behaviour", "Auras", "Fading",
       orientation = true, roles = true, portrait = true, power = true },
     defaults = { width = 160, height = 40, portraitScale = 92, powerHeight = 5, fontSize = 10,
       healthText = "Percent", powerText = "None", auraSize = 20 },
     defaultPosition = { point = "LEFT", x = 40, y = 120 },
-  })
+  }
+  for k, v in pairs(extra or {}) do o[k] = v end
+  local spec = ns.Units.defineGroup(o)
   spec.create(spec)
   return spec
 end
@@ -339,6 +342,61 @@ h.test("orderEvents re-sort the block", function()
     client.fire("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
     h.eq(ys(spec)[3], 0, "boss3 at the top after the event")
     h.eq(ys(spec)[2], -148, "boss2 behind the missing boss1")
+  end)
+end)
+
+h.test("Blizzard party frames built later are hidden on roster and world events", function()
+  withUnits({}, { player = ME }, function(ns, client)
+    local spec = party(ns, { blizzard = { "PartyFrame", "CompactPartyFrame" } })
+    h.eq(spec.frame._events.PLAYER_ENTERING_WORLD, true, "world event")
+    local late = fakes.frame("CompactPartyFrame")
+    fakes.withGlobals({ CompactPartyFrame = late }, function()
+      client.fire("GROUP_ROSTER_UPDATE")
+      h.eq(late:GetParent() ~= nil, true, "reparented")
+      h.eq(late:IsShown(), false, "hidden after the roster change")
+    end)
+    local other = fakes.frame("PartyFrame")
+    fakes.withGlobals({ PartyFrame = other }, function()
+      client.fire("PLAYER_ENTERING_WORLD")
+      h.eq(other:IsShown(), false, "hidden after entering the world")
+    end)
+  end)
+end)
+
+h.test("a hooked Blizzard builder hides the frame it builds", function()
+  withUnits({}, { player = ME }, function(ns)
+    local late = fakes.frame("CompactPartyFrame")
+    local built = false
+    fakes.withGlobals({ CompactPartyFrame_Generate = function()
+      built = true
+      _G.CompactPartyFrame = late
+    end }, function()
+      party(ns, { blizzard = { "CompactPartyFrame" }, blizzardHooks = { "CompactPartyFrame_Generate" } })
+      _G.CompactPartyFrame_Generate()
+      h.eq(built, true, "the original ran")
+      h.eq(late:IsShown(), false, "hidden right after it was built")
+      _G.CompactPartyFrame = nil
+    end)
+  end)
+end)
+
+h.test("holder re-orders on entering the world", function()
+  withUnits({}, { player = ME }, function(ns, client, units)
+    local spec = party(ns)
+    units.set("party2", "exists", true)
+    units.set("party2", "role", "TANK")
+    client.fire("PLAYER_ENTERING_WORLD")
+    h.eq(ys(spec), { -48, -96, 0, -144, -192 }, "tank first")
+  end)
+end)
+
+h.test("only roster groups give members the roster event", function()
+  withUnits({}, {}, function(ns)
+    local spec = boss(ns)
+    for i, m in ipairs(spec.members) do
+      h.eq(m._events.GROUP_ROSTER_UPDATE, nil, "boss " .. i .. " no roster event")
+      h.eq(m._events.INSTANCE_ENCOUNTER_ENGAGE_UNIT, true, "boss " .. i .. " encounter event")
+    end
   end)
 end)
 

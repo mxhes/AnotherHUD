@@ -7,9 +7,12 @@ local ADDON, ns = ...
 --     auraSide (Vertical only: Horizontal puts the auras under each frame),
 --     castGap, badge, range, role, dispel, roles (Sort by Role and
 --     Show Player apply), samples (one Edit Mode sample table per slot),
---     parts, defaults, blizzard, defaultPosition,
+--     parts, defaults, blizzard, blizzardHooks (global Blizzard functions
+--     that build a `blizzard` frame later; hooked to hide it), roster (the
+--     member units change with the group roster: members take
+--     GROUP_ROSTER_UPDATE), defaultPosition,
 --     orderEvents (extra events on the holder that re-order, as
---     GROUP_ROSTER_UPDATE does) }
+--     GROUP_ROSTER_UPDATE and PLAYER_ENTERING_WORLD do) }
 -- spec.frame is a plain holder frame on UIParent (the frame Edit Mode
 -- moves); spec.members are the member unit buttons (Units/Base.lua, member
 -- = true) on the holder, one per token. Their order (existing first, then by
@@ -129,8 +132,17 @@ function ns.Units.defineGroup(o)
     holderState(spec)
   end
 
+  local blizzard = o.blizzard or {}
+
+  -- Every event re-orders. Blizzard builds some of its frames late (the
+  -- raid-style party frames when that option is turned on), and
+  -- hideBlizzard skips a missing frame: the roster and world events try
+  -- again (frames already hidden are skipped).
   local function onEvent(self, event)
     place(self.spec)
+    if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
+      Base.hideBlizzard(blizzard)
+    end
   end
 
   local function create(spec)
@@ -145,10 +157,11 @@ function ns.Units.defineGroup(o)
         sample = function() return samples[i] end,
         mirror = o.mirror, castBar = o.castBar, auras = o.auras, auraMode = o.auraMode,
         auraSide = o.auraSide, castGap = o.castGap, badge = o.badge,
-        range = o.range, role = o.role, dispel = o.dispel, roster = true,
+        range = o.range, role = o.role, dispel = o.dispel, roster = o.roster,
       })
     end
     holder:RegisterEvent("GROUP_ROSTER_UPDATE")
+    holder:RegisterEvent("PLAYER_ENTERING_WORLD")
     if o.roles then holder:RegisterEvent("PLAYER_ROLES_ASSIGNED") end
     -- Bosses fire neither roster event: orderEvents (Boss passes
     -- INSTANCE_ENCOUNTER_ENGAGE_UNIT) queue the same re-order.
@@ -169,7 +182,14 @@ function ns.Units.defineGroup(o)
       end)
     end
     apply(spec)
-    Base.hideBlizzard(spec.blizzard or {})
+    Base.hideBlizzard(blizzard)
+    for _, name in ipairs(o.blizzardHooks or {}) do
+      -- UNVERIFIED (check in client): CompactPartyFrame_Generate builds
+      -- CompactPartyFrame (raid-style party frames) and may be hooked.
+      if type(_G[name]) == "function" then
+        hooksecurefunc(name, function() Base.hideBlizzard(blizzard) end)
+      end
+    end
   end
 
   local function onEditMode(spec, active)

@@ -428,3 +428,59 @@ h.test("aura line samples in one row", function()
     h.eq(cs[1]:IsShown(), true)
   end)
 end)
+
+-- A plain value the client reports as secret (a table fake is rejected by
+-- the type checks alone, so it does not prove the isSecret guard).
+local function withSecretPlain(values, fn)
+  local old = _G.issecretvalue
+  _G.issecretvalue = function(v)
+    for _, s in ipairs(values) do if rawequal(v, s) then return true end end
+    return fakes.isSecret(v)
+  end
+  local ok, err = pcall(fn)
+  _G.issecretvalue = old
+  if not ok then error(err, 0) end
+end
+
+h.test("role and crown hide when a plain looking value is secret", function()
+  withClient(function(ns)
+    local role = ns.Units.Parts.Role.create(fakes.frame())
+    role:layout(roleLayout(ns), {})
+    role:setRole("TANK")
+    role:setLeader(true)
+    h.eq(role.badge:IsShown(), true)
+    h.eq(role.crown:IsShown(), true)
+    withSecretPlain({ "TANK", true }, function()
+      role:setRole("TANK")
+      h.eq(role.badge:IsShown(), false, "secret role")
+      role:setLeader(true)
+      h.eq(role.crown:IsShown(), false, "secret leader")
+    end)
+    local units = fakes.units({ party1 = { role = "TANK", leader = true } })
+    local ok, err = pcall(function()
+      role:setUnit("party1")
+      h.eq(role.badge:IsShown(), true)
+      h.eq(role.crown:IsShown(), true)
+      withSecretPlain({ "TANK", true }, function()
+        role:setUnit("party1")
+        h.eq(role.badge:IsShown(), false, "secret role via setUnit")
+        h.eq(role.crown:IsShown(), false, "secret leader via setUnit")
+      end)
+    end)
+    units.restore()
+    if not ok then error(err, 0) end
+  end)
+end)
+
+h.test("aura line without debuffs starts at the left", function()
+  withContainers(function(ns)
+    local auras = ns.Units.Parts.Auras.create(fakes.frame(), "party1", "line")
+    auras:layout({ size = 20, rows = 1, width = 200, buffs = true, debuffs = false, onlyMine = false })
+    auras:sample(true)
+    local xs = {}
+    for _, p in ipairs(auras.samples) do
+      if p.holder:IsShown() then xs[#xs + 1] = point(p.holder, "TOPLEFT")[5] end
+    end
+    h.eq(xs, { 0 }, "my buff alone, no gap")
+  end)
+end)

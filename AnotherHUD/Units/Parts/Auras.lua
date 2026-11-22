@@ -271,7 +271,9 @@ local function drawSamples(self)
     local index
     if self.line then
       -- One line: debuffs first, no other players' buffs.
-      if debuff or s.mine then nDebuff = nDebuff + 1; index = nDebuff else index = math.huge end
+      if (debuff or s.mine) and wanted(o, { debuff = debuff, mine = s.mine }) then
+        nDebuff = nDebuff + 1; index = nDebuff
+      else index = math.huge end
     elseif debuff then nDebuff = nDebuff + 1; index = nDebuff
     else nBuff = nBuff + 1; index = nBuff end
     local show = self.sampling and wanted(o, { debuff = debuff, mine = s.mine }) and index <= self.shown

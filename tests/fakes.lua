@@ -264,7 +264,9 @@ function fakes.units(map)
   _G.UnregisterStateDriver = previous.UnregisterStateDriver or function() end
   _G.AbbreviateNumbers = function(n) return n end
   _G.CurveConstants = { ScaleTo100 = "ScaleTo100", ZeroToOne = "ZeroToOne" }
-  _G.C_ClassColor = { GetClassColor = function() return { r = 1, g = 1, b = 1 } end }
+  _G.C_ClassColor = { GetClassColor = function()
+    return { r = 1, g = 1, b = 1, GetRGB = function() return 1, 1, 1 end }
+  end }
   _G.PowerBarColor = {}
   -- Keep whatever Enum the test already installed and add the status bar enums.
   local enum = {}

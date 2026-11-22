@@ -339,6 +339,7 @@ end)
 
 h.test("Boot starts the addon on its ADDON_LOADED", function()
   local client = fakes.client{}
+  local units = fakes.units({})
   local ok, err = pcall(fakes.withGlobals, { LibStub = fakes.NIL, AnotherHUDDB = fakes.NIL,
     AnotherHUDCharDB = fakes.NIL }, function()
     local ns = h.load(h.toc())
@@ -348,6 +349,7 @@ h.test("Boot starts the addon on its ADDON_LOADED", function()
     h.eq(type(ns.db), "table")
     h.eq(ns.db, _G.AnotherHUDDB)
   end)
+  units.restore()
   client.restore()
   if not ok then error(err, 0) end
 end)

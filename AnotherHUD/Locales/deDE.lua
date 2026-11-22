@@ -14,17 +14,18 @@ ns.Locale.register("deDE", {
   ["Test setting, changes nothing yet."] = "Testoption, ändert noch nichts.",
   ["on"] = "an",
   ["off"] = "aus",
-  -- Spike test frame (Spike/SpikeModule.lua)
-  ["AnotherHUD Test"] = "AnotherHUD-Test",
+  -- Unit frame modules (Units/Player.lua ... Units/Pet.lua)
+  ["Player"] = "Spieler",
+  ["Player Cast Bar"] = "Spielerzauberleiste",
+  ["Target"] = "Ziel",
+  ["Target of Target"] = "Ziel des Ziels",
+  ["Focus"] = "Fokus",
+  ["Pet"] = "Begleiter",
+  -- Shared unit frame settings (Units/Settings.lua)
   ["Size"] = "Größe",
   ["Look"] = "Aussehen",
   ["Width"] = "Breite",
   ["Height"] = "Höhe",
-  ["Show border"] = "Rahmen zeigen",
-  ["Width of the test frame."] = "Breite des Testrahmens.",
-  ["Height of the test frame."] = "Höhe des Testrahmens.",
-  ["Draw the frame's border."] = "Zeichnet den Rahmen.",
-  -- Shared unit frame settings (Units/Settings.lua)
   ["Text"] = "Texte",
   ["Behaviour"] = "Verhalten",
   ["Cast Bar"] = "Zauberleiste",

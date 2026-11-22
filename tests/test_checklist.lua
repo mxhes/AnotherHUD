@@ -200,12 +200,18 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
     AnotherHUDDB = fakes.NIL, AnotherHUDCharDB = fakes.NIL,
     EditModeManagerFrame = manager,
   }, function()
-    local ns = h.load(h.toc())
-    ns.Core.init()
-    h.eq(lem.frames, 1) -- the spike test frame
-    h.eq(ns.Modules.get("spike").frame ~= nil, true)
-    h.eq(#lem.added, 1)
-    h.eq(hooked, true)
+    -- inside withGlobals: the unit API keeps this test's Enum and adds its own
+    local units = fakes.units({})
+    local ok2, err2 = pcall(function()
+      local ns = h.load(h.toc())
+      ns.Core.init()
+      h.eq(lem.frames, 6) -- the unit frames and the player cast bar holder
+      h.eq(ns.Modules.get("player").frame ~= nil, true)
+      h.eq(#lem.added, 1)
+      h.eq(hooked, true)
+    end)
+    units.restore()
+    if not ok2 then error(err2, 0) end
   end)
   client.restore()
   if not ok then error(err, 0) end
@@ -214,7 +220,7 @@ end)
 h.test("German checklist texts fit 24 glyphs", function()
   local ns
   fakes.withGlobals({ GetLocale = function() return "deDE" end }, function() ns = h.load(h.toc()) end)
-  for _, text in ipairs({ "AnotherHUD look", "AnotherHUD Test", "Show border", "Width", "Height",
+  for _, text in ipairs({ "AnotherHUD look", "Width", "Height",
     "Size", "Look", "Type /reload to apply" }) do
     h.eq(ns.L[text] ~= text, true, text .. " translated")
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])

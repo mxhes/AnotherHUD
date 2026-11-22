@@ -74,6 +74,12 @@ and remove both once it is confirmed.
   the same); the Blizzard cast bar stays hidden after an Edit Mode layout
   switch / lock-to-player toggle (the `SetParent` hook parks it again);
   the right-click menu on the Target frame works with the gamepad UI.
+- Unit modules (`Units/*.lua`): the five frames show at their default
+  positions; Detach cast bar on puts the Player cast bar on its own Edit
+  Mode frame ("Player Cast Bar") that drags; off, that frame can't be
+  selected (LibEditMode doesn't show or select a hidden registered frame,
+  `Units/PlayerCastBar.lua`) and the bar hangs under the Player frame;
+  the Blizzard Target of Target goes away with `TargetFrame`.
 
 ### Edit Mode spike (Plan 1, Task 7)
 
@@ -87,7 +93,8 @@ pass / fail, what was seen).
   copied into `AnotherHUD/Libs/LibEditMode/`; its entry file `embed.xml`
   (at the repo root upstream) is what `embeds.xml` loads. If this prints
   `false`, nothing below can pass.
-- Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
+- (The test frame is gone since Plan 3; run these with the Player frame.)
+  Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
   drags, snaps to grid / screen / Blizzard frames, panel opens next to it with
   the sections (Size, Look), our Settings button and the library's reset buttons; positions differ per
   layout. (Grid and Blizzard-frame snap are not built yet, see above: expect

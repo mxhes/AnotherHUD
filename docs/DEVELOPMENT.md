@@ -3,8 +3,9 @@
 Status: Plan 1 is built: the core (saved state, options, module registry,
 combat queue, theme, texts), the Edit Mode glue (frames, settings panels,
 snapping, positions per layout, checklist toggles) and the Edit Mode spike
-(test frame, one Action Bar 1 setting). Unit frames and bars are not built
-yet; their rows below are the plan. The design and its reasons are in
+(one Action Bar 1 setting; its test frame is gone). Plan 3 adds the Player,
+Target, Target of Target, Focus and Pet frames; party, boss and the bars
+are not built yet, their rows below are the plan. The design and its reasons are in
 `docs/superpowers/specs/2026-11-21-anotherhud-design.md`.
 
 ## Setup
@@ -67,14 +68,16 @@ PowerShell; nothing here is done by the build.
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
 | `EditMode/Snap.lua` | snapping to grid, screen and frames |
 | `EditMode/Checklist.lua` | module toggles in the Edit Mode window |
-| `EditMode/SystemSettings.lua` | spike: one checkbox in Action Bar 1's Edit Mode panel |
-| `Spike/SpikeModule.lua` | spike: "AnotherHUD Test" frame; deleted when Plan 3's Player module lands |
+| `EditMode/SystemSettings.lua` | spike: one checkbox in Action Bar 1's Edit Mode panel (still writes `profile.spike.abLook` until Plan 5 replaces it) |
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
 | `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
 | `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit)`, `auras:layout(opts)`, `auras:sample(on)` |
 | `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.hideBlizzard(names)`) |
-| `Units/Player.lua` ... `Units/Boss.lua` | one module per unit |
+| `Units/Define.lua` | `ns.Units.define(o)`: the shared unit module shape (settings from `Units/Settings.lua`, create / apply / onEditMode through `Units/Base.lua`) |
+| `Units/Player.lua`, `Units/Target.lua`, `Units/TargetTarget.lua`, `Units/Focus.lua`, `Units/Pet.lua` | one unit module each (`ns.Units.define{...}`) |
+| `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
+| `Units/Party.lua`, `Units/Boss.lua` | planned |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |
 | `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
@@ -174,10 +177,9 @@ Blizzard frames prints a `/reload` hint.
 `EditMode/SystemSettings.lua` adds one checkbox, "AnotherHUD look", to Action
 Bar 1's panel (`AddSystemSettings(Enum.EditModeSystem.ActionBar, ...,
 Enum.EditModeActionBarSystemIndices.MainBar)`); its value is
-`profile.spike.abLook` and only prints a line. The test frame itself is the
-module `spike` in `Spike/SpikeModule.lua` (Size: width, height; Look: Show
-border). To remove the spike: delete `Spike/` and its `.toc` line;
-`EditMode/SystemSettings.lua` either becomes the real bar look or goes too.
+`profile.spike.abLook` and only prints a line; it keeps doing so until
+Plan 5 turns it into the real bar look or removes it. The spike's test frame
+(`Spike/`) is gone: the unit frames replaced it.
 
 **Unit frames.** A unit module's `create` calls `Units/Base.create(spec, o)`
 (`o = { unit, name, mirror, castBar, auras, badge }`): a
@@ -217,6 +219,36 @@ a `hooksecurefunc(frame, "Show", ...)` that hides it again (a protected
 frame in combat: queued), and a `SetParent` hook that parks it again
 (queued in combat). A name whose frame is missing is tried again by the
 next call.
+
+**Unit modules.** Each unit file is one `ns.Units.define{...}`
+(`Units/Define.lua`): id, label, unit, global frame name, `mirror`,
+`castBar`, `auras`, `badge`, `parts` (the `Units.Settings.build` sections and
+flags), `defaults` (overrides), `blizzard`, `defaultPosition`, optional
+`apply`. It calls `ns.Modules.define{ kind = "unit" }` with `create` =
+`Base.create` + apply + `Base.hideBlizzard`, `apply` = `Base.apply`,
+`onEditMode` = `Base.editMode`.
+
+| id | frame | unit | sections | overrides | hides |
+| --- | --- | --- | --- | --- | --- |
+| `player` | `AnotherHUDPlayerFrame` | player, badge 18 | Size (portrait, power), Text, Look, Behaviour, Cast Bar (detach), Auras, Fading | none | `PlayerFrame`, `PlayerCastingBarFrame` |
+| `playercast` | `AnotherHUDPlayerCastBarHolder` | (holder, child of `player`) | none | none | none |
+| `target` | `AnotherHUDTargetFrame` | target, mirrored, badge 18 | as Player, Cast Bar without detach | health Percent, power None | `TargetFrame` |
+| `targettarget` | `AnotherHUDTargetTargetFrame` | targettarget, mirrored | Size (portrait), Text, Look, Fading | 120 x 26, 10 pt, health None | none (inside `TargetFrame`) |
+| `focus` | `AnotherHUDFocusFrame` | focus, badge 14 | as Target | 160 x 40, power 8, 10 pt, health Percent, power None | `FocusFrame` |
+| `pet` | `AnotherHUDPetFrame` | pet | Size (portrait, power), Text, Look, Auras, Fading | 120 x 34, power 6, 10 pt, health Percent, power None | `PetFrame` |
+
+`targettarget` has no `blizzard` list (nil, not `{}`), so turning it off
+needs no `/reload`. The detached cast bar: `playercast` is a plain frame on
+`UIParent`, sized to the Player's Cast bar width / height, placed by Edit
+Mode like any module. With Show cast bar and Detach cast bar on,
+`Base.anchorCast(playerFrame, holder)` parents the bar to it and the holder
+is shown (empty outside Edit Mode, the bar is its only content); otherwise
+the holder is hidden (Edit Mode can't select it) and the bar hangs under
+the Player frame. The Player's `apply` re-runs `playercast`'s apply (or,
+before the holder exists, anchors the bar under the frame); the holder's
+own create applies the Player's state once it exists. Size and visibility
+go through `Combat.after("unit:playercast")`, the move through
+`Base.anchorCast`, so both change together after combat.
 
 *(Filled in as built.)* Planned topics: secret values and how texts are formatted, party header attributes, sample data in Edit Mode, skinning
 Blizzard action buttons.

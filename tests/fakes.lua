@@ -68,6 +68,8 @@ function methods.SetAlpha(self, a) self._alpha = a end
 function methods.GetAlpha(self) return self._alpha or 1 end
 function methods.SetAlphaFromBoolean(self, b, yes, no) self._alphaFrom = { b, yes, no } end
 function methods.SetTimerDuration(self, d, interp, dir) self._timer = { d, interp, dir } end
+function methods.SetTexture(self, file) self._texture = file end
+function methods.SetTextureSliceMargins(self, l, t, r, b) self._slice = { l, t, r, b } end
 function methods.SetSize(self, w, h) self._width, self._height = w, h end
 -- SetVertexColor / SetTextColor keep { r, g, b, a } (a as given, may be nil).
 function methods.SetVertexColor(self, r, g, b, a) self._color = { r, g, b, a } end
@@ -180,7 +182,8 @@ local UNIT_GLOBALS = { "UnitExists", "UnitName", "UnitClass", "UnitLevel", "Unit
   "UnitHealth", "UnitHealthMax", "UnitHealthPercent", "UnitPower", "UnitPowerMax", "UnitPowerPercent",
   "UnitPowerType", "UnitCastingInfo", "UnitChannelInfo", "UnitCastingDuration", "UnitChannelDuration",
   "SetPortraitTexture", "RegisterStateDriver", "UnregisterStateDriver", "AbbreviateNumbers",
-  "CurveConstants", "C_ClassColor", "PowerBarColor", "Enum", "GameTooltip" }
+  "CurveConstants", "C_ClassColor", "PowerBarColor", "Enum", "GameTooltip",
+  "UnitGroupRolesAssigned", "UnitIsGroupLeader", "UnitInRange" }
 
 -- Installs the client's unit API globals reading from
 -- map[unit] = { exists, name, class, level, classification, reaction, isPlayer,
@@ -225,6 +228,14 @@ function fakes.units(map)
   field("UnitIsPlayer", "isPlayer")
   field("UnitIsDeadOrGhost", "dead")
   field("UnitIsConnected", "connected")
+  field("UnitGroupRolesAssigned", "role")
+  field("UnitIsGroupLeader", "leader")
+  -- inRange, checked (checked = rangeChecked; false when the client cannot say).
+  _G.UnitInRange = function(u)
+    count("UnitInRange")
+    local m = unit(u)
+    return m.inRange, m.rangeChecked
+  end
   field("UnitHealth", "health")
   field("UnitHealthMax", "healthMax")
   field("UnitHealthPercent", "healthPct")

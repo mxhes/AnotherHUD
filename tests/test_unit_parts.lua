@@ -4,7 +4,7 @@ local fakes = dofile("tests/fakes.lua")
 local function load()
   return h.load({ "Core/Util.lua", "Core/Locale.lua", "Locales/deDE.lua", "Core/Theme.lua",
     "Core/UnitLayout.lua", "Units/Settings.lua", "Units/Parts/Panel.lua", "Units/Parts/Ring.lua",
-    "Units/Parts/Bars.lua" })
+    "Units/Parts/Bars.lua", "Units/Parts/Auras.lua", "Units/Parts/Role.lua", "Units/Parts/Dispel.lua" })
 end
 
 -- Runs fn(ns) with a fake client and unit API; restores units first, then
@@ -198,5 +198,233 @@ h.test("panel studs only on the free corners", function()
     panel:layout(player(ns), { skin = Theme.skins.classic })
     h.eq(shownCount(panel.edges), 0)
     h.eq(panel.studs.TOPRIGHT:IsShown(), false)
+  end)
+end)
+
+-- Group parts: role badge, crown, dispel glow, aura line.
+local function roleLayout(ns, extra)
+  local o = { w = 160, h = 40, powerH = 5, portraitScale = 92, edge = 4, badge = false, role = true }
+  for k, v in pairs(extra or {}) do o[k] = v end
+  return ns.UnitLayout.frame(o)
+end
+
+h.test("role badge shows plain roles only", function()
+  withClient(function(ns)
+    local T = ns.Theme
+    local role = ns.Units.Parts.Role.create(fakes.frame())
+    role:layout(roleLayout(ns), { skin = T.skins.forge })
+    h.eq(role.badge:IsShown(), false, "no role yet")
+    for _, r in ipairs({ "TANK", "HEALER", "DAMAGER" }) do
+      role:setRole(r)
+      h.eq(role.badge:IsShown(), true, r)
+      h.eq(role.glyph._texture, T.textures.role[r])
+    end
+    h.eq(role.glyph._width, 15 * 0.72)
+    for _, r in ipairs({ "NONE", false, fakes.secret("TANK") }) do
+      role:setRole("TANK")
+      role:setRole(r)
+      h.eq(role.badge:IsShown(), false)
+    end
+    role:setRole("TANK")
+    role:setRole(nil)
+    h.eq(role.badge:IsShown(), false)
+    h.eq(shownCount(role.lines), #ns.Units.Parts.Ring.shadesOf(T.skins.forge.border))
+    h.eq(role.lines[1]._width, 15)
+    h.eq(role.lines[2]._width, 13)
+  end)
+end)
+
+h.test("role setUnit reads the unit API", function()
+  withClient(function(ns)
+    local role = ns.Units.Parts.Role.create(fakes.frame())
+    role:layout(roleLayout(ns), {})
+    local units = fakes.units({ party1 = { role = "HEALER", leader = true }, party2 = { role = "NONE", leader = false } })
+    local ok, err = pcall(function()
+      role:setUnit("party1")
+      h.eq(role.badge:IsShown(), true)
+      h.eq(role.crown:IsShown(), true)
+      role:setUnit("party2")
+      h.eq(role.badge:IsShown(), false)
+      h.eq(role.crown:IsShown(), false)
+    end)
+    units.restore()
+    if not ok then error(err, 0) end
+  end)
+end)
+
+h.test("crown only for a plain leader", function()
+  withClient(function(ns)
+    local role = ns.Units.Parts.Role.create(fakes.frame())
+    local L = roleLayout(ns)
+    role:layout(L, {})
+    h.eq(role.crown:IsShown(), false)
+    role:setLeader(true)
+    h.eq(role.crown:IsShown(), true)
+    h.eq(role.crown._width, 12)
+    h.eq(role.crown._height, 9)
+    h.eq(point(role.crown, "TOP")[6], -L.crown.top)
+    role:setLeader(fakes.secret(true))
+    h.eq(role.crown:IsShown(), false)
+    role:setLeader(true)
+    role:setLeader(false)
+    h.eq(role.crown:IsShown(), false)
+  end)
+end)
+
+h.test("role and crown hidden without L.role", function()
+  withClient(function(ns)
+    local role = ns.Units.Parts.Role.create(fakes.frame())
+    role:layout(roleLayout(ns), {})
+    role:setRole("TANK")
+    role:setLeader(true)
+    h.eq(role.badge:IsShown(), true)
+    role:layout(roleLayout(ns, { role = false }), {})
+    h.eq(role.badge:IsShown(), false)
+    h.eq(role.crown:IsShown(), false)
+  end)
+end)
+
+-- A fake AuraContainer with slots and groups.
+local function fakeContainer()
+  local c = fakes.frame()
+  c.groups, c.slots = {}, {}
+  function c:AddAuraGroup(key, filter, opts) self.groups[#self.groups + 1] = { key = key, filter = filter, opts = opts } end
+  function c:AddAuraSlot(key, filter, opts) self.slots[key] = { filter = filter, opts = opts } end
+  return c
+end
+
+local function withContainers(fn, noSlot)
+  withClient(function(ns)
+    local containers = {}
+    local create = _G.CreateFrame
+    _G.CreateFrame = function(kind, ...)
+      if kind == "AuraContainer" then
+        local c = fakeContainer()
+        if noSlot then c.AddAuraSlot = false end
+        containers[#containers + 1] = c
+        return c
+      end
+      return create(kind, ...)
+    end
+    local ok, err = pcall(fn, ns, containers)
+    _G.CreateFrame = create
+    if not ok then error(err, 0) end
+  end)
+end
+
+h.test("dispel slot uses the raid filter and our glow", function()
+  withContainers(function(ns, cs)
+    local U = ns.Theme.sizes.unit
+    local parent = fakes.frame()
+    parent._width, parent._height = 160, 40
+    local dispel = ns.Units.Parts.Dispel.create(parent, "party1")
+    h.eq(dispel.available, true)
+    h.eq(#cs, 1)
+    local slot = cs[1].slots.dispel
+    h.eq(slot.filter, "HARMFUL|RAID")
+    local calls = {}
+    local button = fakes.frame()
+    function button:AddDispelTypeTexture(tex, opts) calls[#calls + 1] = { tex, opts } end
+    local oldEnum = _G.Enum
+    _G.Enum = { CustomAuraButtonDispelTypeTextureStyle = { PreserveAsset = "Preserve" } }
+    slot.opts.initializeFrame(button)
+    _G.Enum = oldEnum
+    h.eq(#calls, 1)
+    local tex, opts = calls[1][1], calls[1][2]
+    h.eq(tex._texture, ns.Theme.textures.glow)
+    h.eq(opts.showWhenHarmful, true)
+    h.eq(opts.showWhenHelpful, false)
+    h.eq(opts.style, "Preserve")
+    h.eq(button._width, 160, "covers the frame")
+    h.eq(button._height, 40)
+    h.eq(tex._slice, { U.glowSlice, U.glowSlice, U.glowSlice, U.glowSlice })
+    h.eq(point(tex, "TOPLEFT")[5], -U.glow, "reaches out on every side")
+    h.eq(point(tex, "TOPLEFT")[6], U.glow)
+    h.eq(point(tex, "BOTTOMRIGHT")[5], U.glow)
+    h.eq(point(tex, "BOTTOMRIGHT")[6], -U.glow)
+    parent._width = 100
+    dispel:layout()
+    h.eq(button._width, 100, "follows the frame")
+  end)
+end)
+
+h.test("dispel without the template does nothing", function()
+  withContainers(function(ns)
+    local dispel = ns.Units.Parts.Dispel.create(fakes.frame(), "party1")
+    h.eq(dispel.available, false)
+    dispel:layout()
+    dispel:sample({ 1, 0, 0, 1 })
+    dispel:sample(nil)
+  end, true)
+  withClient(function(ns)
+    local create = _G.CreateFrame
+    _G.CreateFrame = function(kind, ...)
+      if kind == "AuraContainer" then error("no such template") end
+      return create(kind, ...)
+    end
+    local ok, d = pcall(ns.Units.Parts.Dispel.create, fakes.frame(), "party1")
+    _G.CreateFrame = create
+    h.eq(ok, true, "no error")
+    h.eq(d.available, false)
+  end)
+end)
+
+h.test("dispel sample tints and hides", function()
+  withContainers(function(ns, cs)
+    local dispel = ns.Units.Parts.Dispel.create(fakes.frame(), "party1")
+    local red = ns.Theme.unitColors.debuff.none
+    dispel:sample(red)
+    h.eq(dispel.sampleTex:IsShown(), true)
+    h.eq(dispel.sampleTex._color, { red[1], red[2], red[3], red[4] })
+    h.eq(cs[1]:IsShown(), false, "live glow hidden under the sample")
+    dispel:sample(nil)
+    h.eq(dispel.sampleTex:IsShown(), false)
+    h.eq(cs[1]:IsShown(), true)
+  end)
+end)
+
+local function lineAuras(ns)
+  local auras = ns.Units.Parts.Auras.create(fakes.frame(), "party1", "line")
+  auras:layout({ size = 20, rows = 1, width = 200, buffs = true, debuffs = true, onlyMine = false })
+  return auras
+end
+
+h.test("aura line holds debuffs then my buffs", function()
+  withContainers(function(ns, cs)
+    local auras = lineAuras(ns)
+    h.eq(#cs, 1, "one container")
+    local keys, filters = {}, {}
+    for i, g in ipairs(cs[1].groups) do keys[i], filters[i] = g.key, g.filter end
+    h.eq(keys, { "debuffMine", "debuffOther", "buffMine" })
+    h.eq(filters, { "HARMFUL|PLAYER", "HARMFUL|!PLAYER", "HELPFUL|PLAYER" })
+    h.eq(cs[1].groups[3].opts.layout.layoutIndex, 3)
+    h.eq(auras.frame._height, 20, "one line")
+    h.eq(auras.frame._width, 200)
+    h.eq(auras.kinds.line.clip._height, 20)
+    -- rows mode is unchanged
+    ns.Units.Parts.Auras.create(fakes.frame(), "target")
+    h.eq(#cs, 3, "rows mode: two more containers")
+    h.eq(cs[3].groups[2].key, "buffOther")
+  end)
+end)
+
+h.test("aura line samples in one row", function()
+  withContainers(function(ns, cs)
+    local auras = lineAuras(ns)
+    auras:sample(true)
+    local shown, xs = 0, {}
+    for _, p in ipairs(auras.samples) do
+      if p.holder:IsShown() then
+        shown = shown + 1
+        local pt = point(p.holder, "TOPLEFT")
+        xs[#xs + 1] = pt[5]
+        h.eq(pt[6], 0, "one row")
+      end
+    end
+    h.eq(shown, 5, "4 debuffs and my buff, not the other player's buff")
+    h.eq(xs, { 0, 22, 44, 66, 88 })
+    h.eq(cs[1]:IsShown(), false)
+    auras:sample(false)
+    h.eq(cs[1]:IsShown(), true)
   end)
 end)

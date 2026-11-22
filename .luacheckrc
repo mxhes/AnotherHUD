@@ -35,4 +35,5 @@ read_globals = {
   "UnitPowerPercent", "UnitPowerType", "CurveConstants", "AbbreviateNumbers",
   "RegisterStateDriver", "UnregisterStateDriver", "hooksecurefunc",
   "GameTooltip", "GameTooltip_SetDefaultAnchor", "UnitGUID",
+  "UnitGroupRolesAssigned", "UnitIsGroupLeader", "UnitInRange",
 }

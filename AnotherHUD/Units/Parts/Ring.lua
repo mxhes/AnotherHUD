@@ -159,4 +159,9 @@ function Ring:setLevel(fmt, args)
   end
 end
 
+-- The line shades of a border, shared with Role (its badge uses the same lines).
+Ring.shadesOf = shades
+Ring.disc = disc
+Ring.place = place
+
 ns.Units.Parts.Ring = Ring

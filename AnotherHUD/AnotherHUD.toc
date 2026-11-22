@@ -33,6 +33,8 @@ Units/Parts/Ring.lua
 Units/Parts/Bars.lua
 Units/Parts/CastBar.lua
 Units/Parts/Auras.lua
+Units/Parts/Role.lua
+Units/Parts/Dispel.lua
 Units/Base.lua
 Units/Define.lua
 Units/Player.lua

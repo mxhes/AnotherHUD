@@ -42,10 +42,10 @@ h.test("bar text: dead and offline win, None stays empty", function()
     local UnitText = load().UnitText
     local function abbr(v) return v end
     local fmt, args = UnitText.bar("Percent", { dead = true, pct = 50 }, abbr)
-    h.eq(fmt, "%s")
+    h.eq(fmt, "|cffbbbbbb%s|r")
     h.eq(args[1], "Dead")
     fmt, args = UnitText.bar("Value", { offline = true, cur = 1, max = 2 }, abbr)
-    h.eq(fmt, "%s")
+    h.eq(fmt, "|cffbbbbbb%s|r")
     h.eq(args[1], "Offline")
     fmt, args = UnitText.bar("None", { dead = true }, abbr)
     h.eq(fmt, "")
@@ -106,6 +106,37 @@ h.test("health color: class, reaction, secret, default", function()
     r, g, b = UnitColor.health({ isPlayer = fakes.secret(1), reaction = 2 })
     same(C.healthDefault, r, g, b)
   end, { C_ClassColor = { GetClassColor = function(c) if c == "PALADIN" then return paladin end end } })
+end)
+
+h.test("dead and offline colors win", function()
+  local paladin = { GetRGB = function() return 0.96, 0.55, 0.73 end }
+  withSecrets(function()
+    local ns = load()
+    local UnitColor, C = ns.UnitColor, ns.Theme.unitColors
+    local base = { isPlayer = true, class = "PALADIN", classColor = true }
+    local function with(extra)
+      local i = {}
+      for k, v in pairs(base) do i[k] = v end
+      for k, v in pairs(extra) do i[k] = v end
+      return i
+    end
+    local r, g, b = UnitColor.health(with({ dead = true }))
+    h.near(r, C.dead[1]); h.near(g, C.dead[2]); h.near(b, C.dead[3])
+    r, g, b = UnitColor.health(with({ offline = true }))
+    h.near(r, C.offline[1]); h.near(g, C.offline[2]); h.near(b, C.offline[3])
+    r, g, b = UnitColor.health(with({ dead = true, offline = true }))
+    h.near(r, C.dead[1])
+    r, g, b = UnitColor.health(with({ dead = fakes.secret(1), offline = fakes.secret(2) }))
+    h.near(r, 0.96); h.near(g, 0.55); h.near(b, 0.73)
+  end, { C_ClassColor = { GetClassColor = function() return paladin end } })
+end)
+
+h.test("dead text is grey", function()
+  withSecrets(function()
+    local UnitText = load().UnitText
+    local fmt = UnitText.bar("Percent", { dead = true }, function(v) return v end)
+    h.eq(fmt, "|cffbbbbbb%s|r")
+  end)
 end)
 
 h.test("ring color by classification", function()

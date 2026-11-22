@@ -16,6 +16,9 @@ end
 -- info = { isPlayer, class, reaction, classColor } -> r, g, b.
 function UnitColor.health(info)
   local C = Theme.unitColors
+  -- Only plain booleans count; a secret dead / offline flag falls through.
+  if plain(info.dead) == true then return C.dead[1], C.dead[2], C.dead[3] end
+  if plain(info.offline) == true then return C.offline[1], C.offline[2], C.offline[3] end
   local isPlayer = plain(info.isPlayer)
   local c
   if isPlayer == true then

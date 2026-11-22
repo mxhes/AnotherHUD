@@ -101,6 +101,11 @@ Theme.unitColors = {
   uninterruptible = { 0.60, 0.60, 0.62, 1 },
   -- The dark 1 px halo behind the portrait ring.
   ringShadow = { 0, 0, 0, 0.6 },
+  -- Group frames: bar colors of a dead / offline member and the grey of the
+  -- "Dead" / "Offline" text (the mockup's #bbb).
+  dead = { 0.35, 0.35, 0.35, 1 },
+  offline = { 0.3, 0.3, 0.3, 1 },
+  deadText = { 0.733, 0.733, 0.733, 1 },
   debuff = {
     Magic = { 0.20, 0.60, 1.00, 1 },
     Curse = { 0.60, 0.00, 1.00, 1 },
@@ -149,7 +154,12 @@ Theme.sizes = {
     castShield = { x = 0.15, y = 0.1, w = 0.7, h = 0.8 },
     -- Spell and aura icons: the share cut off each side of the icon art (its
     -- baked-in frame).
-    iconCrop = 0.08 },
+    iconCrop = 0.08,
+    -- Group frames: role badge and leader crown, how far the crown sits above
+    -- the ring, out-of-range alpha and the range check interval, the gaps of
+    -- the aura rows and the boss cast bar, the dispel glow and its edge.
+    roleBadge = 15, crown = 12, crownLift = 7, rangeAlpha = 0.55, rangeTick = 0.5,
+    partyAuraGap = 6, bossAuraGap = 4, bossCastGap = 4, glow = 8, glowEdge = 2 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which

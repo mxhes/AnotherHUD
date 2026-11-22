@@ -47,6 +47,13 @@ function UnitLayout.frame(o)
     L.badge = { size = o.badge, cx = L.ring.cx + (o.mirror and -dx or dx), cy = L.ring.cy + 0.36 * dia }
   end
 
+  if o.role then
+    local S = ns.Theme.sizes.unit
+    local dx = 0.33 * dia
+    L.role = { size = S.roleBadge, cx = L.ring.cx + (o.mirror and dx or -dx), cy = L.ring.cy + 0.33 * dia }
+    L.crown = { size = S.crown, cx = L.ring.cx, top = L.ring.cy - dia / 2 - S.crownLift }
+  end
+
   if powerH >= 9 then L.powerText = { size = math.min(10, powerH - 3) } end
   L.ringStuds = dia >= 40
   L.below = round(math.max(8, h / 2 + dia / 2 - h + 6))

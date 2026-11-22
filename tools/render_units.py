@@ -9,7 +9,8 @@ origin, like Media/Skins):
   BarSmooth.tga    4 x 64   grey vertical gradient, stops 1.25 / 1.0 / 0.72 of
                             the bar color at 0 / 45 / 100 %, divided by 1.25
   BarGloss.tga     4 x 64   grey vertical gradient, stops white mix / 1.05 /
-                            0.82 / 0.62 at 0 / 38 / 52 / 100 %, divided by 1.05
+                            0.82 / 0.62 at 0 / 38 / 52 / 100 %, baked at c = 0.5,
+                            normalized by the top stop
   Spark.tga       16 x 64   soft white vertical glow, brightest on the center
                             column (tinted in code)
   Shield.tga      32 x 32   the mockup's shield outline, grey gradient, alpha .75
@@ -80,13 +81,14 @@ def bar_smooth():
 
 
 def bar_gloss():
-    k = 1.05
-    g = 1.0 / k
-    # The mockup's top stop is a mix of the color toward white (.45). A tint
-    # cannot add white, so it is baked as brightness: the grey level moved
-    # toward white by .45 (about 0.974), the closest a multiplied texture gets.
-    top = min(1.0, g + (1.0 - g) * 0.45)
-    return gradient([(0.0, top), (0.38, 1.05 / k), (0.52, 0.82 / k), (1.0, 0.62 / k)])
+    # The mockup's stops are mix(c, white, .45), 1.05 c, .82 c, .62 c. A grey
+    # file is multiplied by the bar color, so the ratios are baked at a mid
+    # color c = 0.5 and normalized by the top stop: exact at c = 0.5, the
+    # highlight is weaker on dark colors and clamped on bright ones.
+    c = 0.5
+    top = c + (1.0 - c) * 0.45
+    return gradient([(0.0, 1.0), (0.38, 1.05 * c / top), (0.52, 0.82 * c / top),
+                     (1.0, 0.62 * c / top)])
 
 
 def spark():

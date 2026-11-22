@@ -86,7 +86,7 @@ h.test("every bar texture has a file and a tint", function()
   end
   h.eq(Theme.barTextures.Flat.file, "Interface\\Buttons\\WHITE8X8")
   h.near(Theme.barTextures.Smooth.tint, 1.25)
-  h.near(Theme.barTextures.Gloss.tint, 1.05)
+  h.near(Theme.barTextures.Gloss.tint, 1.45)
   for _, name in ipairs({ "disc", "spark", "shield" }) do
     h.eq(type(Theme.textures[name]), "string", name)
   end
@@ -99,5 +99,23 @@ h.test("unit art files exist on disk", function()
     local f = io.open("AnotherHUD/Media/Units/" .. name .. ".tga", "rb")
     h.eq(f ~= nil, true, name)
     if f then f:close() end
+  end
+end)
+
+h.test("unit art headers are 32-bit uncompressed TGA of the right size", function()
+  local sizes = { Disc = { 256, 256 }, BarSmooth = { 4, 64 }, BarGloss = { 4, 64 },
+    Spark = { 16, 64 }, Shield = { 32, 32 } }
+  for name, wh in pairs(sizes) do
+    local f = io.open("AnotherHUD/Media/Units/" .. name .. ".tga", "rb")
+    h.eq(f ~= nil, true, name)
+    if f then
+      local hd = f:read(18)
+      f:close()
+      local b = { hd:byte(1, 18) }
+      h.eq(b[3], 2, name .. " type")
+      h.eq(b[17], 32, name .. " bpp")
+      h.eq(b[13] + b[14] * 256, wh[1], name .. " width")
+      h.eq(b[15] + b[16] * 256, wh[2], name .. " height")
+    end
   end
 end)

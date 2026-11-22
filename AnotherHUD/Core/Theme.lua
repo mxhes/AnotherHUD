@@ -36,7 +36,7 @@ Theme.textures = {
 Theme.barTextures = {
   Smooth = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarSmooth", tint = 1.25 },
   Flat = { file = "Interface\\Buttons\\WHITE8X8", tint = 1 },
-  Gloss = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarGloss", tint = 1.05 },
+  Gloss = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarGloss", tint = 1.45 },
 }
 
 Theme.fonts = {

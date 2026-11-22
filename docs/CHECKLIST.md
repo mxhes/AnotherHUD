@@ -125,6 +125,8 @@ Hiding Blizzard's frames (`Units/Base.lua`):
   after a vehicle, a pet battle, an Edit Mode layout switch or the
   lock-to-player toggle (the `SetParent` hook parks the cast bar again).
 - Blizzard's Target of Target goes away with `TargetFrame`.
+- Blizzard's party frames (`PartyFrame`, `CompactPartyFrame`) and boss frames (`BossTargetFrameContainer`) stay hidden.
+- The Boss block re-orders when a boss appears or leaves: `INSTANCE_ENCOUNTER_ENGAGE_UNIT` fires for boss units (`orderEvents`).
 
 Combat and taint:
 

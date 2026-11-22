@@ -81,7 +81,8 @@ PowerShell; nothing here is done by the build.
 | `Units/Group.lua` | `ns.Units.defineGroup(o)`: the shared group module shape (Party, Boss): a plain holder frame (the Edit Mode frame) with member unit buttons at fixed tokens, their order (existing first, by role; index order in Edit Mode), anchors and holder size out of combat, the holder's visibility driver, the range ticker |
 | `Units/Player.lua`, `Units/Target.lua`, `Units/TargetTarget.lua`, `Units/Focus.lua`, `Units/Pet.lua` | one unit module each (`ns.Units.define{...}`) |
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
-| `Units/Party.lua`, `Units/Boss.lua` | planned |
+| `Units/Party.lua` | the party block (`defineGroup`): player + party1-4, line auras, role badge, dispel glow, range fade, Sort by Role / Show Player; hides `PartyFrame`, `CompactPartyFrame` |
+| `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |
 | `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |

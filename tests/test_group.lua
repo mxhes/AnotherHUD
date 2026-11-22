@@ -60,6 +60,7 @@ local function boss(ns)
     defaults = { width = 180, height = 42, powerHeight = 6, fontSize = 10, healthText = "Percent",
       powerText = "None", castWidth = 180, castHeight = 16, buffs = false, onlyMine = true, gap = 12 },
     defaultPosition = { point = "RIGHT", x = -120, y = 120 },
+    orderEvents = { "INSTANCE_ENCOUNTER_ENGAGE_UNIT" },
   })
   spec.create(spec)
   return spec
@@ -302,5 +303,37 @@ h.test("range ticker fades shown members", function()
     spec.members[2]._alphaFrom = nil
     tick(spec.frame, 0.1)
     h.eq(spec.members[2]._alphaFrom, nil, "timer restarted")
+  end)
+end)
+
+h.test("orderEvents re-sort the block", function()
+  withUnits({}, { boss2 = { exists = true } }, function(ns, client, units)
+    local spec = boss(ns)
+    h.eq(spec.frame._events.INSTANCE_ENCOUNTER_ENGAGE_UNIT, true, "registered")
+    h.eq(spec.frame._events.PLAYER_ROLES_ASSIGNED, nil, "still no roles event")
+    -- created with boss2 present: it is already first
+    h.eq(ys(spec)[2], 0)
+    units.set("boss2", "exists", false)
+    units.set("boss3", "exists", true)
+    client.fire("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+    h.eq(ys(spec)[3], 0, "boss3 at the top after the event")
+    h.eq(ys(spec)[2], -148, "boss2 behind the missing boss1")
+  end)
+end)
+
+h.test("edit mode enter and exit in combat restore drivers and order", function()
+  withUnits({}, { player = ME, party2 = { exists = true, role = "TANK" } }, function(ns, client)
+    local spec = party(ns)
+    h.eq(ys(spec), { -48, -96, 0, -144, -192 }, "live: tank first")
+    client.setCombat(true)
+    spec.onEditMode(spec, true)
+    spec.onEditMode(spec, false)
+    client.setCombat(false)
+    client.fire("PLAYER_REGEN_ENABLED")
+    h.eq(client.drivers[spec.frame].cond, ns.GroupLayout.partyVisibility(), "holder driver back")
+    for i, m in ipairs(spec.members) do
+      h.eq(client.drivers[m] ~= nil, true, "member " .. i .. " driver back")
+    end
+    h.eq(ys(spec), { -48, -96, 0, -144, -192 }, "live order applies")
   end)
 end)

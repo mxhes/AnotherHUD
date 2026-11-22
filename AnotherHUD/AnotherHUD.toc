@@ -44,5 +44,7 @@ Units/Target.lua
 Units/TargetTarget.lua
 Units/Focus.lua
 Units/Pet.lua
+Units/Party.lua
+Units/Boss.lua
 Core/Core.lua
 Boot.lua

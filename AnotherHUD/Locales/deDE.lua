@@ -14,13 +14,15 @@ ns.Locale.register("deDE", {
   ["Test setting, changes nothing yet."] = "Testoption, ändert noch nichts.",
   ["on"] = "an",
   ["off"] = "aus",
-  -- Unit frame modules (Units/Player.lua ... Units/Pet.lua)
+  -- Unit frame modules (Units/Player.lua ... Units/Boss.lua)
   ["Player"] = "Spieler",
   ["Player Cast Bar"] = "Spielerzauberleiste",
   ["Target"] = "Ziel",
   ["Target of Target"] = "Ziel des Ziels",
   ["Focus"] = "Fokus",
   ["Pet"] = "Begleiter",
+  ["Party"] = "Gruppe",
+  ["Boss"] = "Boss",
   -- Shared unit frame settings (Units/Settings.lua)
   ["Size"] = "Größe",
   ["Look"] = "Aussehen",

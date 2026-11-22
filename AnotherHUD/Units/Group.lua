@@ -6,7 +6,9 @@ local ADDON, ns = ...
 --     the holder's driver string), mirror, castBar, auras, auraMode,
 --     auraSide, castGap, badge, range, role, dispel, roles (Sort by Role and
 --     Show Player apply), samples (one Edit Mode sample table per slot),
---     parts, defaults, blizzard, defaultPosition }
+--     parts, defaults, blizzard, defaultPosition,
+--     orderEvents (extra events on the holder that re-order, as
+--     GROUP_ROSTER_UPDATE does) }
 -- spec.frame is a plain holder frame on UIParent (the frame Edit Mode
 -- moves); spec.members are the member unit buttons (Units/Base.lua, member
 -- = true) on the holder, one per token. Their order (existing first, then by
@@ -142,6 +144,10 @@ function ns.Units.defineGroup(o)
     end
     holder:RegisterEvent("GROUP_ROSTER_UPDATE")
     if o.roles then holder:RegisterEvent("PLAYER_ROLES_ASSIGNED") end
+    -- Bosses fire neither roster event: orderEvents (Boss passes
+    -- INSTANCE_ENCOUNTER_ENGAGE_UNIT) queue the same re-order.
+    -- UNVERIFIED (check in client): INSTANCE_ENCOUNTER_ENGAGE_UNIT fires when boss units change.
+    for _, event in ipairs(o.orderEvents or {}) do holder:RegisterEvent(event) end
     holder:SetScript("OnEvent", onEvent)
     if o.range then
       -- Range has no event: Base.fade on every shown member each rangeTick s.

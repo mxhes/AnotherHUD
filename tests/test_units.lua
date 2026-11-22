@@ -5,7 +5,8 @@ local fakes = dofile("tests/fakes.lua")
 -- .toc and started through Core.init with a fake client, fake unit API and
 -- a fake LibEditMode.
 
-local BLIZZARD = { "PlayerFrame", "PlayerCastingBarFrame", "TargetFrame", "FocusFrame", "PetFrame" }
+local BLIZZARD = { "PlayerFrame", "PlayerCastingBarFrame", "TargetFrame", "FocusFrame", "PetFrame",
+  "PartyFrame", "CompactPartyFrame", "BossTargetFrameContainer" }
 
 local function fakeLem()
   local lem = { SettingType = { Checkbox = 1, Slider = 2, Dropdown = 3, Divider = 4 }, frames = 0, labels = {} }
@@ -48,25 +49,27 @@ local function withInit(opts, fn)
   if not ok then error(err, 0) end
 end
 
-h.test("all six modules register with Edit Mode", function()
+h.test("all eight modules register with Edit Mode", function()
   withInit({}, function(ns, _, lem)
-    h.eq(lem.frames, 6)
-    for _, id in ipairs({ "player", "playercast", "target", "targettarget", "focus", "pet" }) do
+    h.eq(lem.frames, 8)
+    for _, id in ipairs({ "player", "playercast", "target", "targettarget", "focus", "pet", "party", "boss" }) do
       h.eq(ns.Modules.get(id) ~= nil and ns.Modules.get(id).frame ~= nil, true, id .. " frame")
       h.eq(ns.Modules.get(id).kind, "unit", id .. " kind")
     end
     h.eq(ns.Modules.get("spike"), nil, "no spike module")
     h.eq(ns.Modules.get("player").frame:GetName(), "AnotherHUDPlayerFrame")
     h.eq(ns.Modules.get("playercast").frame:GetName(), "AnotherHUDPlayerCastBarHolder")
+    h.eq(ns.Modules.get("party").frame:GetName(), "AnotherHUDParty")
+    h.eq(ns.Modules.get("boss").frame:GetName(), "AnotherHUDBoss")
     h.eq(ns.Modules.get("targettarget").frame:GetName(), "AnotherHUDTargetTargetFrame")
   end)
 end)
 
-h.test("checklist shows five unit frames", function()
+h.test("checklist shows seven unit frames", function()
   withInit({}, function(ns)
     local ids = {}
     for _, entry in ipairs(ns.EditMode.Checklist.entries()) do ids[#ids + 1] = entry.id end
-    h.eq(ids, { "player", "target", "targettarget", "focus", "pet" })
+    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss" })
   end)
 end)
 
@@ -114,7 +117,7 @@ h.test("labels and defaults fit", function()
   fakes.withGlobals({ GetLocale = function() return "deDE" end }, function() ns = h.load(h.toc()) end)
   h.eq(ns.Options.longLabels(ns.Modules.list(), ns.L, 24), {})
   for _, spec in ipairs(ns.Modules.list()) do
-    h.eq(ns.L[spec.label] ~= spec.label, true, spec.label .. " translated")
+    h.eq(ns.L[spec.label] ~= spec.label or spec.label == "Boss", true, spec.label .. " translated") -- "Boss" is the same word in German
   end
 end)
 
@@ -222,5 +225,84 @@ h.test("player off hides its detached cast bar", function()
     h.eq(holder:IsShown(), true, "holder back")
     h.eq(castParent(ns), holder)
     h.eq(client.drivers[player] ~= nil, true, "driver back")
+  end)
+end)
+
+h.test("party hides both Blizzard party frames", function()
+  withInit({}, function(ns, _, _, blizzard)
+    h.eq(ns.Modules.get("party").blizzard, { "PartyFrame", "CompactPartyFrame" })
+    for _, name in ipairs({ "PartyFrame", "CompactPartyFrame" }) do
+      h.eq(blizzard[name]:IsShown(), false, name .. " hidden")
+    end
+  end)
+end)
+
+h.test("boss hides the Blizzard boss container", function()
+  withInit({}, function(ns, _, _, blizzard)
+    h.eq(ns.Modules.get("boss").blizzard, { "BossTargetFrameContainer" })
+    h.eq(blizzard.BossTargetFrameContainer:IsShown(), false)
+  end)
+end)
+
+local function sectionsOf(spec)
+  local out = {}
+  for _, entry in ipairs(spec.settings) do
+    if out[#out] ~= entry.section then out[#out + 1] = entry.section end
+  end
+  return out
+end
+
+h.test("party panel sections in spec order", function()
+  withInit({}, function(ns)
+    h.eq(sectionsOf(ns.Modules.get("party")),
+      { "Group", "Size", "Text", "Look", "Behaviour", "Auras", "Fading" })
+  end)
+end)
+
+h.test("boss panel sections", function()
+  withInit({}, function(ns)
+    h.eq(sectionsOf(ns.Modules.get("boss")), { "Group", "Size", "Text", "Look", "Cast Bar", "Auras" })
+  end)
+end)
+
+h.test("party and boss samples and defaults", function()
+  withInit({}, function(ns)
+    local get = ns.Options.get
+    h.eq({ get("party", "width"), get("party", "height"), get("party", "powerHeight"), get("party", "auraSize") },
+      { 160, 40, 5, 20 })
+    h.eq({ get("boss", "width"), get("boss", "height"), get("boss", "castWidth"), get("boss", "gap") },
+      { 180, 42, 180, 12 })
+    h.eq(ns.Modules.get("party").defaultPosition, { point = "LEFT", x = 40, y = 120 })
+    h.eq(ns.Modules.get("boss").defaultPosition, { point = "RIGHT", x = -120, y = 120 })
+    ns.EditMode.Glue.inEditMode = function() return true end
+    local party, boss = ns.Modules.get("party"), ns.Modules.get("boss")
+    party.onEditMode(party, true)
+    boss.onEditMode(boss, true)
+    h.eq(party.members[1].bars.name:GetText(), "Arthelis")
+    h.eq(party.members[5].bars.name:GetText(), "Torvald")
+    h.eq(boss.members[1].bars.name:GetText(), "Vyrastra")
+    h.eq(boss.members[3].bars.name:GetText(), "The Hollow King")
+  end)
+end)
+
+h.test("every module's apply honors isEnabled", function()
+  withInit({}, function(ns, client)
+    local checked = 0
+    for _, spec in ipairs(ns.Modules.list()) do
+      if spec.frame and type(spec.apply) == "function" then
+        checked = checked + 1
+        ns.Modules.setEnabled(spec.id, false)
+        spec.apply(spec)
+        h.eq(spec.frame:IsShown(), false, spec.id .. " hidden when off")
+        h.eq(client.drivers[spec.frame], nil, spec.id .. " no driver when off")
+        ns.Modules.setEnabled(spec.id, true)
+        spec.apply(spec)
+        if not spec.parent then -- a child holder (playercast) shows only with its parent's setting
+          local on = spec.frame:IsShown() or client.drivers[spec.frame] ~= nil
+          h.eq(on, true, spec.id .. " shown or driven when on")
+        end
+      end
+    end
+    h.eq(checked >= 8, true, "all modules checked")
   end)
 end)

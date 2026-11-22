@@ -4,7 +4,8 @@ local ADDON, ns = ...
 --   ns.Units.defineGroup{ id, label, name (the holder's global name; members
 --     get name .. i), units (tokens in slot order), visibility (function ->
 --     the holder's driver string), mirror, castBar, auras, auraMode,
---     auraSide, castGap, badge, range, role, dispel, roles (Sort by Role and
+--     auraSide (Vertical only: Horizontal puts the auras under each frame),
+--     castGap, badge, range, role, dispel, roles (Sort by Role and
 --     Show Player apply), samples (one Edit Mode sample table per slot),
 --     parts, defaults, blizzard, defaultPosition,
 --     orderEvents (extra events on the holder that re-order, as
@@ -35,10 +36,15 @@ function ns.Units.defineGroup(o)
   end
 
   -- Show Player off turns the player's slot off (Base hides it, no driver).
+  -- Side-by-side frames (Horizontal) have no room beside them: the auras go
+  -- under each frame (Base's below placement); Vertical keeps o.auraSide.
   local function setSlots(spec)
     local show = showPlayer()
+    local side = o.auraSide or false
+    if opt("orientation") == "Horizontal" then side = false end
     for _, m in ipairs(spec.members) do
       m.slotOn = m.unit ~= "player" or show
+      m.auraSide = side
     end
   end
 

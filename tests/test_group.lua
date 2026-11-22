@@ -219,6 +219,27 @@ h.test("growth and orientation move the members", function()
   end)
 end)
 
+h.test("horizontal party puts each member's auras under its frame", function()
+  -- The aura line's anchor, with the relative frame as "member" when it is f.
+  local function auraPoint(f)
+    local p = lastPoint(f.auras.frame)
+    return { p[2], p[3] == f and "member" or "other", p[4], p[5], p[6] }
+  end
+  withUnits({}, { player = ME }, function(ns)
+    local spec = party(ns)
+    local m = spec.members[2]
+    h.eq(auraPoint(m), { "LEFT", "member", "RIGHT", 6, 0 }, "vertical: right")
+    ns.Options.set("party", "orientation", "Horizontal")
+    for i, f in ipairs(spec.members) do
+      h.eq(auraPoint(f), { "TOPLEFT", "member", "BOTTOMLEFT", 0, -f.L.below }, "member " .. i .. " auras below")
+      h.eq(f.auras.opts.mirror, false, "grows right")
+    end
+    h.eq(spec.frame._height, 40, "block keeps the frame height")
+    ns.Options.set("party", "orientation", "Vertical")
+    h.eq(auraPoint(m), { "LEFT", "member", "RIGHT", 6, 0 }, "right again")
+  end)
+end)
+
 h.test("boss blocks include the cast bar", function()
   withUnits({}, {}, function(ns, client)
     local spec = boss(ns)

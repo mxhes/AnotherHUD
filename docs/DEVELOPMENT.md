@@ -203,7 +203,10 @@ only while `UnitGUID` stays the same; a new or secret GUID and
 `UNIT_TARGET` / `PLAYER_TARGET_CHANGED` update everything). Every unit
 frame also runs a full `Base.update` from `HookScript("OnShow")`. Health /
 power events update only values and texts; the others (and the change
-events) also colors, portrait and level. `Base.update` passes every client
+events) also colors, portrait and level. A death, rez or disconnect arrives
+with `UNIT_HEALTH`: `Base.update` keeps the plain flags of the last update
+(`frame.deadState` / `frame.offlineState`) and repaints the bar colors when
+one changed, also on a values-only update. `Base.update` passes every client
 value through untouched (`UnitHealthPercent` / `UnitPowerPercent` with
 `CurveConstants.ScaleTo100` for the percent texts; without that API the
 text mode falls back, "Percent" to "None" and "Value + Percent" to
@@ -279,9 +282,21 @@ visibility driver: `o.visibility()`, `GroupLayout.partyVisibility` hides
 it with `[group:raid]`; unregistered and shown in Edit Mode, hidden when
 the module is off) and `group:<id>:order` (`place`: which slots exist, the
 order from `GroupLayout.order`, anchors from `GroupLayout.offsets`, the
-holder size). `place` runs on `GROUP_ROSTER_UPDATE`, `PLAYER_ROLES_ASSIGNED`
-(with `roles`) and every event in `o.orderEvents` (Boss passes
-`INSTANCE_ENCOUNTER_ENGAGE_UNIT`, since bosses fire neither roster event).
+holder size). `place` runs on `GROUP_ROSTER_UPDATE`, `PLAYER_ENTERING_WORLD`,
+`PLAYER_ROLES_ASSIGNED` (with `roles`) and every event in `o.orderEvents`
+(Boss passes `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, since bosses fire neither
+roster event). `GroupLayout.bossVisibility` shows the Boss holder only while
+a `boss1`-`boss5` unit exists, so the empty block is no invisible snap
+target. Only groups with `o.roster` (Party) give their members
+`GROUP_ROSTER_UPDATE` for a full update. Blizzard builds `CompactPartyFrame`
+late (raid-style party frames turned on), so the holder calls
+`Base.hideBlizzard(o.blizzard)` again on `GROUP_ROSTER_UPDATE` and
+`PLAYER_ENTERING_WORLD` (hidden frames are skipped) and hooks every function
+in `o.blizzardHooks` (Party: `CompactPartyFrame_Generate`) to do the same.
+`o.auraSide` places the aura line beside each member in Vertical
+orientation; in Horizontal the group's apply sets each member's
+`frame.auraSide` to `false` before `Base.applyFrame`, so the auras sit
+`L.below` under each frame (the block height stays the frame height).
 `UnitExists` and `UnitGroupRolesAssigned` answers are only read when plain
 (`GroupLayout` skips secrets). Range has no event: with `o.range` the holder
 `OnUpdate` calls `Base.fade` on every shown member each
@@ -303,7 +318,7 @@ nothing shown. A second way to turn frames on and off (Settings window, a
 profile switch) relies on this; the test "every module's `apply` honors
 `isEnabled`" (`tests/test_units.lua`) pins it for every defined module.
 
-*(Filled in as built.)* Planned topics: secret values and how texts are formatted, party header attributes, sample data in Edit Mode, skinning
+*(Filled in as built.)* Planned topics: secret values and how texts are formatted, member frames, sample data in Edit Mode, skinning
 Blizzard action buttons.
 
 ## Secret values and taint

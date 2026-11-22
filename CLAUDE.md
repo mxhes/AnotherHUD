@@ -29,7 +29,7 @@ Docs:
 ## Architecture (planned; details in `docs/DEVELOPMENT.md`)
 
 - **Modules.** Every replaced frame is one `ns.Modules.define{...}` in its own file (`Units/` or `Bars/`). Its `settings` list feeds both the Edit Mode panel and the Settings window. UI and Edit Mode code never name a module. New frame = new file + `.toc` line.
-- **Unit frames are ours** (`SecureUnitButtonTemplate`, party via `SecureGroupHeaderTemplate`); Blizzard's are hidden. **Action bars are Blizzard's, re-skinned**; Blizzard keeps clicks, paging, cooldowns, procs, keybinds.
+- **Unit frames are ours** (`SecureUnitButtonTemplate`; Party and Boss as fixed member frames in a holder (`Units/Group.lua`)); Blizzard's are hidden. **Action bars are Blizzard's, re-skinned**; Blizzard keeps clicks, paging, cooldowns, procs, keybinds.
 - **Edit Mode** goes through LibEditMode (unmodified, packager external) plus `EditMode/` glue: settings panels, snapping, checklist toggles. Positions per Edit Mode layout; look settings per profile.
 - **Pure vs client code** as in AnotherLedger: files in `Core/` are plain Lua and tested with `h.load`; client calls only inside functions, never at file load.
 - **Look** lives in `Core/Theme.lua` (colors, fonts, sizes, textures); change it there, not in UI files.

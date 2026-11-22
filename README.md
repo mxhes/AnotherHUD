@@ -20,7 +20,7 @@ AnotherHUD draws seven unit frames and hides Blizzard's in their place. Turn sin
 
 Move every frame in Edit Mode: with Edit Mode open each one shows sample data, so you can place it without a target. Click a frame to open its settings panel. The sections are:
 
-- **Group** (Party and Boss): how the frames are stacked (vertical or horizontal), which way new frames are added and the gap between them; Party also has Sort by role (tanks, then healers, then damage) and Show player.
+- **Group** (Party and Boss): how the frames are stacked (vertical or horizontal), which way new frames are added and the gap between them; stacked horizontally, each party member's auras sit under its frame instead of beside it; Party also has Sort by role (tanks, then healers, then damage) and Show player.
 - **Size**: width and height, portrait scale and power bar height.
 - **Text**: what the name, health and power texts show, and the text size.
 - **Look**: skin, class colors and bar texture.

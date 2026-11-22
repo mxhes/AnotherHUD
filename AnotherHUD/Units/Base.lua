@@ -142,8 +142,9 @@ function Base.fade(frame)
 end
 
 -- Everything from the client into the parts (valuesOnly: bars and texts,
--- not the colors, portrait, level and role). No unit: texts cleared,
--- nothing else read.
+-- not the colors, portrait, level and role; the bar colors too when the
+-- plain dead / offline flag changed). No unit: texts cleared, nothing else
+-- read.
 function Base.update(frame, valuesOnly)
   if frame.sampling then return end
   local unit, bars, ring = frame.unit, frame.bars, frame.ring
@@ -183,7 +184,11 @@ function Base.update(frame, valuesOnly)
   end
 
   bars:setTexts((UnitName(unit)), healthFmt, healthArgs, powerFmt, powerArgs)
-  if valuesOnly then return end
+  -- UNIT_HEALTH is a values-only event, but it is the one a death or a rez
+  -- arrives with: a changed dead / offline flag also repaints the bars.
+  local changed = dead ~= frame.deadState or offline ~= frame.offlineState
+  frame.deadState, frame.offlineState = dead, offline
+  if valuesOnly and not changed then return end
 
   local r, g, b = ns.UnitColor.health({
     isPlayer = UnitIsPlayer(unit), class = select(2, UnitClass(unit)),
@@ -191,6 +196,7 @@ function Base.update(frame, valuesOnly)
     dead = dead, offline = offline,
   })
   bars:setColors({ r, g, b }, powerRGB)
+  if valuesOnly then return end
 
   ring:setColors(ns.UnitColor.ring(UnitClassification(unit)))
   ring:setUnit(unit)
@@ -396,6 +402,8 @@ function Base.create(spec, o)
   frame.castGap, frame.auraSide = o.castGap or false, o.auraSide or false
   frame.sampleFn, frame.sampleState = o.sample or false, false
   frame.role, frame.dispel = false, false
+  -- The plain dead / offline flags of the last update (Base.update).
+  frame.deadState, frame.offlineState = false, false
   if not o.member then spec.frame = frame end
   ns.Combat.after("unit:" .. key .. ":init", function()
     frame:SetAttribute("unit", unit)

@@ -526,6 +526,43 @@ h.test("dead member: grey bar, empty power", function()
   end)
 end)
 
+h.test("member dies and is rezzed on health events alone", function()
+  withUnits({}, { party1 = { exists = true, name = "Torvald", dead = false, connected = true, isPlayer = true,
+    class = "HUNTER", health = 50, healthMax = 100 } }, function(ns, client, units)
+    local frame = member(ns, define(ns, "party"), {})
+    h.eq(frame.bars.healthRGB, { 1, 1, 1 }, "class color")
+    local full = units.calls.UnitClassification
+    units.set("party1", "dead", true)
+    client.fire("UNIT_HEALTH", "party1")
+    h.eq(frame.bars.healthRGB, { 0.35, 0.35, 0.35 }, "grey on death")
+    units.set("party1", "dead", false)
+    client.fire("UNIT_HEALTH", "party1")
+    h.eq(frame.bars.healthRGB, { 1, 1, 1 }, "class color back on rez")
+    units.set("party1", "connected", false)
+    client.fire("UNIT_HEALTH", "party1")
+    h.eq(frame.bars.healthRGB, { 0.3, 0.3, 0.3 }, "offline grey")
+    h.eq(units.calls.UnitClassification, full, "still values-only updates")
+  end)
+end)
+
+h.test("target dies and is rezzed on health events alone", function()
+  withUnits({}, { target = { exists = true, name = "Boar", dead = false, connected = true, isPlayer = false,
+    reaction = 2, health = 50, healthMax = 100 } }, function(ns, client, units)
+    local frame = make(ns, define(ns))
+    local hostile = ns.Theme.unitColors.hostile
+    local rgb = { hostile[1], hostile[2], hostile[3] }
+    h.eq(frame.bars.healthRGB, rgb, "reaction color")
+    units.set("target", "dead", true)
+    client.fire("UNIT_HEALTH", "target")
+    h.eq(frame.bars.healthRGB, { 0.35, 0.35, 0.35 }, "grey on death")
+    client.fire("UNIT_HEALTH", "target")
+    h.eq(frame.bars.healthRGB, { 0.35, 0.35, 0.35 }, "stays grey")
+    units.set("target", "dead", false)
+    client.fire("UNIT_HEALTH", "target")
+    h.eq(frame.bars.healthRGB, rgb, "reaction color back on rez")
+  end)
+end)
+
 h.test("secret dead flag keeps class color", function()
   local pw = fakes.secret(2)
   withUnits({}, { party1 = { exists = true, dead = fakes.secret(1), connected = fakes.secret(3),

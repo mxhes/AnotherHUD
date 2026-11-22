@@ -160,6 +160,9 @@ Results:
   frames work, no Lua errors and no blocked / forbidden action messages.
   The items above were not checked one by one and the taint log was not
   captured, so they stay open until a closer pass.
+- 2026-11-22, Plan 4 (Party and Boss) run by the player: "all works".
+  The Plan 4 items were not reported one by one, so they stay open until a
+  closer pass.
 
 ## Edit Mode spike (Plan 1, Task 7)
 

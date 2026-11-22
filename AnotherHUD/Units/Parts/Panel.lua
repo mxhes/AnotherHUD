@@ -53,10 +53,10 @@ function Panel.create(parent)
   return self
 end
 
--- opts = { skin } (a Theme.skins entry).
+-- opts = { skin } (a Theme.skins entry; Classic when missing).
 function Panel:layout(L, opts)
   local T = ns.Theme
-  local border = opts.skin.border
+  local border = ((opts and opts.skin) or T.skins.classic).border
   local frame = self.frame
   frame:SetBackdrop(T.backdropSpec(border))
   local bg, edge = T.colors.panelTint, T.colors.panelBorder

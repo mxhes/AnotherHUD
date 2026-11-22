@@ -97,11 +97,11 @@ function Ring:paint()
   self.level:SetTextColor(g[1], g[2], g[3], g[4] or 1)
 end
 
--- opts = { skin } (a Theme.skins entry).
+-- opts = { skin } (a Theme.skins entry; Classic when missing).
 function Ring:layout(L, opts)
   local T = ns.Theme
   local frame, r = self.frame, L.ring
-  local border = opts.skin.border
+  local border = ((opts and opts.skin) or T.skins.classic).border
   local list = shades(border)
   local n = #list
   self.shades = list

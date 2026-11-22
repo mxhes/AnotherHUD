@@ -69,6 +69,10 @@ function methods.GetAlpha(self) return self._alpha or 1 end
 function methods.SetAlphaFromBoolean(self, b, yes, no) self._alphaFrom = { b, yes, no } end
 function methods.SetTimerDuration(self, d, interp, dir) self._timer = { d, interp, dir } end
 function methods.SetSize(self, w, h) self._width, self._height = w, h end
+-- SetVertexColor / SetTextColor keep { r, g, b, a } (a as given, may be nil).
+function methods.SetVertexColor(self, r, g, b, a) self._color = { r, g, b, a } end
+function methods.SetTextColor(self, r, g, b, a) self._textColor = { r, g, b, a } end
+function methods.SetFont(self, file, size, flags) self._font = { file, size, flags } end
 function methods.SetWidth(self, w) self._width = w end
 function methods.SetHeight(self, h) self._height = h end
 function methods.UnregisterEvent(self, ev) self._events[ev] = nil end

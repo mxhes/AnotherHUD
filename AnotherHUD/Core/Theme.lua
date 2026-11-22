@@ -132,7 +132,10 @@ Theme.sizes = {
   -- Unit frames.
   unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
     castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
-    interruptHold = 0.6, badgeFont = 10 },
+    interruptHold = 0.6, badgeFont = 10,
+    -- Bar texts: the font size before a layout sets one, and the share of
+    -- the health bar width the name may take (the value text keeps the rest).
+    textFont = 11, nameShare = 0.6 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which
@@ -212,7 +215,7 @@ Theme.skinOrder = { "classic", "forge", "slate", "gilded" }
 -- dark / light line, the raised buttons' light / dark edge, how far Plain
 -- moves a line color toward grey and the panel, the sunken list fill.
 Theme.skinScales = {
-  edgeDark = 0.2, edgeLight = 1.7, grooveDark = 0.3, grooveLight = 2.0,
+  edgeDark = 0.2, edgeLight = 1.7, grooveDark = 0.3, grooveLight = 2.0, grooveLightAlpha = 0.55,
   raisedLight = 3.5, raisedDark = 0.3, plainMix = 0.5, listBox = 0.5,
 }
 

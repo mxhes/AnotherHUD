@@ -21,27 +21,37 @@ local function statusBar(parent)
 end
 
 local function font(parent)
-  return parent:CreateFontString(nil, "OVERLAY")
+  local fs = parent:CreateFontString(nil, "OVERLAY")
+  -- A font from the start, so texts set before the first layout show.
+  fs:SetFont(ns.Theme.fonts.file, ns.Theme.sizes.unit.textFont, "OUTLINE")
+  fs:SetWordWrap(false)
+  return fs
 end
 
 local function line(parent)
   return parent:CreateTexture(nil, "OVERLAY")
 end
 
+-- Frame levels, bottom up: the Groove light line (on `frame` itself, under
+-- the bars, which cover it as in the mockup), the bars, then the divider and
+-- the texts (on `top`).
 function Bars.create(parent)
+  local base = parent:GetFrameLevel() or 0
+  local levels = { groove = base + 1, power = base + 2, divider = base + 3 }
   local frame = CreateFrame("Frame", nil, parent)
   frame:SetAllPoints(parent)
-  frame:SetFrameLevel((parent:GetFrameLevel() or 0) + 1)
-  local self = setmetatable({ frame = frame, parent = parent }, Bars)
+  frame:SetFrameLevel(levels.groove)
+  local self = setmetatable({ frame = frame, parent = parent, levels = levels }, Bars)
   self.health = statusBar(frame)
   self.power = statusBar(frame)
-  -- Lines and texts sit above the bars.
+  self.health:SetFrameLevel(levels.power)
+  self.power:SetFrameLevel(levels.power)
+  self.groove = line(frame)
   local top = CreateFrame("Frame", nil, frame)
   top:SetAllPoints(frame)
-  top:SetFrameLevel((frame:GetFrameLevel() or 0) + 2)
+  top:SetFrameLevel(levels.divider)
   self.top = top
   self.divider = line(top)
-  self.groove = line(top)
   self.name = font(top)
   self.healthText = font(top)
   self.powerText = font(top)
@@ -70,11 +80,14 @@ function Bars:paint()
   if self.powerRGB then paintBar(self.power, self.powerRGB, tex) end
 end
 
--- The divider in the skin's Lines pick: Gold one line, Groove a dark line
--- with a light one under it, Plain greyed toward the panel, Dotted tiled.
+-- The divider in the skin's Lines pick (docs/mockups/kit.js `rule`): Gold
+-- and Dotted at the divider alpha, Groove a dark line (alpha 1) with a light
+-- one under it (grooveLightAlpha), Plain greyed toward the panel (alpha 1).
 local function styleDivider(self, lines)
   local T = ns.Theme
   local main, second = T.lineColors(lines, T.colors.goldLine, T.colors.panelTint)
+  local alpha = 1
+  if lines ~= "groove" and lines ~= "plain" then alpha = T.colors.divider[4] end
   local d = self.divider
   local dotted = false
   if lines == "dotted" then
@@ -82,10 +95,10 @@ local function styleDivider(self, lines)
   end
   if not dotted then d:SetTexture(T.textures.line) end
   d:SetHorizTile(dotted)
-  d:SetVertexColor(main[1], main[2], main[3], main[4] or 1)
+  d:SetVertexColor(main[1], main[2], main[3], alpha)
   if second then
     self.groove:SetTexture(T.textures.line)
-    self.groove:SetVertexColor(second[1], second[2], second[3], second[4] or 1)
+    self.groove:SetVertexColor(second[1], second[2], second[3], T.skinScales.grooveLightAlpha)
   end
   return second ~= nil
 end
@@ -120,7 +133,7 @@ function Bars:layout(L, opts)
   if p then
     span(self.power, frame, L, bars.left, bars.right, p.top, p.bottom - p.top)
     span(self.divider, frame, L, bars.left, bars.right, p.top - 1, 1)
-    local skin = opts.skin or T.skins.classic
+    local skin = opts.skin or T.skins.classic -- Classic when missing, like Panel / Ring
     local groove = styleDivider(self, skin.lines)
     span(self.groove, frame, L, bars.left, bars.right, p.top, 1)
     self.power:Show()
@@ -147,6 +160,10 @@ function Bars:layout(L, opts)
   setFont(self.healthText, size)
   anchorText(self.name, frame, nearSide, near, midH)
   anchorText(self.healthText, frame, farSide, far, midH)
+  -- The name takes nameShare of the bar, the value the rest (4 px insets).
+  local bw, share = bars.right - bars.left, T.sizes.unit.nameShare
+  self.name:SetWidth(bw * share - 4)
+  self.healthText:SetWidth(bw * (1 - share) - 4)
   if opts.showName == false then self.name:Hide() else self.name:Show() end
 
   if p and L.powerText then

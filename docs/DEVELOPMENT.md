@@ -190,7 +190,9 @@ events with `RegisterUnitEvent`, the cast events (to `cast:update`), the
 unit's change event (`PLAYER_TARGET_CHANGED`, `PLAYER_FOCUS_CHANGED`,
 `UNIT_TARGET` of `target`, `UNIT_PET` of `player`), `PLAYER_ENTERING_WORLD`,
 and `PLAYER_REGEN_DISABLED` / `_ENABLED` for fading. `targettarget` gets no
-unit events: it refreshes every 0.2 s from `OnUpdate` while shown. Health /
+unit events: it refreshes every 0.2 s from `OnUpdate` while shown (values
+only while `UnitGUID` stays the same; a new or secret GUID and
+`UNIT_TARGET` update everything). Health /
 power events update only values and texts; the others (and the change
 events) also colors, portrait and level. `Base.update` passes every client
 value through untouched (`UnitHealthPercent` / `UnitPowerPercent` with
@@ -207,10 +209,14 @@ or `L.below` under the frame, and sets the state driver
 `onEditMode`) the driver goes, the frame shows a plain sample (health 72%,
 power 55%, the unit's label or the player's name, the cast bar and aura
 samples) at full opacity; on close the driver comes back and `Base.update`
-runs. `Base.hideBlizzard(names)` hides each Blizzard frame once, out of
-combat: `UnregisterAllEvents`, reparent to one hidden frame of ours (made on
-first use), and a `hooksecurefunc(frame, "Show", ...)` that hides it again
-(queued in combat).
+runs (and a running cast is picked up). `Base.hideBlizzard(names)` hides
+each Blizzard frame once it exists, out of combat: `UnregisterAllEvents` on
+it and its child bars (`healthbar`, `manabar`, `spellbar`, `totFrame`,
+`powerBarAlt`), reparent to one hidden frame of ours (made on first use),
+a `hooksecurefunc(frame, "Show", ...)` that hides it again (a protected
+frame in combat: queued), and a `SetParent` hook that parks it again
+(queued in combat). A name whose frame is missing is tried again by the
+next call.
 
 *(Filled in as built.)* Planned topics: secret values and how texts are formatted, party header attributes, sample data in Edit Mode, skinning
 Blizzard action buttons.

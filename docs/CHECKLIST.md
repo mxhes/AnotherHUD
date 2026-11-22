@@ -68,8 +68,12 @@ and remove both once it is confirmed.
   taint log; `UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)` and
   `UnitPowerPercent(unit, type, false, CurveConstants.ScaleTo100)` give the
   percent texts 0-100; the tooltip shows on hover
-  (`GameTooltip_SetDefaultAnchor`, `GameTooltip:SetUnit`); Target of Target
-  follows its unit within 0.2 s.
+  (`GameTooltip_SetDefaultAnchor`, `GameTooltip:SetUnit`) and another
+  addon's tooltip is not hidden on leave (`GameTooltip:IsOwned`); Target of
+  Target follows its unit within 0.2 s (values only while `UnitGUID` stays
+  the same); the Blizzard cast bar stays hidden after an Edit Mode layout
+  switch / lock-to-player toggle (the `SetParent` hook parks it again);
+  the right-click menu on the Target frame works with the gamepad UI.
 
 ### Edit Mode spike (Plan 1, Task 7)
 

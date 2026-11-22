@@ -288,18 +288,29 @@ function Base.create(spec, o)
     self.hover = false
     Base.fade(self)
     local tip = _G.GameTooltip
-    if tip then tip:Hide() end
+    if tip and type(tip.IsOwned) == "function" and tip:IsOwned(self) then tip:Hide() end
   end)
 
   registerEvents(frame, unit, o.castBar)
   if unit == "targettarget" then
-    -- No unit events for targettarget: a refresh every THROTTLE s while shown.
-    frame.elapsed = 0
+    -- No unit events for targettarget: a refresh every THROTTLE s while
+    -- shown; values only while the GUID stays the same (a secret or missing
+    -- GUID counts as new).
+    frame.elapsed, frame.guid = 0, false
     frame:HookScript("OnUpdate", function(self, elapsed)
       self.elapsed = self.elapsed + (elapsed or 0)
       if self.elapsed < THROTTLE then return end
       self.elapsed = 0
-      Base.update(self)
+      local guid = maybe(_G.UnitGUID, self.unit)
+      if guid == nil or ns.Util.isSecret(guid) then
+        self.guid = false
+        Base.update(self)
+      elseif guid ~= self.guid then
+        self.guid = guid
+        Base.update(self)
+      else
+        Base.update(self, true)
+      end
     end)
   end
   return frame
@@ -377,6 +388,8 @@ function Base.editMode(spec, active)
       if not frame.sampling then RegisterStateDriver(frame, "visibility", visibility(frame)) end
     end)
     Base.update(frame)
+    -- A cast that started while the sample showed.
+    if castOn(frame) then frame.cast:update("PLAYER_ENTERING_WORLD", frame.unit) end
   end
   Base.fade(frame)
 end
@@ -389,26 +402,54 @@ local function hiddenFrame()
   return hiddenParent
 end
 
--- Hides Blizzard frames by name, once each, out of combat: events off,
--- reparented to our hidden frame, hidden again whenever they show.
+-- The child bars of Blizzard unit frames that register their own events.
+local CHILDREN = { "healthbar", "manabar", "spellbar", "totFrame", "powerBarAlt" }
+
+-- Hides `f` now unless it is protected and we are in combat (then after).
+local function hideNow(f, key)
+  local protected = type(f.IsProtected) == "function" and f:IsProtected()
+  if not protected or not InCombatLockdown() then
+    f:Hide()
+  else
+    ns.Combat.after(key, function() f:Hide() end)
+  end
+end
+
+-- Hides Blizzard frames by name, once each, out of combat: events off (also
+-- on their child bars), reparented to our hidden frame, hidden again
+-- whenever they show and parked again whenever something reparents them
+-- (Edit Mode layout switches, "lock to player frame"). A frame that does
+-- not exist yet is tried again by a later call.
 -- UNVERIFIED (check in client): hiding PlayerFrame / TargetFrame / FocusFrame
 -- / PetFrame / PlayerCastingBarFrame this way causes no taint.
 function Base.hideBlizzard(names)
   for _, name in ipairs(names) do
-    if not hidden[name] then
+    local key = "hide:" .. name
+    ns.Combat.after(key, function()
+      local f = _G[name]
+      if hidden[name] or type(f) ~= "table" then return end
       hidden[name] = true
-      local key = "hide:" .. name
-      ns.Combat.after(key, function()
-        local f = _G[name]
-        if type(f) ~= "table" then return end
-        f:UnregisterAllEvents()
-        f:SetParent(hiddenFrame())
-        f:Hide()
-        hooksecurefunc(f, "Show", function(self)
-          ns.Combat.after(key, function() self:Hide() end)
+      local parent = hiddenFrame()
+      f:UnregisterAllEvents()
+      for _, child in ipairs(CHILDREN) do
+        local c = rawget(f, child)
+        if type(c) == "table" and type(c.UnregisterAllEvents) == "function" then
+          pcall(c.UnregisterAllEvents, c)
+        end
+      end
+      f:SetParent(parent)
+      f:Hide()
+      hooksecurefunc(f, "Show", function(self) hideNow(self, key .. ":show") end)
+      local parking = false
+      hooksecurefunc(f, "SetParent", function(self, p)
+        if parking or p == parent then return end
+        ns.Combat.after(key .. ":parent", function()
+          parking = true
+          self:SetParent(parent)
+          parking = false
         end)
       end)
-    end
+    end)
   end
 end
 

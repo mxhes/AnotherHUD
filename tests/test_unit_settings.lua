@@ -118,3 +118,16 @@ h.test("English labels fit 24 glyphs", function()
     end
   end
 end)
+
+h.test("unit overrides only apply to keys a section produced", function()
+  local _, defaults = load().Units.Settings.build({ "Size", power = false }, { powerHeight = 8, bogus = 1 })
+  h.eq(defaults.powerHeight, nil)
+  h.eq(defaults.bogus, nil)
+end)
+
+h.test("unknown section name raises", function()
+  local S = load().Units.Settings
+  local ok, err = pcall(S.build, { "Size", "Cast bar" }, {})
+  h.eq(ok, false)
+  h.eq(tostring(err):find("Cast bar", 1, true) ~= nil, true)
+end)

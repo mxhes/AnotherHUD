@@ -124,11 +124,12 @@ function Settings.build(parts, defaults)
   local merged, settings = {}, {}
   for _, name in ipairs(parts) do
     local builder = builders[name]
-    if builder then
-      settings[#settings + 1] = { section = name, controls = builder(merged, opts) }
-    end
+    if not builder then error("Units.Settings.build: unknown section '" .. tostring(name) .. "'", 2) end
+    settings[#settings + 1] = { section = name, controls = builder(merged, opts) }
   end
-  for key, value in pairs(defaults or {}) do merged[key] = value end
+  for key, value in pairs(defaults or {}) do
+    if merged[key] ~= nil then merged[key] = value end
+  end
   return settings, merged
 end
 

@@ -28,6 +28,15 @@ Theme.textures = {
   disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
   spark = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Spark",
   shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
+  -- Group frames: role glyphs (colored, 32 x 32), the leader crown (32 x 24)
+  -- and a white 9-slice glow frame (slice margin Theme.sizes.unit.glowSlice).
+  role = {
+    TANK = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleTank",
+    HEALER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleHealer",
+    DAMAGER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleDamage",
+  },
+  crown = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Crown",
+  glow = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Glow",
   -- A plain white tile for 1 px lines (unit frame edges and dividers).
   line = "Interface\\Buttons\\WHITE8X8",
   -- The placeholder icon of Edit Mode samples (cast bar, auras).
@@ -139,7 +148,7 @@ Theme.sizes = {
   -- Unit frames.
   unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
     castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
-    interruptHold = 0.6, badgeFont = 10,
+    interruptHold = 0.6, badgeFont = 10, glowSlice = 12,
     -- Bar texts: the font size before a layout sets one, and the share of
     -- the health bar width the name may take (the value text keeps the rest).
     textFont = 11, nameShare = 0.6,

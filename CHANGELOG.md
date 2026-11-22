@@ -7,3 +7,4 @@
 - Focus frame.
 - Pet frame.
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
+- A frame turned off in the Edit Mode box goes away at once and stays off.

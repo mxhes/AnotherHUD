@@ -15,12 +15,13 @@ local function fakeLem()
   end
   function lem:AddFrameSettings() end
   function lem:AddFrameSettingsButtons() end
-  function lem:RegisterCallback() end
+  lem.callbacks = {}
+  function lem:RegisterCallback(name, fn) self.callbacks[name] = fn end
   function lem:GetActiveLayoutName() return "Modern" end
   return lem
 end
 
--- Runs fn(ns, client, lem, blizzard) after Core.init; restores the unit API
+-- Runs fn(ns, client, lem, blizzard, units) after Core.init; restores the unit API
 -- first, then the client, even on failure.
 local function withInit(opts, fn)
   local client = fakes.client(opts)
@@ -40,7 +41,7 @@ local function withInit(opts, fn)
     local ns = h.load(h.toc())
     ns.Util.say = function() end
     ns.Core.init()
-    fn(ns, client, lem, blizzard)
+    fn(ns, client, lem, blizzard, units)
   end)
   units.restore()
   client.restore()
@@ -160,5 +161,66 @@ h.test("blizzard frames hidden at init", function()
       h.eq(f:GetParent() ~= nil and f:GetParent() ~= UIParent, true, name .. " reparented")
       h.eq(f:IsShown(), false, name .. " hidden")
     end
+  end)
+end)
+
+h.test("a frame turned off stays off until turned on", function()
+  withInit({}, function(ns, client, lem, _, units)
+    local spec = ns.Modules.get("targettarget")
+    local frame = spec.frame
+    h.eq(client.drivers[frame] ~= nil, true, "driver at login")
+    lem.callbacks.enter()
+    ns.EditMode.Checklist.toggle("targettarget", false)
+    h.eq(frame:IsShown(), false, "hidden at once")
+    h.eq(client.drivers[frame], nil, "no driver")
+    lem.callbacks.exit()
+    h.eq(frame:IsShown(), false, "still hidden after Edit Mode")
+    h.eq(client.drivers[frame], nil, "no driver after Edit Mode")
+    units.set("targettarget", "exists", true)
+    units.set("targettarget", "name", "Tank")
+    client.fire("UNIT_TARGET", "target")
+    client.fire("PLAYER_TARGET_CHANGED")
+    h.eq(frame:IsShown(), false, "unit change keeps it hidden")
+    h.eq(client.drivers[frame], nil)
+    lem.callbacks.enter()
+    h.eq(frame:IsShown(), false, "no sample while off")
+    h.eq(frame.sampling, false)
+    h.eq(frame.bars.name:GetText() ~= ns.L["Target of Target"], true, "no sample name")
+    lem.callbacks.exit()
+    ns.EditMode.Checklist.toggle("targettarget", true)
+    h.eq(client.drivers[frame] ~= nil, true, "driver back")
+    h.eq(frame.bars.name:GetText(), "Tank", "frame updates")
+  end)
+end)
+
+h.test("a frame turned on in Edit Mode shows its sample", function()
+  withInit({}, function(ns, client, lem)
+    local frame = ns.Modules.get("focus").frame
+    lem.callbacks.enter()
+    ns.EditMode.Checklist.toggle("focus", false)
+    h.eq(frame:IsShown(), false)
+    h.eq(frame.sampling, false)
+    ns.EditMode.Checklist.toggle("focus", true)
+    h.eq(frame:IsShown(), true, "shown again")
+    h.eq(frame.sampling, true, "sample again")
+    h.eq(client.drivers[frame], nil, "no driver while editing")
+    lem.callbacks.exit()
+    h.eq(client.drivers[frame] ~= nil, true, "driver after Edit Mode")
+  end)
+end)
+
+h.test("player off hides its detached cast bar", function()
+  withInit({}, function(ns, client)
+    local player, holder = ns.Modules.get("player").frame, ns.Modules.get("playercast").frame
+    ns.Options.set("player", "castDetach", true)
+    h.eq(holder:IsShown(), true)
+    ns.EditMode.Checklist.toggle("player", false)
+    h.eq(player:IsShown(), false, "player hidden")
+    h.eq(holder:IsShown(), false, "holder hidden")
+    h.eq(client.drivers[player], nil)
+    ns.EditMode.Checklist.toggle("player", true)
+    h.eq(holder:IsShown(), true, "holder back")
+    h.eq(castParent(ns), holder)
+    h.eq(client.drivers[player] ~= nil, true, "driver back")
   end)
 end)

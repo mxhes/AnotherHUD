@@ -7,9 +7,12 @@ local ADDON, ns = ...
 -- is parented and anchored to the holder and the holder is shown. Off: the
 -- holder stays hidden, so Edit Mode can't select it, and the bar hangs
 -- under the Player frame. Shown and moved together through Combat.after.
+-- Also off while the Player is turned off (Player's apply re-applies the
+-- holder, so the holder hides with it).
 local function detached()
   local get = ns.Options.get
-  return get("player", "castBar") == true and get("player", "castDetach") == true
+  return ns.Modules.isEnabled("player") and get("player", "castBar") == true
+    and get("player", "castDetach") == true
 end
 
 local function apply(spec)

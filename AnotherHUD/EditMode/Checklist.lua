@@ -26,14 +26,19 @@ function Checklist.entries()
   return out
 end
 
--- Turns a module on or off: stores the flag, shows / hides its frame (out
--- of combat), creates and registers it when it was off at login. Says
+-- Turns a module on or off: stores the flag, re-applies the module (its
+-- apply reads the flag) or else shows / hides its frame (out of combat),
+-- creates and registers it when it was off at login. Says
 -- when a /reload is needed (the module hides Blizzard frames). Returns
 -- whether a reload is needed.
 function Checklist.toggle(id, on)
   local needsReload = ns.Modules.setEnabled(id, on)
   local spec = ns.Modules.get(id)
-  if spec and spec.frame then
+  if spec and spec.frame and type(spec.apply) == "function" then
+    -- The module's own apply honors the flag (unit frames: state driver
+    -- off and hidden, or back with their values / Edit Mode sample).
+    spec.apply(spec)
+  elseif spec and spec.frame then
     local frame = spec.frame
     ns.Combat.after("show:" .. id, function()
       if on then frame:Show() else frame:Hide() end

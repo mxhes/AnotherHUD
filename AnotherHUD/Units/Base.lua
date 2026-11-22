@@ -23,7 +23,7 @@ local UNIT_EVENTS = {
 local CHANGE = {
   target = { "PLAYER_TARGET_CHANGED" },
   focus = { "PLAYER_FOCUS_CHANGED" },
-  targettarget = { "UNIT_TARGET", "target" },
+  targettarget = { "UNIT_TARGET", "target" }, -- plus PLAYER_TARGET_CHANGED (registerEvents)
   pet = { "UNIT_PET", "player" },
 }
 
@@ -55,8 +55,25 @@ end
 
 local function abbr(v)
   local f = _G.AbbreviateNumbers
+  -- UNVERIFIED (check in client): AbbreviateNumbers accepts secret health /
+  -- power values.
   if type(f) == "function" then return f(v) end
   return v
+end
+
+-- The text mode to use when the client may lack the percent API: no
+-- percent, so "Percent" shows nothing and "Value + Percent" only the value
+-- (plain logic on the mode string; SetFormattedText never gets a missing
+-- argument).
+local function textMode(mode, hasPercent)
+  if hasPercent then return mode end
+  if mode == "Percent" then return "None" end
+  if mode == "Value + Percent" then return "Value" end
+  return mode
+end
+
+local function enabled(frame)
+  return ns.Modules.isEnabled(frame.id)
 end
 
 local function plainBool(v)
@@ -111,7 +128,8 @@ function Base.update(frame, valuesOnly)
   -- answer 0..100 (secret in combat).
   local hpPct = maybe(_G.UnitHealthPercent, unit, true, scale)
   bars:setHealth(hp, hpMax)
-  local healthFmt, healthArgs = ns.UnitText.bar(opt(frame, "healthText") or "None",
+  local healthMode = textMode(opt(frame, "healthText") or "None", type(_G.UnitHealthPercent) == "function")
+  local healthFmt, healthArgs = ns.UnitText.bar(healthMode,
     { cur = hp, max = hpMax, pct = hpPct, dead = dead, offline = offline }, abbr)
 
   local powerFmt, powerArgs, powerRGB = "", {}, nil
@@ -121,7 +139,8 @@ function Base.update(frame, valuesOnly)
     if ns.Util.isSecret(token) then token = nil end
     local pwPct = maybe(_G.UnitPowerPercent, unit, ptype, false, scale)
     bars:setPower(pw, pwMax)
-    powerFmt, powerArgs = ns.UnitText.bar(opt(frame, "powerText") or "None",
+    local powerMode = textMode(opt(frame, "powerText") or "None", type(_G.UnitPowerPercent) == "function")
+    powerFmt, powerArgs = ns.UnitText.bar(powerMode,
       { cur = pw, max = pwMax, pct = pwPct, dead = dead, offline = offline }, abbr)
     powerRGB = { ns.UnitColor.power(token) }
   end
@@ -241,6 +260,9 @@ local function registerEvents(frame, unit, castBar)
   if change then
     if change[2] then frame:RegisterUnitEvent(change[1], change[2]) else frame:RegisterEvent(change[1]) end
   end
+  -- A new target is a new target of target at once (no stale name until
+  -- the next throttled refresh).
+  if unit == "targettarget" then frame:RegisterEvent("PLAYER_TARGET_CHANGED") end
   frame:RegisterEvent("PLAYER_ENTERING_WORLD")
   frame:RegisterEvent("PLAYER_REGEN_DISABLED")
   frame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -291,6 +313,10 @@ function Base.create(spec, o)
     if tip and type(tip.IsOwned) == "function" and tip:IsOwned(self) then tip:Hide() end
   end)
 
+  -- Shown by the state driver (a new unit): its values at once, not from
+  -- the last unit it showed.
+  frame:HookScript("OnShow", function(self) Base.update(self) end)
+
   registerEvents(frame, unit, o.castBar)
   if unit == "targettarget" then
     -- No unit events for targettarget: a refresh every THROTTLE s while
@@ -316,11 +342,31 @@ function Base.create(spec, o)
   return frame
 end
 
+-- A frame turned off in the Edit Mode checklist: sample off, state driver
+-- gone, hidden (out of combat; under both secure keys, so a queued apply or
+-- Edit Mode show can't bring it back).
+local function turnOff(frame)
+  if frame.sampling then sample(frame, false) end
+  frame.sampling = false
+  local function off()
+    UnregisterStateDriver(frame, "visibility")
+    frame:Hide()
+  end
+  ns.Combat.after("unit:" .. frame.id, off)
+  ns.Combat.after("unit:" .. frame.id .. ":edit", off)
+end
+
 -- Reads every option and lays the frame out (out of combat), then the
--- values and the opacity.
+-- values and the opacity. A module turned off only hides its frame.
 function Base.apply(spec)
   local frame = spec.frame
   if not frame then return end
+  if not enabled(frame) then
+    turnOff(frame)
+    return
+  end
+  -- Turned back on while Edit Mode is open: the sample, as on enter.
+  if not frame.sampling and editing(frame) then Base.editMode(spec, true) end
   ns.Combat.after("unit:" .. spec.id, function()
     local skin = skinOf(frame)
     local w, h = opt(frame, "width"), opt(frame, "height")
@@ -373,6 +419,10 @@ end
 function Base.editMode(spec, active)
   local frame = spec.frame
   if not frame then return end
+  if not enabled(frame) then
+    turnOff(frame)
+    return
+  end
   local key = "unit:" .. spec.id .. ":edit"
   if active then
     frame.sampling = true

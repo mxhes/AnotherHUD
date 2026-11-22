@@ -23,6 +23,20 @@ Theme.textures = {
   -- the theme colors.
   skinStud = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Stud",
   skinDotted = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Dotted",
+  -- Unit frames (tools/render_units.py): a white anti-aliased disc (ring
+  -- lines, portrait and badge masks), a soft vertical glow and a shield.
+  disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
+  spark = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Spark",
+  shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
+}
+
+-- Bar fill textures. The files are grey-scale vertical gradients normalized to
+-- their brightest stop; the bar color is multiplied by `tint` (Theme.barColor)
+-- so the middle of the bar reads as the color.
+Theme.barTextures = {
+  Smooth = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarSmooth", tint = 1.25 },
+  Flat = { file = "Interface\\Buttons\\WHITE8X8", tint = 1 },
+  Gloss = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarGloss", tint = 1.05 },
 }
 
 Theme.fonts = {
@@ -111,7 +125,20 @@ Theme.sizes = {
   -- How close (px) an edge or the center of a dragged AnotherHUD frame has
   -- to be to a screen line or another AnotherHUD frame to snap onto it.
   snapDistance = 8,
+  -- Unit frames.
+  unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
+    castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
+    interruptHold = 0.6 },
 }
+
+-- Pure. The color to give a status bar with texture `textureName`: the color
+-- times the texture's tint, each channel clamped to 1. An unknown name is
+-- Smooth.
+function Theme.barColor(color, textureName)
+  local t = Theme.barTextures[textureName] or Theme.barTextures.Smooth
+  local k = t.tint
+  return math.min(1, color[1] * k), math.min(1, color[2] * k), math.min(1, color[3] * k)
+end
 
 -- Pure. A color with r, g, b multiplied by `k` (clamped to 0..1); alpha kept.
 function Theme.scaleColor(c, k)

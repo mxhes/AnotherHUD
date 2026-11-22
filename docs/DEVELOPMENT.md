@@ -77,7 +77,14 @@ PowerShell; nothing here is done by the build.
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
+| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
+
+`tools/render_units.py` (repo root, not packaged) draws the `Media/Units`
+textures: `python tools/render_units.py` (plain Python 3, no libraries)
+rewrites the TGA files; commit them. The bar gradients are grey and
+normalized to their brightest stop; `Theme.barColor` multiplies the bar color
+by `Theme.barTextures[name].tint` to compensate.
 
 ## Extending: modules
 

@@ -37,6 +37,7 @@ Units/Parts/Role.lua
 Units/Parts/Dispel.lua
 Units/Base.lua
 Units/Define.lua
+Units/Group.lua
 Units/Player.lua
 Units/PlayerCastBar.lua
 Units/Target.lua

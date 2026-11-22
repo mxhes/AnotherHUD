@@ -78,6 +78,7 @@ PowerShell; nothing here is done by the build.
 | `Units/Parts/Dispel.lua` | group frames: dispellable-debuff glow, a 9-slice texture reaching `glow` px outside the frame; live one is an `AuraContainer` slot (raid dispel filter) whose button carries the glow texture tinted by `AddDispelTypeTexture`; `available` false without the template; `create(parent, unit)`, `dispel:layout()`, `dispel:sample(colorOrNil)` |
 | `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.hideBlizzard(names)`) |
 | `Units/Define.lua` | `ns.Units.define(o)`: the shared unit module shape (settings from `Units/Settings.lua`, create / apply / onEditMode through `Units/Base.lua`) |
+| `Units/Group.lua` | `ns.Units.defineGroup(o)`: the shared group module shape (Party, Boss): a plain holder frame (the Edit Mode frame) with member unit buttons at fixed tokens, their order (existing first, by role; index order in Edit Mode), anchors and holder size out of combat, the holder's visibility driver, the range ticker |
 | `Units/Player.lua`, `Units/Target.lua`, `Units/TargetTarget.lua`, `Units/Focus.lua`, `Units/Pet.lua` | one unit module each (`ns.Units.define{...}`) |
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
 | `Units/Party.lua`, `Units/Boss.lua` | planned |

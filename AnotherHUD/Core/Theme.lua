@@ -135,7 +135,10 @@ Theme.sizes = {
     interruptHold = 0.6, badgeFont = 10,
     -- Bar texts: the font size before a layout sets one, and the share of
     -- the health bar width the name may take (the value text keeps the rest).
-    textFont = 11, nameShare = 0.6 },
+    textFont = 11, nameShare = 0.6,
+    -- The share of the cast bar width the spell name may take (the time
+    -- keeps the rest).
+    castNameShare = 0.8 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which

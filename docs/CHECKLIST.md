@@ -29,6 +29,30 @@ and remove both once it is confirmed.
   `SetPortraitTexture(tex, unit, true)` draws for units with secret identity
   (instances) without an error; `SetFormattedText` takes secret health,
   power and level arguments.
+- Unit cast bar (`Units/Parts/CastBar.lua`): `StatusBar:SetTimerDuration`
+  takes the secret duration from `UnitCastingDuration` / `UnitChannelDuration`
+  (cast fills, channel empties); `C_DurationUtil.CreateDurationTextBinding`
+  shows the time with one decimal (`C_StringUtil.CreateNumericRuleFormatter`),
+  and its `Disable` / `Enable` keep the Edit Mode sample's "0.9"; the sample
+  bar stays at 62% after a real cast (the client's timer must not keep
+  driving it); `SetAlphaFromBoolean` with a secret `notInterruptible` shows
+  the shield and the grey overlay only on uninterruptible casts (a dungeon
+  boss); the grey overlay and the spark follow the fill texture; a kicked
+  channel shows "Interrupted" (`UNIT_SPELLCAST_CHANNEL_STOP` with
+  `interruptedBy`).
+- Unit auras (`Units/Parts/Auras.lua`): `Blizzard_AuraContainer` loads and
+  `CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")`
+  works when created at login; the `HARMFUL|!PLAYER` / `HELPFUL|!PLAYER`
+  filters show only other players' / NPCs' auras; `SetIcon`,
+  `SetDurationCooldown`, `SetApplicationCount`, `SetDurationText` and
+  `AddDispelTypeTexture` (Border style) work on the container's buttons;
+  the dispel border colors are the client's: compare them with the approved
+  type colors (`Theme.unitColors.debuff`); `SetDesaturated` on an icon of the
+  others' groups sticks; the flow layout setters (`SetFlowLayoutAxis`,
+  `...AnchorPoint`, `...GrowthDirection`, `...MaximumLineSize`,
+  `...Padding`) and `AnchorUtil.FlowDirection` grow away from the portrait,
+  buffs on a new line under the debuffs; mine and others each cap at the
+  rows' icon count, so together they may run past the Aura rows setting.
 
 ### Edit Mode spike (Plan 1, Task 7)
 

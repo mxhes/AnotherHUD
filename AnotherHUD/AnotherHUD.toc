@@ -30,6 +30,8 @@ Units/Settings.lua
 Units/Parts/Panel.lua
 Units/Parts/Ring.lua
 Units/Parts/Bars.lua
+Units/Parts/CastBar.lua
+Units/Parts/Auras.lua
 Spike/SpikeModule.lua
 Core/Core.lua
 Boot.lua

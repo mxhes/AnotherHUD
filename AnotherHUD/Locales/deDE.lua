@@ -90,4 +90,7 @@ ns.Locale.register("deDE", {
   -- Unit texts (Core/UnitText.lua)
   ["Dead"] = "Tot",
   ["Offline"] = "Offline",
+  -- Cast bar (Units/Parts/CastBar.lua)
+  ["Interrupted"] = "Unterbrochen",
+  ["Sample Spell"] = "Beispielzauber",
 })

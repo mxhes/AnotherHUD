@@ -71,6 +71,8 @@ PowerShell; nothing here is done by the build.
 | `Spike/SpikeModule.lua` | spike: "AnotherHUD Test" frame; deleted when Plan 3's Player module lands |
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
 | `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
+| `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
+| `Units/Parts/Auras.lua` | unit aura rows: one client `AuraContainer` (`CustomAuraContainerTemplate`) with debuff / buff groups, mine and others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode; `available` false without the template; `create(parent, unit)`, `auras:layout(opts)`, `auras:sample(on)` |
 | `Units/Base.lua` | shared unit frame parts (health, power, portrait, texts, cast bar, auras, icons) |
 | `Units/Player.lua` ... `Units/Boss.lua` | one module per unit |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |

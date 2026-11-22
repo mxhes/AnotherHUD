@@ -27,4 +27,6 @@ read_globals = {
   "InCombatLockdown", "CreateFrame", "geterrorhandler",
   "LibStub", "UIParent", "CreateColor", "EditModeManagerFrame",
   "Enum", "C_ClassColor", "PowerBarColor", "SetPortraitTexture",
+  "UnitCastingInfo", "UnitChannelInfo", "UnitCastingDuration", "UnitChannelDuration",
+  "C_DurationUtil", "C_StringUtil", "C_AddOns", "C_Timer", "AnchorUtil",
 }

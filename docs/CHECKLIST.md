@@ -84,6 +84,8 @@ Results:
   - Still open: everything else in the list above (snapping, per-layout
     positions after a drag, Reset Settings, combat Width change, the
     checklist box and toggle details, rename / delete).
+- [ ] LibEditMode fires "enter" / "exit" when Edit Mode opens / closes and
+  `lem:IsInEditMode()` exists (Glue.inEditMode and `spec.onEditMode`).
 
 ## Release steps
 

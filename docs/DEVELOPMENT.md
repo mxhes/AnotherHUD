@@ -94,6 +94,8 @@ ns.Modules.define{
   blizzard = { "PlayerFrame" },   -- hidden while the module is on
   create = function(mod) ... end, -- once, out of combat
   apply  = function(mod, key, value) ... end, -- redraw from settings (queued in combat)
+  parent = "player",              -- optional: a child module (see below)
+  onEditMode = function(mod, active) ... end, -- optional: Edit Mode opened / closed
 }
 ```
 
@@ -106,6 +108,15 @@ translated where they are drawn (`EditMode/Panel.lua`,
 informational only; `apply` must redraw the whole module from its settings,
 because the combat queue keeps only the last call per module (earlier
 changes made in combat arrive folded into that one call).
+
+`parent`: a child module (e.g. the detached Player cast bar's holder).
+`Modules.isEnabled(child)` is false while the parent is off (an unknown
+parent id counts as enabled); the Edit Mode checklist does not list
+children. `onEditMode(spec, active)`: `EditMode/Glue.lua` calls it for every
+registered module when LibEditMode fires `"enter"` (true) / `"exit"` (false)
+and once right after a module registers while Edit Mode is open; errors are
+reported through the error handler so one module cannot stop the others.
+`Glue.inEditMode()` gives the tracked state (false without the library).
 
 A new replaced frame is a new file with one `Modules.define` and a `.toc`
 line; nothing else names it.

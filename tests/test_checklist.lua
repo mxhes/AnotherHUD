@@ -220,3 +220,12 @@ h.test("German checklist texts fit 24 glyphs", function()
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])
   end
 end)
+
+h.test("children are not listed", function()
+  local ns = load()
+  define(ns, "a")
+  define(ns, "b", { parent = "a" })
+  local entries = ns.EditMode.Checklist.entries()
+  h.eq(#entries, 1)
+  h.eq(entries[1].id, "a")
+end)

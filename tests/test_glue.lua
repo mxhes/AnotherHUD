@@ -360,3 +360,47 @@ h.test("German button label fits 24 glyphs", function()
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])
   end
 end)
+
+h.test("enter and exit reach onEditMode", function()
+  with({}, function(ns, lem)
+    local got = {}
+    local a = define(ns, "a", { onEditMode = function(_, active) got[#got + 1] = active end })
+    local b = define(ns, "b", { onEditMode = function() error("boom") end })
+    local c = define(ns, "c", { onEditMode = function(_, active) got[#got + 1] = "c" .. tostring(active) end })
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+    ns.EditMode.Glue.registerAll()
+    h.eq(#lem.events.enter, 1)
+    h.eq(#lem.events.exit, 1)
+    local errors = {}
+    local old = geterrorhandler
+    geterrorhandler = function() return function(e) errors[#errors + 1] = e end end
+    local ok, err = pcall(function()
+      lem:fire("enter")
+      h.eq(ns.EditMode.Glue.inEditMode(), true)
+      lem:fire("exit")
+    end)
+    geterrorhandler = old
+    if not ok then error(err, 0) end
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+    h.eq(got, { true, "ctrue", false, "cfalse" })
+    h.eq(#errors, 2)
+    h.eq(a.frame ~= nil and b.frame ~= nil and c.frame ~= nil, true)
+  end)
+end)
+
+h.test("a module registered during Edit Mode is told at once", function()
+  with({}, function(ns, lem)
+    lem.IsInEditMode = function() return true end
+    local got = {}
+    define(ns, "a", { onEditMode = function(_, active) got[#got + 1] = active end })
+    ns.EditMode.Glue.registerAll()
+    h.eq(got, { true })
+  end)
+end)
+
+h.test("inEditMode is false without the library", function()
+  with({ noLem = true }, function(ns)
+    ns.EditMode.Glue.registerAll()
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+  end)
+end)

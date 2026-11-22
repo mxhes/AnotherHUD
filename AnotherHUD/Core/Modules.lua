@@ -3,7 +3,13 @@ local ADDON, ns = ...
 -- Module registry. Each module file calls ns.Modules.define(spec) at load:
 --   spec = { id, label, kind = "unit"|"bar"|"misc", defaults, settings,
 --            blizzard = { frame names to hide }, create, apply,
---            defaultPosition = { point, x, y } }
+--            defaultPosition = { point, x, y },
+--            parent = "<id>", onEditMode = function(spec, active) }
+-- `parent`: a child module (e.g. a detached cast bar's holder): it is off
+-- when its parent is off, and the Edit Mode checklist does not list it.
+-- `onEditMode(spec, active)`: called by EditMode/Glue for every registered
+-- module when Edit Mode opens (true) / closes (false), and once right after
+-- a module registers while Edit Mode is already open.
 -- `spec.frame` is set by the module's create path once its frame exists;
 -- setEnabled uses it to tell whether a /reload is needed.
 local Modules = {}
@@ -39,6 +45,11 @@ end
 
 -- Enabled unless the profile says otherwise.
 function Modules.isEnabled(id)
+  local spec = byId[id]
+  -- A child follows its parent. An unknown parent id counts as enabled: only
+  -- the child's own flag applies.
+  local parent = spec and spec.parent and byId[spec.parent]
+  if parent and not Modules.isEnabled(parent.id) then return false end
   local saved = ns.DB.profile().modules[id]
   return not (saved and saved.enabled == false)
 end

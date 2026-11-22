@@ -19,7 +19,9 @@ local BOX_WIDTH = 220
 function Checklist.entries()
   local out = {}
   for _, spec in ipairs(ns.Modules.list()) do
-    out[#out + 1] = { id = spec.id, label = L[spec.label], checked = ns.Modules.isEnabled(spec.id) }
+    if not spec.parent then -- children follow their parent
+      out[#out + 1] = { id = spec.id, label = L[spec.label], checked = ns.Modules.isEnabled(spec.id) }
+    end
   end
   return out
 end

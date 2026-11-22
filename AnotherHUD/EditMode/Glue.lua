@@ -27,6 +27,7 @@ local order = {}      -- specs in registration order
 local byFrame = {}    -- frame -> spec
 local lem             -- the library once registerAll found it
 local layoutHooked = false
+local editing = false     -- Edit Mode open, from the library's enter / exit
 
 -- LibEditMode or nil (no LibStub, or the library is missing). The real LibStub
 -- is a table made callable by a metatable, not a function: look it up through
@@ -172,6 +173,27 @@ local function onDelete(name)
   ns.db.positions[name] = nil
 end
 
+-- True while Edit Mode is open (false before any "enter" and without the library).
+function Glue.inEditMode()
+  return editing
+end
+
+-- Tells one module Edit Mode opened / closed; a bad module must not stop the
+-- others, so errors go to the error handler.
+local function notify(spec, active)
+  if type(spec.onEditMode) ~= "function" then return end
+  local ok, err = pcall(spec.onEditMode, spec, active)
+  if not ok and geterrorhandler then geterrorhandler()(err) end
+end
+
+local function setEditing(active)
+  editing = active
+  for _, spec in ipairs(order) do notify(spec, active) end
+end
+
+local function onEnter() setEditing(true) end
+local function onExit() setEditing(false) end
+
 local function openSettings(spec)
   local ui = ns.UI and ns.UI.Settings
   if ui and type(ui.open) == "function" then
@@ -202,6 +224,11 @@ local function register(spec)
     lem:AddFrameSettingsButtons(spec.frame, buttons(spec))
   end
   placeForLayout(spec, activeLayout())
+  -- UNVERIFIED (check in client): lem:IsInEditMode exists on Forever's copy.
+  if lem and lem.IsInEditMode and lem:IsInEditMode() then
+    editing = true
+    notify(spec, true)
+  end
 end
 
 -- Registers every enabled module; creates missing frames first (out of
@@ -226,6 +253,8 @@ function Glue.registerAll(lib)
     lem:RegisterCallback("layout", onLayout)
     lem:RegisterCallback("rename", onRename)
     lem:RegisterCallback("delete", onDelete)
+    lem:RegisterCallback("enter", onEnter)
+    lem:RegisterCallback("exit", onExit)
   end
 end
 

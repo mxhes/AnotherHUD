@@ -23,6 +23,24 @@ Theme.textures = {
   -- the theme colors.
   skinStud = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Stud",
   skinDotted = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Dotted",
+  -- Unit frames (tools/render_units.py): a white anti-aliased disc (ring
+  -- lines, portrait and badge masks), a soft vertical glow and a shield.
+  disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
+  spark = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Spark",
+  shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
+  -- A plain white tile for 1 px lines (unit frame edges and dividers).
+  line = "Interface\\Buttons\\WHITE8X8",
+  -- The placeholder icon of Edit Mode samples (cast bar, auras).
+  sampleIcon = "Interface\\Icons\\INV_Misc_QuestionMark",
+}
+
+-- Bar fill textures. The files are grey-scale vertical gradients normalized to
+-- their brightest stop; the bar color is multiplied by `tint` (Theme.barColor)
+-- so the middle of the bar reads as the color.
+Theme.barTextures = {
+  Smooth = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarSmooth", tint = 1.25 },
+  Flat = { file = "Interface\\Buttons\\WHITE8X8", tint = 1 },
+  Gloss = { file = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\BarGloss", tint = 1.45 },
 }
 
 Theme.fonts = {
@@ -69,6 +87,29 @@ Theme.colors = {
   tipHint = { 0.25, 0.90, 0.25, 1 },
 }
 
+-- Unit frame colors (approved art). Elite uses colors.gold and normal uses
+-- colors.panelBorder for the ring (see Core/UnitColor.lua).
+Theme.unitColors = {
+  healthDefault = { 0.16, 0.62, 0.22, 1 },
+  hostile = { 0.85, 0.20, 0.15, 1 },
+  neutral = { 0.95, 0.82, 0.20, 1 },
+  friendly = { 0.25, 0.75, 0.25, 1 },
+  rare = { 0.78, 0.78, 0.81, 1 },
+  cast = { 1.00, 0.74, 0.12, 1 },
+  channel = { 0.35, 0.75, 0.35, 1 },
+  interrupted = { 0.85, 0.20, 0.15, 1 },
+  uninterruptible = { 0.60, 0.60, 0.62, 1 },
+  -- The dark 1 px halo behind the portrait ring.
+  ringShadow = { 0, 0, 0, 0.6 },
+  debuff = {
+    Magic = { 0.20, 0.60, 1.00, 1 },
+    Curse = { 0.60, 0.00, 1.00, 1 },
+    Poison = { 0.00, 0.60, 0.00, 1 },
+    Disease = { 0.60, 0.40, 0.00, 1 },
+    none = { 0.80, 0.00, 0.00, 1 },
+  },
+}
+
 Theme.sizes = {
   padding = 8,
   -- Bronze buttons: edge thickness, fill inset, glyph padding of icon buttons.
@@ -90,7 +131,40 @@ Theme.sizes = {
   -- How close (px) an edge or the center of a dragged AnotherHUD frame has
   -- to be to a screen line or another AnotherHUD frame to snap onto it.
   snapDistance = 8,
+  -- Unit frames.
+  unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
+    castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
+    interruptHold = 0.6, badgeFont = 10,
+    -- Bar texts: the font size before a layout sets one, and the share of
+    -- the health bar width the name may take (the value text keeps the rest).
+    textFont = 11, nameShare = 0.6,
+    -- The share of the cast bar width the spell name may take (the time
+    -- keeps the rest).
+    castNameShare = 0.8,
+    -- Cast bar (docs/mockups/units.js cast): the spark's width and how far
+    -- it reaches past the bar top and bottom, the texts' inset in the bar,
+    -- the shield over the icon (offset and size as shares of the bar
+    -- height).
+    castSparkWidth = 4, castSparkOverhang = 2, castTextInset = 3,
+    castShield = { x = 0.15, y = 0.1, w = 0.7, h = 0.8 },
+    -- Spell and aura icons: the share cut off each side of the icon art (its
+    -- baked-in frame).
+    iconCrop = 0.08 },
 }
+
+-- The portrait ring's line shades (outside in) for the Round border, which
+-- has no edge lines: the mockup's soft tooltip-like edge. The other borders
+-- use the shades of Theme.edgeRects.
+Theme.ringRoundShades = { 0.35, 1, 1, 0.45 }
+
+-- Pure. The color to give a status bar with texture `textureName`: the color
+-- times the texture's tint, each channel clamped to 1. An unknown name is
+-- Smooth.
+function Theme.barColor(color, textureName)
+  local t = Theme.barTextures[textureName] or Theme.barTextures.Smooth
+  local k = t.tint
+  return math.min(1, color[1] * k), math.min(1, color[2] * k), math.min(1, color[3] * k)
+end
 
 -- Pure. A color with r, g, b multiplied by `k` (clamped to 0..1); alpha kept.
 function Theme.scaleColor(c, k)
@@ -155,7 +229,7 @@ Theme.skinOrder = { "classic", "forge", "slate", "gilded" }
 -- dark / light line, the raised buttons' light / dark edge, how far Plain
 -- moves a line color toward grey and the panel, the sunken list fill.
 Theme.skinScales = {
-  edgeDark = 0.2, edgeLight = 1.7, grooveDark = 0.3, grooveLight = 2.0,
+  edgeDark = 0.2, edgeLight = 1.7, grooveDark = 0.3, grooveLight = 2.0, grooveLightAlpha = 0.55,
   raisedLight = 3.5, raisedDark = 0.3, plainMix = 0.5, listBox = 0.5,
 }
 

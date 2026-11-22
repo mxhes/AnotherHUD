@@ -59,3 +59,63 @@ h.test("snap distance lives in Theme.sizes", function()
   h.eq(Theme.sizes.snapDistance, 8)
   h.eq(Theme.sizes.gridSnapDistance, nil)
 end)
+
+h.test("bar color tint", function()
+  local Theme = load().Theme
+  local r, g, b = Theme.barColor({ 0.4, 0.8, 0.2 }, "Smooth")
+  h.near(r, 0.5)
+  h.near(g, 1)
+  h.near(b, 0.25)
+  r, g, b = Theme.barColor({ 0.4, 0.8, 0.2 }, "Flat")
+  h.near(r, 0.4)
+  h.near(g, 0.8)
+  h.near(b, 0.2)
+  r, g, b = Theme.barColor({ 0.4, 0.8, 0.2 }, "Nope")
+  h.near(r, 0.5)
+  h.near(g, 1)
+  h.near(b, 0.25)
+end)
+
+h.test("every bar texture has a file and a tint", function()
+  local Theme = load().Theme
+  for _, name in ipairs({ "Smooth", "Flat", "Gloss" }) do
+    local t = Theme.barTextures[name]
+    h.eq(type(t), "table", name)
+    h.eq(type(t.file), "string", name)
+    h.eq(type(t.tint), "number", name)
+  end
+  h.eq(Theme.barTextures.Flat.file, "Interface\\Buttons\\WHITE8X8")
+  h.near(Theme.barTextures.Smooth.tint, 1.25)
+  h.near(Theme.barTextures.Gloss.tint, 1.45)
+  for _, name in ipairs({ "disc", "spark", "shield" }) do
+    h.eq(type(Theme.textures[name]), "string", name)
+  end
+  h.eq(Theme.sizes.unit.badge, 18)
+  h.eq(Theme.sizes.unit.interruptHold, 0.6)
+end)
+
+h.test("unit art files exist on disk", function()
+  for _, name in ipairs({ "Disc", "BarSmooth", "BarGloss", "Spark", "Shield" }) do
+    local f = io.open("AnotherHUD/Media/Units/" .. name .. ".tga", "rb")
+    h.eq(f ~= nil, true, name)
+    if f then f:close() end
+  end
+end)
+
+h.test("unit art headers are 32-bit uncompressed TGA of the right size", function()
+  local sizes = { Disc = { 256, 256 }, BarSmooth = { 4, 64 }, BarGloss = { 4, 64 },
+    Spark = { 16, 64 }, Shield = { 32, 32 } }
+  for name, wh in pairs(sizes) do
+    local f = io.open("AnotherHUD/Media/Units/" .. name .. ".tga", "rb")
+    h.eq(f ~= nil, true, name)
+    if f then
+      local hd = f:read(18)
+      f:close()
+      local b = { hd:byte(1, 18) }
+      h.eq(b[3], 2, name .. " type")
+      h.eq(b[17], 32, name .. " bpp")
+      h.eq(b[13] + b[14] * 256, wh[1], name .. " width")
+      h.eq(b[15] + b[16] * 256, wh[2], name .. " height")
+    end
+  end
+end)

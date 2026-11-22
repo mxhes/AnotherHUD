@@ -55,3 +55,15 @@ h.test("setEnabled needs reload only with blizzard list and created frame", func
   h.eq(ns.Modules.setEnabled("p", true), true)
   h.eq(ns.Modules.setEnabled("q", false), false) -- no blizzard list
 end)
+
+h.test("a child follows its parent", function()
+  local ns = load()
+  ns.Modules.define(spec({ id = "a" }))
+  ns.Modules.define(spec({ id = "b", parent = "a" }))
+  h.eq(ns.Modules.isEnabled("b"), true)
+  ns.Modules.setEnabled("a", false)
+  h.eq(ns.Modules.isEnabled("b"), false)
+  ns.Modules.setEnabled("a", true)
+  ns.Modules.setEnabled("b", false) -- its own flag counts too
+  h.eq(ns.Modules.isEnabled("b"), false)
+end)

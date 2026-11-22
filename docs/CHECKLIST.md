@@ -18,14 +18,138 @@ and remove both once it is confirmed.
 - Edit Mode: nudging a snapped frame with the arrow keys moves it off the
   snap line (a nudge is saved unsnapped, `EditMode/Glue.lua`); a drag near a
   line still snaps.
-- Edit Mode layouts: rename a layout with a moved test frame, the frame stays
+- Edit Mode layouts: rename a layout with a moved frame, the frame stays
   put under the new name; delete a layout, no Lua error.
 
-### Edit Mode spike (Plan 1, Task 7)
+## Unit frames (Plan 3)
+
+FlareUI's unit frames off for this test. Run with the Player, Target, Target of
+Target, Focus and Pet frames; a dummy and a group are enough.
+
+Frames and Edit Mode:
+
+- The five frames show at their default positions; in Edit Mode each shows
+  with sample data (no target needed) and drags; positions differ per layout.
+- Leaving Edit Mode with no target hides Target, Target of Target and Focus.
+- Panel (Player): sections Size, Text, Look, Behaviour, Cast Bar, Auras,
+  Fading show (Divider rows with the packaged LibEditMode), our Settings
+  button sits next to Reset Settings / Reset Position.
+- The panel's `BackdropTemplate` child (`Units/Parts/Panel.lua`) shows the
+  Round edge and fill.
+- Detach cast bar on puts the Player cast bar on its own Edit Mode frame
+  ("Player Cast Bar") that drags; off, that frame can't be selected
+  (`Units/PlayerCastBar.lua`) and the bar hangs under the Player frame.
+- Right click (`*type2 = "togglemenu"`) opens the unit menu, also with the
+  gamepad UI; the tooltip shows on hover and another addon's tooltip is not
+  hidden on leave (`GameTooltip:IsOwned`).
+- Target of Target follows its unit within 0.2 s and shows the new unit's
+  name right on a target change (`PLAYER_TARGET_CHANGED`, `OnShow` update).
+- A frame turned off in the AnotherHUD box hides at once, stays hidden after
+  leaving and reopening Edit Mode and on unit changes, and comes back (with
+  its values, or its sample in Edit Mode) when turned on; Player off also
+  hides a detached cast bar.
+- Expected, not a bug: with the Player frame on, the class resource bars
+  (combo points, holy power, runes, shards, chi, essence, arcane charges),
+  the totem bar and the alternate power bar are gone with `PlayerFrame`
+  until Plan 6.
+- The state driver (`[petbattle] hide; [vehicleui] hide; [@unit,exists] show;
+  hide`) hides the frames in pet battles and, with Show in vehicle off, in
+  vehicles.
+
+Colors, bars and texts:
+
+- `C_ClassColor.GetClassColor(classFile)` returns a color with `GetRGB`;
+  `PowerBarColor[token]` holds `r, g, b` for every power token
+  (`Core/UnitColor.lua`).
+- `SetFormattedText` takes secret health, power and level arguments
+  (`Units/Parts/Bars.lua`, `Ring.lua`); health and power texts show in a
+  fight against a dummy and in a group with no Lua error.
+- `UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)` and
+  `UnitPowerPercent(unit, type, false, CurveConstants.ScaleTo100)` give the
+  percent texts 0-100 (`Units/Base.lua`).
+- `AbbreviateNumbers` accepts secret health / power values (Player health
+  text 'Value', `Units/Base.lua`).
+
+Portrait ring:
+
+- A `MaskTexture` with the Disc file (`CLAMPTOBLACKADDITIVE`) clips the
+  portrait to a circle; `SetPortraitTexture(tex, unit, true)` draws for units
+  with secret identity (instances) without an error (`Units/Parts/Ring.lua`).
+
+Cast bar (`Units/Parts/CastBar.lua`):
+
+- `StatusBar:SetTimerDuration` takes the secret duration from
+  `UnitCastingDuration` / `UnitChannelDuration` (cast fills, channel
+  empties).
+- `C_DurationUtil.CreateDurationTextBinding` shows the time with one decimal
+  (`C_StringUtil.CreateNumericRuleFormatter`); its `Disable` / `Enable` keep
+  the Edit Mode sample's "0.9".
+- The Edit Mode sample (a static 62% texture over the hidden timed fill,
+  after `ClearTimerDuration` when it exists) shows right after a real cast,
+  and the next real cast fills normally again.
+- `SetAlphaFromBoolean` with a secret `notInterruptible` shows the shield and
+  the grey overlay only on uninterruptible casts (a dungeon boss); the grey
+  overlay and the spark follow the fill texture.
+- A kicked channel shows "Interrupted" (`UNIT_SPELLCAST_CHANNEL_STOP` with
+  `interruptedBy`).
+- `UnitCastingInfo` / `UnitChannelInfo` return no values at all when the unit
+  is idle (`select("#", ...) == 0`).
+- `INTERRUPTED` (or `CHANNEL_STOP` with `interruptedBy`) arrives before the
+  cast's `STOP`, so the bar holds on "Interrupted" instead of hiding.
+
+Auras (`Units/Parts/Auras.lua`):
+
+- `Blizzard_AuraContainer` loads and
+  `CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")`
+  works when created at login.
+- Auras show after /reload in combat and after toggling a frame on
+  (containers made after login may be refused).
+- The `HARMFUL|!PLAYER` / `HELPFUL|!PLAYER` filters show only other players'
+  / NPCs' auras.
+- `SetIcon`, `SetDurationCooldown`, `SetApplicationCount`, `SetDurationText`
+  and `AddDispelTypeTexture` (Border style) work on the container's buttons;
+  the dispel border colors match the approved type colors
+  (`Theme.unitColors.debuff`).
+- `SetDesaturated` on an icon of the others' groups sticks.
+- The flow layout setters (`SetFlowLayoutAxis`, `...AnchorPoint`,
+  `...GrowthDirection`, `...MaximumLineSize`, `...Padding`) and
+  `AnchorUtil.FlowDirection` grow away from the portrait.
+- Each kind's clip frame (`SetClipsChildren(true)`) cuts icons past the Aura
+  rows setting, and since mine come first only other players' auras are cut;
+  buffs sit under the debuffs (none of the debuffs' space when Debuffs is
+  off).
+
+Hiding Blizzard's frames (`Units/Base.lua`):
+
+- Blizzard's Player, Target, Focus, Pet and cast bar never reappear: not
+  after a vehicle, a pet battle, an Edit Mode layout switch or the
+  lock-to-player toggle (the `SetParent` hook parks the cast bar again).
+- Blizzard's Target of Target goes away with `TargetFrame`.
+
+Combat and taint:
+
+- Dummy fight with `/console taintLog 1`: no AnotherHUD lines, no
+  "Interface action failed" / blocked message; target and menu clicks work in
+  combat.
+- Hiding `PlayerFrame`, `TargetFrame`, `FocusFrame`, `PetFrame` and
+  `PlayerCastingBarFrame` (events off, reparent to a hidden frame, re-hide on
+  `Show`) leaves no AnotherHUD lines in the taint log.
+- `/reload` in combat: the frames come back with no Lua error.
+
+Results:
+
+- 2026-11-22, first run by the player (FlareUI's unit frames off): the
+  frames work, no Lua errors and no blocked / forbidden action messages.
+  The items above were not checked one by one and the taint log was not
+  captured, so they stay open until a closer pass.
+
+## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in
 `docs/DEVELOPMENT.md` (Setup, "Spike check"). Results go here (date,
-pass / fail, what was seen).
+pass / fail, what was seen). The spike's test frame is gone since Plan 3: run
+these checks with the Player frame, whose panel has the sections Size, Text,
+Look, Behaviour, Cast Bar, Auras and Fading.
 
 - **First:** the library loaded: `/dump LibStub and LibStub("LibEditMode", true) ~= nil`
   prints `true`. Library source: the CI `package-dry-run` job artifact (its
@@ -33,14 +157,13 @@ pass / fail, what was seen).
   copied into `AnotherHUD/Libs/LibEditMode/`; its entry file `embed.xml`
   (at the repo root upstream) is what `embeds.xml` loads. If this prints
   `false`, nothing below can pass.
-- Test frame ("AnotherHUD Test", `Spike/SpikeModule.lua`) shows in Edit Mode,
-  drags, snaps to grid / screen / Blizzard frames, panel opens next to it with
-  the sections (Size, Look), our Settings button and the library's reset buttons; positions differ per
-  layout. (Grid and Blizzard-frame snap are not built yet, see above: expect
-  screen and AnotherHUD-frame snap only.)
-- Checklist checkbox appears under Blizzard's list and toggles the test frame
-  (`EditMode/Checklist.lua`: `EditModeManagerFrame:HookScript("OnShow")`, a
-  `BackdropTemplate` box on `UIParent` anchored under the window,
+- The Player frame shows in Edit Mode, drags, snaps to screen and
+  AnotherHUD frames, and its panel opens next to it with our Settings button
+  and the library's reset buttons; positions differ per layout. (Grid and
+  Blizzard-frame snap are not built yet, see above.)
+- Checklist checkbox appears under Blizzard's list and toggles the Player
+  frame (`EditMode/Checklist.lua`: `EditModeManagerFrame:HookScript("OnShow")`,
+  a `BackdropTemplate` box on `UIParent` anchored under the window,
   `UICheckButtonTemplate` rows).
 - "AnotherHUD look" checkbox appears in Action Bar 1's Edit Mode panel
   (`EditMode/SystemSettings.lua`: `LibEditMode:AddSystemSettings` with
@@ -53,13 +176,12 @@ pass / fail, what was seen).
   message; `/console taintLog 1` log shows no AnotherHUD lines. If taint
   lines point at `Checklist`, report it: the fallback moves the module
   toggles to the Settings window.
-- With Edit Mode open, start a fight (target dummy) and change Width: no
+- With Edit Mode open, start a fight (target dummy) and change the Player's Width: no
   error, the size applies when combat ends.
-- Reset Settings (the library's button) returns width / height / border to
+- Reset Settings (the library's button) returns the Player's settings to
   their defaults with no Lua error.
-- `BackdropTemplate` on the test frame and the checklist box draws the round
-  edge; "Show border" off leaves the flat fill.
-- Turn the test frame off, /reload, open Edit Mode, turn it on: it appears
+- `BackdropTemplate` on the checklist box draws the round edge.
+- Turn the Player frame off, /reload, open Edit Mode, turn it on: it appears
   and the chat says "Reopen Edit Mode to move it"; after closing and
   reopening Edit Mode it is selectable and drags, with no taint lines.
 - The checklist box shows under the Edit Mode window and hides with it.
@@ -84,6 +206,8 @@ Results:
   - Still open: everything else in the list above (snapping, per-layout
     positions after a drag, Reset Settings, combat Width change, the
     checklist box and toggle details, rename / delete).
+- [ ] LibEditMode fires "enter" / "exit" when Edit Mode opens / closes and
+  `lem:IsInEditMode()` exists (Glue.inEditMode and `spec.onEditMode`).
 
 ## Release steps
 

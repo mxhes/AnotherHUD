@@ -29,16 +29,13 @@ end
 local function with(opts, fn)
   local client = fakes.client{}
   local lem = not opts.noLem and fakeLem(opts.active or "Modern") or nil
-  local prevStub = rawget(_G, "LibStub")
-  _G.LibStub = fakes.libstub({ LibEditMode = lem })
-  local ok, err = pcall(function()
+  local ok, err = pcall(fakes.withGlobals, { LibStub = fakes.libstub({ LibEditMode = lem }) }, function()
     local ns = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua" })
     ns.db, ns.chardb = ns.DB.init(nil, nil)
     fn(ns, lem, client)
   end)
   client.restore()
-  _G.LibStub = prevStub
   if not ok then error(err, 0) end
 end
 
@@ -311,9 +308,7 @@ h.test("works without LibEditMode", function()
   end)
   -- and without LibStub at all
   local client = fakes.client{}
-  local prevStub = rawget(_G, "LibStub")
-  _G.LibStub = nil
-  local ok, err = pcall(function()
+  local ok, err = pcall(fakes.withGlobals, { LibStub = fakes.NIL }, function()
     local ns = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua" })
     ns.db, ns.chardb = ns.DB.init(nil, nil)
@@ -322,7 +317,6 @@ h.test("works without LibEditMode", function()
     h.eq(lastPoint(a.frame), { "SetPoint", "CENTER", UIParent, "CENTER", 0, -100 })
   end)
   client.restore()
-  _G.LibStub = prevStub
   if not ok then error(err, 0) end
 end)
 
@@ -331,12 +325,11 @@ h.test("Core.init loads saved state and registers", function()
     local core = h.load({ "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
       "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua", "Core/Core.lua" })
     define(core, "a")
-    local prevDB, prevChar = rawget(_G, "AnotherHUDDB"), rawget(_G, "AnotherHUDCharDB")
-    _G.AnotherHUDDB, _G.AnotherHUDCharDB = nil, nil
-    local ok, err = pcall(core.Core.init)
-    local db, chardb = _G.AnotherHUDDB, _G.AnotherHUDCharDB
-    _G.AnotherHUDDB, _G.AnotherHUDCharDB = prevDB, prevChar
-    if not ok then error(err, 0) end
+    local db, chardb
+    fakes.withGlobals({ AnotherHUDDB = fakes.NIL, AnotherHUDCharDB = fakes.NIL }, function()
+      core.Core.init()
+      db, chardb = _G.AnotherHUDDB, _G.AnotherHUDCharDB
+    end)
     h.eq(type(db.positions), "table")
     h.eq(chardb.profile, "Default")
     h.eq(core.db, db)
@@ -346,10 +339,9 @@ end)
 
 h.test("Boot starts the addon on its ADDON_LOADED", function()
   local client = fakes.client{}
-  local prevStub = rawget(_G, "LibStub")
-  local prevDB, prevChar = rawget(_G, "AnotherHUDDB"), rawget(_G, "AnotherHUDCharDB")
-  _G.LibStub, _G.AnotherHUDDB, _G.AnotherHUDCharDB = nil, nil, nil
-  local ok, err = pcall(function()
+  local units = fakes.units({})
+  local ok, err = pcall(fakes.withGlobals, { LibStub = fakes.NIL, AnotherHUDDB = fakes.NIL,
+    AnotherHUDCharDB = fakes.NIL }, function()
     local ns = h.load(h.toc())
     client.fire("ADDON_LOADED", "SomeOtherAddon")
     h.eq(ns.db, nil)
@@ -357,19 +349,60 @@ h.test("Boot starts the addon on its ADDON_LOADED", function()
     h.eq(type(ns.db), "table")
     h.eq(ns.db, _G.AnotherHUDDB)
   end)
+  units.restore()
   client.restore()
-  _G.LibStub, _G.AnotherHUDDB, _G.AnotherHUDCharDB = prevStub, prevDB, prevChar
   if not ok then error(err, 0) end
 end)
 
 h.test("German button label fits 24 glyphs", function()
-  local prevLocale = rawget(_G, "GetLocale")
-  _G.GetLocale = function() return "deDE" end
-  local ok, ns = pcall(h.load, h.toc())
-  _G.GetLocale = prevLocale
-  assert(ok, ns)
+  local ns
+  fakes.withGlobals({ GetLocale = function() return "deDE" end }, function() ns = h.load(h.toc()) end)
   for _, text in ipairs({ "Settings" }) do
     h.eq(ns.L[text] ~= text, true, text .. " translated")
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])
   end
+end)
+
+h.test("enter and exit reach onEditMode", function()
+  with({}, function(ns, lem)
+    local got = {}
+    local a = define(ns, "a", { onEditMode = function(_, active) got[#got + 1] = active end })
+    local b = define(ns, "b", { onEditMode = function() error("boom") end })
+    local c = define(ns, "c", { onEditMode = function(_, active) got[#got + 1] = "c" .. tostring(active) end })
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+    ns.EditMode.Glue.registerAll()
+    h.eq(#lem.events.enter, 1)
+    h.eq(#lem.events.exit, 1)
+    local errors = {}
+    local old = geterrorhandler
+    geterrorhandler = function() return function(e) errors[#errors + 1] = e end end
+    local ok, err = pcall(function()
+      lem:fire("enter")
+      h.eq(ns.EditMode.Glue.inEditMode(), true)
+      lem:fire("exit")
+    end)
+    geterrorhandler = old
+    if not ok then error(err, 0) end
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+    h.eq(got, { true, "ctrue", false, "cfalse" })
+    h.eq(#errors, 2)
+    h.eq(a.frame ~= nil and b.frame ~= nil and c.frame ~= nil, true)
+  end)
+end)
+
+h.test("a module registered during Edit Mode is told at once", function()
+  with({}, function(ns, lem)
+    lem.IsInEditMode = function() return true end
+    local got = {}
+    define(ns, "a", { onEditMode = function(_, active) got[#got + 1] = active end })
+    ns.EditMode.Glue.registerAll()
+    h.eq(got, { true })
+  end)
+end)
+
+h.test("inEditMode is false without the library", function()
+  with({ noLem = true }, function(ns)
+    ns.EditMode.Glue.registerAll()
+    h.eq(ns.EditMode.Glue.inEditMode(), false)
+  end)
 end)

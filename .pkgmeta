@@ -17,12 +17,15 @@ manual-changelog:
 move-folders:
   AnotherHUD/AnotherHUD: AnotherHUD
 
-# Libraries loaded by embeds.xml. A development copy without Libs/ still
+# Libraries loaded by embeds.xml. LibEditMode is pinned to tag 19 (MINOR 19, the
+# copy the code was written against); raise it on purpose. A development copy without Libs/ still
 # works (everything but the Edit Mode part).
 externals:
   AnotherHUD/Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
   AnotherHUD/Libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
-  AnotherHUD/Libs/LibEditMode: https://github.com/p3lim-wow/LibEditMode
+  AnotherHUD/Libs/LibEditMode:
+    url: https://github.com/p3lim-wow/LibEditMode
+    tag: "19"
 
 # Repo files that are not part of the addon.
 ignore:

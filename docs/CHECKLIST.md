@@ -136,6 +136,13 @@ Combat and taint:
   `Show`) leaves no AnotherHUD lines in the taint log.
 - `/reload` in combat: the frames come back with no Lua error.
 
+Results:
+
+- 2026-11-22, first run by the player (FlareUI's unit frames off): the
+  frames work, no Lua errors and no blocked / forbidden action messages.
+  The items above were not checked one by one and the taint log was not
+  captured, so they stay open until a closer pass.
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

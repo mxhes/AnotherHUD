@@ -4,9 +4,12 @@ local ADDON, ns = ...
 -- button (left click targets, right click opens the unit menu) holding the
 -- drawn parts (Units/Parts), the unit's events, the Edit Mode sample, fading
 -- and hiding Blizzard's frames. Client values (health, power, name, level,
--- ...) only travel into the parts; flags are read only when plain. Every
--- change to the secure button (attributes, size, anchors, state driver,
--- show) goes through Combat.after.
+-- range, ...) only travel into the parts; flags are read only when plain.
+-- Every change to the secure button (attributes, size, anchors, state
+-- driver, show) goes through Combat.after, under keys made from frame.key.
+-- A module builds one frame (spec.frame); a group builds several member
+-- frames of one spec (o.member, each with its own key) and lays them out
+-- with applyFrame / editModeFrame.
 ns.Units = ns.Units or {}
 local Base = {}
 
@@ -31,6 +34,10 @@ local PORTRAIT = { UNIT_PORTRAIT_UPDATE = true, UNIT_MODEL_CHANGED = true }
 -- Frequent events: values and texts only (no colors, portrait, level).
 local VALUES = { UNIT_HEALTH = true, UNIT_MAXHEALTH = true, UNIT_POWER_UPDATE = true,
   UNIT_POWER_FREQUENT = true, UNIT_MAXPOWER = true }
+-- Role and leader changes: only the role badge and crown.
+local ROLE = { PLAYER_ROLES_ASSIGNED = true, PARTY_LEADER_CHANGED = true }
+-- Unit events that mean another unit in the frame: its cast as well.
+local NEW_UNIT = { UNIT_TARGET = true, UNIT_PET = true, UNIT_TARGETABLE_CHANGED = true }
 local CAST = {}
 for _, ev in ipairs(ns.Units.Parts.CastBar.EVENTS) do CAST[ev] = true end
 
@@ -72,13 +79,18 @@ local function textMode(mode, hasPercent)
   return mode
 end
 
+-- The module is on and (for a group member) its slot is shown.
 local function enabled(frame)
-  return ns.Modules.isEnabled(frame.id)
+  return frame.slotOn ~= false and ns.Modules.isEnabled(frame.id)
 end
 
 local function plainBool(v)
   if ns.Util.isSecret(v) or type(v) ~= "boolean" then return nil end
   return v
+end
+
+local function isBoss(unit)
+  return type(unit) == "string" and string.sub(unit, 1, 4) == "boss"
 end
 
 local function skinOf(frame)
@@ -95,26 +107,50 @@ local function visibility(frame)
   return ns.UnitState.visibility(frame.unit, opt(frame, "showInVehicle"))
 end
 
--- Opacity (SetAlpha is not protected: it may run in combat).
+-- Opacity (SetAlpha is not protected: it may run in combat). With
+-- frame.range a unit out of range fades to rangeAlpha: the client's range
+-- answer may be secret, so it only travels into SetAlphaFromBoolean; only
+-- `checked` is read, and only when plain. The player is never out of range.
 function Base.fade(frame)
-  frame:SetAlpha(ns.UnitState.alpha({
-    editMode = editing(frame),
+  local edit = editing(frame)
+  local a = ns.UnitState.alpha({
+    editMode = edit,
     inCombat = frame.combat or InCombatLockdown(),
     hover = frame.hover,
     outOfCombat = opt(frame, "outOfCombat"),
     mouseover = opt(frame, "mouseover"),
-  }))
+  })
+  local far = a * ns.Theme.sizes.unit.rangeAlpha
+  if not frame.range then
+    frame:SetAlpha(a)
+  elseif edit then
+    local s = frame.sampleState
+    frame:SetAlpha(s and s.far and far or a)
+  elseif frame.unit == "player" or type(_G.UnitInRange) ~= "function" then
+    frame:SetAlpha(a)
+  else
+    -- UNVERIFIED (check in client): UnitInRange(unit) answers inRange,
+    -- checked (inRange secret in restricted contexts) and
+    -- SetAlphaFromBoolean takes that secret boolean.
+    local inRange, checked = UnitInRange(frame.unit)
+    if not ns.Util.isSecret(checked) and checked ~= true then
+      frame:SetAlpha(a)
+    elseif not pcall(frame.SetAlphaFromBoolean, frame, inRange, a, far) then
+      frame:SetAlpha(a)
+    end
+  end
 end
 
 -- Everything from the client into the parts (valuesOnly: bars and texts,
--- not the colors, portrait and level). No unit: texts cleared, nothing else
--- read.
+-- not the colors, portrait, level and role). No unit: texts cleared,
+-- nothing else read.
 function Base.update(frame, valuesOnly)
   if frame.sampling then return end
   local unit, bars, ring = frame.unit, frame.bars, frame.ring
   if not UnitExists(unit) then
     bars:setTexts("", "", {}, "", {})
     ring:setLevel("", {})
+    if frame.role then frame.role:setUnit(nil) end
     return
   end
   local CC = _G.CurveConstants
@@ -138,7 +174,8 @@ function Base.update(frame, valuesOnly)
     local ptype, token = UnitPowerType(unit)
     if ns.Util.isSecret(token) then token = nil end
     local pwPct = maybe(_G.UnitPowerPercent, unit, ptype, false, scale)
-    bars:setPower(pw, pwMax)
+    -- A dead unit's power bar is empty.
+    if dead then bars:setPower(0, 1) else bars:setPower(pw, pwMax) end
     local powerMode = textMode(opt(frame, "powerText") or "None", type(_G.UnitPowerPercent) == "function")
     powerFmt, powerArgs = ns.UnitText.bar(powerMode,
       { cur = pw, max = pwMax, pct = pwPct, dead = dead, offline = offline }, abbr)
@@ -151,6 +188,7 @@ function Base.update(frame, valuesOnly)
   local r, g, b = ns.UnitColor.health({
     isPlayer = UnitIsPlayer(unit), class = select(2, UnitClass(unit)),
     reaction = UnitReaction(unit, "player"), classColor = opt(frame, "classColor"),
+    dead = dead, offline = offline,
   })
   bars:setColors({ r, g, b }, powerRGB)
 
@@ -158,14 +196,55 @@ function Base.update(frame, valuesOnly)
   ring:setUnit(unit)
   local level = type(_G.UnitEffectiveLevel) == "function" and _G.UnitEffectiveLevel or UnitLevel
   ring:setLevel(ns.UnitText.level(level(unit)))
+  if frame.role then frame.role:setUnit(unit) end
+end
+
+-- A group member's sample s = { name, class, role, leader, dead, offline,
+-- far, dispel, healthPct, and optional reaction (no class color),
+-- classification (ring color), level (nil: "??") }: plain values.
+local function memberSample(frame, s)
+  local bars, ring = frame.bars, frame.ring
+  local pct = s.healthPct or 0
+  local dead, offline = s.dead == true, s.offline == true
+  bars:setHealth(pct, 100)
+  local healthFmt, healthArgs = ns.UnitText.bar(opt(frame, "healthText") or "None",
+    { cur = pct * 1000, max = 100000, pct = pct, dead = dead, offline = offline }, abbr)
+  local powerFmt, powerArgs = "", {}
+  if frame.hasPower then
+    if dead then bars:setPower(0, 1) else bars:setPower(0.55, 1) end
+    powerFmt, powerArgs = ns.UnitText.bar(opt(frame, "powerText") or "None",
+      { cur = SAMPLE_POWER.cur, max = SAMPLE_POWER.max, pct = SAMPLE_POWER.pct, dead = dead, offline = offline },
+      abbr)
+  end
+  local r, g, b = ns.UnitColor.health({ isPlayer = s.reaction == nil, class = s.class, reaction = s.reaction,
+    classColor = opt(frame, "classColor"), dead = dead, offline = offline })
+  bars:setColors({ r, g, b }, { ns.UnitColor.power("MANA") })
+  bars:setTexts(s.name or "", healthFmt, healthArgs, powerFmt, powerArgs)
+  ring:setColors(ns.UnitColor.ring(s.classification))
+  ring:setUnit("player")
+  ring:setLevel(ns.UnitText.level(s.level))
+  if frame.role then
+    frame.role:setRole(s.role)
+    frame.role:setLeader(s.leader == true)
+  end
 end
 
 -- The Edit Mode sample: plain values into the parts (cast bar and auras
--- draw their own).
+-- draw their own). A member's sample function answers its slot's table
+-- (nil: the frame's own sample below).
 local function sample(frame, on)
   if castOn(frame) then frame.cast:sample(on) end
   if frame.auras then frame.auras:sample(on) end
+  local s = on and frame.sampleFn and frame.sampleFn(frame) or nil
+  frame.sampleState = s or false
+  if frame.dispel then
+    frame.dispel:sample(s and s.dispel and ns.Theme.unitColors.debuff[s.dispel] or nil)
+  end
   if not on then return end
+  if s then
+    memberSample(frame, s)
+    return
+  end
   local bars, ring = frame.bars, frame.ring
   local name
   if frame.unit == "player" then name = UnitName("player") else name = ns.L[frame.spec.label] end
@@ -185,17 +264,24 @@ local function sample(frame, on)
   ring:setLevel(ns.UnitText.level(UnitLevel("player")))
 end
 
--- Places the auras: under an attached cast bar (auraBelowCast between), else
--- L.below under the frame. Plain frames, but anchored to the secure button:
--- callers run it inside Combat.after.
+-- Places the auras: beside the frame (auraSide "right": partyAuraGap right
+-- of it; "left": bossAuraGap left of it; vertically centered), else under an
+-- attached cast bar (auraBelowCast between) or L.below under the frame.
+-- Plain frames, but anchored to the secure button: callers run it inside
+-- Combat.after.
 local function placeAuras(frame)
   local auras, L = frame.auras, frame.L
   if not auras or not L then return end
+  local U = ns.Theme.sizes.unit
   local mirror = frame.mirror
   local top, bottom = mirror and "TOPRIGHT" or "TOPLEFT", mirror and "BOTTOMRIGHT" or "BOTTOMLEFT"
   auras.frame:ClearAllPoints()
-  if castOn(frame) and not frame.castHolder then
-    auras.frame:SetPoint(top, frame.cast.frame, bottom, 0, -ns.Theme.sizes.unit.auraBelowCast)
+  if frame.auraSide == "right" then
+    auras.frame:SetPoint("LEFT", frame, "RIGHT", U.partyAuraGap, 0)
+  elseif frame.auraSide == "left" then
+    auras.frame:SetPoint("RIGHT", frame, "LEFT", -U.bossAuraGap, 0)
+  elseif castOn(frame) and not frame.castHolder then
+    auras.frame:SetPoint(top, frame.cast.frame, bottom, 0, -U.auraBelowCast)
   else
     auras.frame:SetPoint(top, frame, bottom, 0, -L.below)
   end
@@ -213,7 +299,7 @@ local function placeCast(frame)
     cast.frame:SetParent(frame)
     local mirror = frame.mirror
     local top, bottom = mirror and "TOPRIGHT" or "TOPLEFT", mirror and "BOTTOMRIGHT" or "BOTTOMLEFT"
-    cast.frame:SetPoint(top, frame, bottom, 0, -L.below)
+    cast.frame:SetPoint(top, frame, bottom, 0, -(frame.castGap or L.below))
   end
   placeAuras(frame)
 end
@@ -222,7 +308,7 @@ end
 -- under the frame (holder nil).
 function Base.anchorCast(frame, holder)
   frame.castHolder = holder or false
-  ns.Combat.after("unit:" .. frame.id .. ":cast", function() placeCast(frame) end)
+  ns.Combat.after("unit:" .. frame.key .. ":cast", function() placeCast(frame) end)
 end
 
 local function onEvent(frame, event, ...)
@@ -240,19 +326,24 @@ local function onEvent(frame, event, ...)
     frame.ring:setUnit(frame.unit)
     return
   end
+  if ROLE[event] then
+    if frame.role then frame.role:setUnit(frame.unit) end
+    return
+  end
   Base.update(frame, VALUES[event] or false)
   if VALUES[event] then return end
   -- A new unit (or the world): its cast, if any.
   local unitEvent = string.sub(event, 1, 5) == "UNIT_"
-  if castOn(frame) and (not unitEvent or event == "UNIT_TARGET" or event == "UNIT_PET") then
+  if castOn(frame) and (not unitEvent or NEW_UNIT[event]) then
     frame.cast:update(event, frame.unit)
   end
 end
 
-local function registerEvents(frame, unit, castBar)
+-- o: the Base.create options (castBar, roster, role).
+local function registerEvents(frame, unit, o)
   if unit ~= "targettarget" then
     for _, ev in ipairs(UNIT_EVENTS) do frame:RegisterUnitEvent(ev, unit) end
-    if castBar then
+    if o.castBar then
       for _, ev in ipairs(ns.Units.Parts.CastBar.EVENTS) do frame:RegisterUnitEvent(ev, unit) end
     end
   end
@@ -263,38 +354,66 @@ local function registerEvents(frame, unit, castBar)
   -- A new target is a new target of target at once (no stale name until
   -- the next throttled refresh).
   if unit == "targettarget" then frame:RegisterEvent("PLAYER_TARGET_CHANGED") end
+  -- Group members: a roster change may put another unit behind the token.
+  if o.roster or o.role then frame:RegisterEvent("GROUP_ROSTER_UPDATE") end
+  if o.role then
+    frame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
+    frame:RegisterEvent("PARTY_LEADER_CHANGED")
+  end
+  if isBoss(unit) then
+    -- UNVERIFIED (check in client): INSTANCE_ENCOUNTER_ENGAGE_UNIT fires when
+    -- boss1-5 change, UNIT_TARGETABLE_CHANGED as a unit event for a boss.
+    frame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+    frame:RegisterUnitEvent("UNIT_TARGETABLE_CHANGED", unit)
+  end
   frame:RegisterEvent("PLAYER_ENTERING_WORLD")
   frame:RegisterEvent("PLAYER_REGEN_DISABLED")
   frame:RegisterEvent("PLAYER_REGEN_ENABLED")
   frame:SetScript("OnEvent", onEvent)
 end
 
--- o = { unit, name (global frame name), mirror, castBar, auras, badge (px or nil) }.
+-- o = { unit, name (global frame name), mirror, castBar, auras, badge (px or
+-- nil), and for group members: key (combat key, default spec.id), parent
+-- (default UIParent), member (spec.frame is not set), sample (function(frame)
+-- -> sample table or nil), castGap (px, default L.below), auraMode ("rows" |
+-- "line"), auraSide (nil | "right" | "left"), range, role, dispel, roster
+-- (the unit changes with the group roster) }. Boss units (boss1-5) take the
+-- encounter events.
 function Base.create(spec, o)
   local unit = o.unit
+  local key = o.key or spec.id
   -- UNVERIFIED (check in client): "*type2" = "togglemenu" opens the unit
   -- menu on Forever.
-  local frame = CreateFrame("Button", o.name, UIParent, "SecureUnitButtonTemplate")
-  frame.id, frame.spec, frame.unit = spec.id, spec, unit
+  local frame = CreateFrame("Button", o.name, o.parent or UIParent, "SecureUnitButtonTemplate")
+  frame.id, frame.spec, frame.unit, frame.key = spec.id, spec, unit, key
   -- Every field set (false for "none"), so a lookup never reaches the
   -- frame's own methods.
   frame.mirror, frame.badge = o.mirror and true or false, o.badge or false
   frame.combat = InCombatLockdown() and true or false
   frame.hover, frame.sampling, frame.castHolder = false, false, false
   frame.L, frame.hasPower, frame.cast, frame.auras = false, false, false, false
-  spec.frame = frame
-  ns.Combat.after("unit:" .. spec.id .. ":init", function()
+  frame.slotOn, frame.range = true, o.range and true or false
+  frame.castGap, frame.auraSide = o.castGap or false, o.auraSide or false
+  frame.sampleFn, frame.sampleState = o.sample or false, false
+  frame.role, frame.dispel = false, false
+  if not o.member then spec.frame = frame end
+  ns.Combat.after("unit:" .. key .. ":init", function()
     frame:SetAttribute("unit", unit)
     frame:SetAttribute("*type1", "target")
     frame:SetAttribute("*type2", "togglemenu")
     frame:RegisterForClicks("AnyUp")
   end)
 
-  frame.panel = ns.Units.Parts.Panel.create(frame)
-  frame.ring = ns.Units.Parts.Ring.create(frame)
-  frame.bars = ns.Units.Parts.Bars.create(frame)
-  if o.castBar then frame.cast = ns.Units.Parts.CastBar.create(frame, unit) end
-  if o.auras then frame.auras = ns.Units.Parts.Auras.create(frame, unit) end
+  local Parts = ns.Units.Parts
+  frame.panel = Parts.Panel.create(frame)
+  frame.ring = Parts.Ring.create(frame)
+  frame.bars = Parts.Bars.create(frame)
+  if o.castBar then frame.cast = Parts.CastBar.create(frame, unit) end
+  if o.auras then frame.auras = Parts.Auras.create(frame, unit, o.auraMode) end
+  -- Frame levels: Ring +5, Role +6 (badge and crown over the ring), Dispel
+  -- +7 (the glow over the panel and bars).
+  if o.role then frame.role = Parts.Role.create(frame) end
+  if o.dispel then frame.dispel = Parts.Dispel.create(frame, unit) end
 
   frame:HookScript("OnEnter", function(self)
     self.hover = true
@@ -317,7 +436,7 @@ function Base.create(spec, o)
   -- the last unit it showed.
   frame:HookScript("OnShow", function(self) Base.update(self) end)
 
-  registerEvents(frame, unit, o.castBar)
+  registerEvents(frame, unit, o)
   if unit == "targettarget" then
     -- No unit events for targettarget: a refresh every THROTTLE s while
     -- shown; values only while the GUID stays the same (a secret or missing
@@ -342,9 +461,9 @@ function Base.create(spec, o)
   return frame
 end
 
--- A frame turned off in the Edit Mode checklist: sample off, state driver
--- gone, hidden (out of combat; under both secure keys, so a queued apply or
--- Edit Mode show can't bring it back).
+-- A frame turned off (Edit Mode checklist, or its group slot hidden): sample
+-- off, state driver gone, hidden (out of combat; under both secure keys, so
+-- a queued apply or Edit Mode show can't bring it back).
 local function turnOff(frame)
   if frame.sampling then sample(frame, false) end
   frame.sampling = false
@@ -352,28 +471,34 @@ local function turnOff(frame)
     UnregisterStateDriver(frame, "visibility")
     frame:Hide()
   end
-  ns.Combat.after("unit:" .. frame.id, off)
-  ns.Combat.after("unit:" .. frame.id .. ":edit", off)
+  ns.Combat.after("unit:" .. frame.key, off)
+  ns.Combat.after("unit:" .. frame.key .. ":edit", off)
 end
 
--- Reads every option and lays the frame out (out of combat), then the
--- values and the opacity. A module turned off only hides its frame.
-function Base.apply(spec)
-  local frame = spec.frame
-  if not frame then return end
+-- Reads every option and lays one frame out (out of combat), then the
+-- values and the opacity. A frame turned off only hides.
+function Base.applyFrame(frame)
   if not enabled(frame) then
     turnOff(frame)
     return
   end
-  -- Turned back on while Edit Mode is open: the sample, as on enter.
-  if not frame.sampling and editing(frame) then Base.editMode(spec, true) end
-  ns.Combat.after("unit:" .. spec.id, function()
+  local key = "unit:" .. frame.key
+  if editing(frame) then
+    -- Turned back on while Edit Mode is open: the sample, as on enter.
+    if not frame.sampling then Base.editModeFrame(frame, true) end
+  else
+    -- A turn-off queued earlier in this combat also waits under ":edit";
+    -- replace it, so it can't hide the frame after this apply.
+    ns.Combat.after(key .. ":edit", function() end)
+  end
+  ns.Combat.after(key, function()
     local skin = skinOf(frame)
     local w, h = opt(frame, "width"), opt(frame, "height")
     local L = ns.UnitLayout.frame({
       w = w, h = h, powerH = opt(frame, "powerHeight") or 0,
       portraitScale = opt(frame, "portraitScale") or 100, mirror = frame.mirror,
       edge = ns.UnitLayout.edgeWidth(skin.border), badge = frame.badge or nil,
+      role = frame.role and true or nil,
     })
     frame.L = L
     frame.hasPower = L.power ~= nil
@@ -382,6 +507,8 @@ function Base.apply(spec)
     frame.ring:layout(L, { skin = skin })
     frame.bars:layout(L, { texture = opt(frame, "barTexture"), fontSize = opt(frame, "fontSize"),
       showName = opt(frame, "showName"), mirror = frame.mirror, skin = skin })
+    if frame.role then frame.role:layout(L, { skin = skin }) end
+    if frame.dispel then frame.dispel:layout() end
 
     local cast = frame.cast
     if cast then
@@ -396,9 +523,12 @@ function Base.apply(spec)
       placeCast(frame)
     end
     if frame.auras then
+      -- Beside the frame on the left the auras grow leftward; on the right
+      -- rightward; under it they follow the portrait side.
+      local side = frame.auraSide
       frame.auras:layout({ size = opt(frame, "auraSize"), rows = opt(frame, "auraRows"), width = w,
         buffs = opt(frame, "buffs"), debuffs = opt(frame, "debuffs"), onlyMine = opt(frame, "onlyMine"),
-        mirror = frame.mirror })
+        mirror = side == "left" or (not side and frame.mirror) })
       placeAuras(frame)
     end
 
@@ -414,16 +544,18 @@ function Base.apply(spec)
   Base.fade(frame)
 end
 
+function Base.apply(spec)
+  if spec.frame then Base.applyFrame(spec.frame) end
+end
+
 -- Edit Mode open (true) / closed (false): the frame shows a sample while
 -- open; on close the state driver and the real values come back.
-function Base.editMode(spec, active)
-  local frame = spec.frame
-  if not frame then return end
+function Base.editModeFrame(frame, active)
   if not enabled(frame) then
     turnOff(frame)
     return
   end
-  local key = "unit:" .. spec.id .. ":edit"
+  local key = "unit:" .. frame.key .. ":edit"
   if active then
     frame.sampling = true
     ns.Combat.after(key, function()
@@ -442,6 +574,10 @@ function Base.editMode(spec, active)
     if castOn(frame) then frame.cast:update("PLAYER_ENTERING_WORLD", frame.unit) end
   end
   Base.fade(frame)
+end
+
+function Base.editMode(spec, active)
+  if spec.frame then Base.editModeFrame(spec.frame, active) end
 end
 
 local function hiddenFrame()

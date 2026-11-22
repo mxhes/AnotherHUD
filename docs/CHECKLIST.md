@@ -33,13 +33,17 @@ and remove both once it is confirmed.
   takes the secret duration from `UnitCastingDuration` / `UnitChannelDuration`
   (cast fills, channel empties); `C_DurationUtil.CreateDurationTextBinding`
   shows the time with one decimal (`C_StringUtil.CreateNumericRuleFormatter`),
-  and its `Disable` / `Enable` keep the Edit Mode sample's "0.9"; the sample
-  bar stays at 62% after a real cast (the client's timer must not keep
-  driving it); `SetAlphaFromBoolean` with a secret `notInterruptible` shows
+  and its `Disable` / `Enable` keep the Edit Mode sample's "0.9"; the Edit
+  Mode sample (a static 62% texture over the hidden timed fill, after
+  `ClearTimerDuration` when it exists) shows right after a real cast and the
+  next real cast fills normally again; `SetAlphaFromBoolean` with a secret `notInterruptible` shows
   the shield and the grey overlay only on uninterruptible casts (a dungeon
   boss); the grey overlay and the spark follow the fill texture; a kicked
   channel shows "Interrupted" (`UNIT_SPELLCAST_CHANNEL_STOP` with
-  `interruptedBy`).
+  `interruptedBy`); `UnitCastingInfo` / `UnitChannelInfo` return no values
+  at all when the unit is idle (`select("#", ...) == 0`); `INTERRUPTED` (or
+  `CHANNEL_STOP` with `interruptedBy`) arrives before the cast's `STOP`, so
+  the bar holds on "Interrupted" instead of hiding.
 - Unit auras (`Units/Parts/Auras.lua`): `Blizzard_AuraContainer` loads and
   `CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")`
   works when created at login; the `HARMFUL|!PLAYER` / `HELPFUL|!PLAYER`
@@ -50,9 +54,11 @@ and remove both once it is confirmed.
   type colors (`Theme.unitColors.debuff`); `SetDesaturated` on an icon of the
   others' groups sticks; the flow layout setters (`SetFlowLayoutAxis`,
   `...AnchorPoint`, `...GrowthDirection`, `...MaximumLineSize`,
-  `...Padding`) and `AnchorUtil.FlowDirection` grow away from the portrait,
-  buffs on a new line under the debuffs; mine and others each cap at the
-  rows' icon count, so together they may run past the Aura rows setting.
+  `...Padding`) and `AnchorUtil.FlowDirection` grow away from the portrait;
+  each kind's container sits in a clip frame (`SetClipsChildren(true)`)
+  sized to its rows: icons past the Aura rows setting are cut, and since
+  mine come first only other players' auras are cut; buffs sit under the
+  debuffs (none of the debuffs' space when Debuffs is off).
 
 ### Edit Mode spike (Plan 1, Task 7)
 

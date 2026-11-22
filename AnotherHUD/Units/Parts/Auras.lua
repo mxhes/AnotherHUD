@@ -1,8 +1,10 @@
 local ADDON, ns = ...
 
--- The unit aura rows: one client AuraContainer (CustomAuraContainerTemplate)
--- with four groups, debuffs first (top rows), then buffs; mine bright,
--- other players' desaturated (off with Only Mine). The client picks, sorts,
+-- The unit aura rows: two client AuraContainers (CustomAuraContainerTemplate),
+-- debuffs (top rows) and buffs under them, each in its own clip frame sized
+-- to its rows. Each holds two groups: mine first (bright), then other
+-- players' (desaturated, off with Only Mine), so an overflow past the rows
+-- cuts only others' auras. The client picks, sorts,
 -- times and counts the auras; we only style its buttons. Debuff edges come
 -- from AddDispelTypeTexture (Border style), buffs get a 1 px panelBorder
 -- edge. The flow grows away from the portrait side. Edit Mode shows our own
@@ -16,15 +18,18 @@ Auras.__index = Auras
 
 local TEMPLATE = "CustomAuraContainerTemplate"
 local MAX_AURAS = 40
-local SAMPLE_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
 
 -- UNVERIFIED (check in client): the "!PLAYER" filter token (auras other
 -- players / NPCs applied).
-local GROUPS = {
-  { key = "debuffMine", filter = "HARMFUL|PLAYER", debuff = true, mine = true },
-  { key = "debuffOther", filter = "HARMFUL|!PLAYER", debuff = true, mine = false },
-  { key = "buffMine", filter = "HELPFUL|PLAYER", debuff = false, mine = true },
-  { key = "buffOther", filter = "HELPFUL|!PLAYER", debuff = false, mine = false },
+local KINDS = {
+  { kind = "debuff", groups = {
+    { key = "debuffMine", filter = "HARMFUL|PLAYER", debuff = true, mine = true },
+    { key = "debuffOther", filter = "HARMFUL|!PLAYER", debuff = true, mine = false },
+  } },
+  { kind = "buff", groups = {
+    { key = "buffMine", filter = "HELPFUL|PLAYER", debuff = false, mine = true },
+    { key = "buffOther", filter = "HELPFUL|!PLAYER", debuff = false, mine = false },
+  } },
 }
 
 -- Edit Mode placeholders (docs/mockups/2-target.html): kind = Theme.unitColors
@@ -47,6 +52,11 @@ local function font(parent)
   fs:SetFont(ns.Theme.fonts.file, ns.Theme.sizes.unit.textFont, "OUTLINE")
   fs:SetWordWrap(false)
   return fs
+end
+
+local function crop(tex)
+  local k = ns.Theme.sizes.unit.iconCrop
+  tex:SetTexCoord(k, 1 - k, k, 1 - k)
 end
 
 local function textSize(size)
@@ -88,7 +98,7 @@ local function initButton(self, button, g)
     local edge = button:CreateTexture(nil, "BACKGROUND")
     edge:SetTexture(T.textures.line)
     local icon = button:CreateTexture(nil, "ARTWORK")
-    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    crop(icon)
     local cd = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
     cd:SetAllPoints(icon)
     cd:SetReverse(true)
@@ -131,59 +141,73 @@ local function initButton(self, button, g)
   end
 end
 
+local function loadAuraContainer()
+  local addons = _G.C_AddOns
+  if type(addons) ~= "table" or not addons.LoadAddOn then return end
+  local okExists, exists = pcall(addons.DoesAddOnExist, "Blizzard_AuraContainer")
+  local okLoaded, loaded = pcall(addons.IsAddOnLoaded, "Blizzard_AuraContainer")
+  if okExists and exists and not (okLoaded and loaded) then
+    pcall(addons.LoadAddOn, "Blizzard_AuraContainer")
+  end
+end
+
 -- UNVERIFIED (check in client): Blizzard_AuraContainer loads on demand and
 -- CreateFrame("AuraContainer", ..., CustomAuraContainerTemplate) works at
 -- login (created later the client refuses it).
-local function makeContainer(frame, unit)
-  local addons = _G.C_AddOns
-  if type(addons) == "table" and addons.LoadAddOn then
-    local okExists, exists = pcall(addons.DoesAddOnExist, "Blizzard_AuraContainer")
-    local okLoaded, loaded = pcall(addons.IsAddOnLoaded, "Blizzard_AuraContainer")
-    if okExists and exists and not (okLoaded and loaded) then
-      pcall(addons.LoadAddOn, "Blizzard_AuraContainer")
-    end
-  end
-  local ok, container = pcall(CreateFrame, "AuraContainer", nil, frame, TEMPLATE)
+local function makeContainer(parent, unit)
+  local ok, container = pcall(CreateFrame, "AuraContainer", nil, parent, TEMPLATE)
   if not ok or type(container) ~= "table" or type(container.AddAuraGroup) ~= "function" then return nil end
   pcall(container.SetUnit, container, unit)
   return container
 end
 
-local function groupLayout(self, i, g)
+local function groupLayout(self, i)
   local gap = ns.Theme.sizes.unit.auraGap
   return {
     elementWidth = self.size, elementHeight = self.size,
     elementSpacing = gap, lineSpacing = gap, groupSpacing = gap, groupLineSpacing = gap,
     layoutIndex = i,
-    -- Buffs start their own line under the debuffs.
-    forceNewLine = g.key == "buffMine",
   }
 end
 
+-- Both kinds' clip frame and container are made here, at login.
 function Auras.create(parent, unit)
   local frame = CreateFrame("Frame", nil, parent)
   local self = setmetatable({ frame = frame, parent = parent, unit = unit, size = 22,
-    buttons = setmetatable({}, { __mode = "k" }), samples = {}, groups = {} }, Auras)
-  self.container = makeContainer(frame, unit)
-  if self.container then
-    for i, g in ipairs(GROUPS) do
-      local ok = pcall(self.container.AddAuraGroup, self.container, g.key, g.filter, {
-        initializeFrame = function(button) initButton(self, button, g) end,
-        maxFrameCount = 0,
-        layout = groupLayout(self, i, g),
-      })
-      if ok then self.groups[g.key] = g end
+    buttons = setmetatable({}, { __mode = "k" }), samples = {}, kinds = {} }, Auras)
+  loadAuraContainer()
+  local any = false
+  for _, k in ipairs(KINDS) do
+    -- UNVERIFIED (check in client): SetClipsChildren on the clip frame cuts
+    -- the container's buttons past its rows.
+    local clip = CreateFrame("Frame", nil, frame)
+    clip:SetClipsChildren(true)
+    local entry = { clip = clip, groups = {} }
+    entry.container = makeContainer(clip, unit)
+    if entry.container then
+      for i, g in ipairs(k.groups) do
+        local ok = pcall(entry.container.AddAuraGroup, entry.container, g.key, g.filter, {
+          initializeFrame = function(button) initButton(self, button, g) end,
+          maxFrameCount = 0,
+          layout = groupLayout(self, i),
+        })
+        if ok then entry.groups[#entry.groups + 1] = { g = g, index = i } end
+      end
+      if #entry.groups == 0 then entry.container = nil end
     end
+    any = any or entry.container ~= nil
+    self.kinds[k.kind] = entry
   end
-  self.available = self.container ~= nil and next(self.groups) ~= nil
+  self.available = any
 
+  local sampleIcon = ns.Theme.textures.sampleIcon
   for i = 1, #SAMPLES do
     local holder = CreateFrame("Frame", nil, frame)
     local p = { holder = holder, edge = holder:CreateTexture(nil, "BACKGROUND"),
       icon = holder:CreateTexture(nil, "ARTWORK"), time = font(holder), count = font(holder) }
     p.edge:SetTexture(ns.Theme.textures.line)
-    p.icon:SetTexture(SAMPLE_ICON)
-    p.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    p.icon:SetTexture(sampleIcon)
+    crop(p.icon)
     holder:Hide()
     for _, r in ipairs({ p.edge, p.icon, p.time, p.count }) do r:Hide() end
     self.samples[i] = p
@@ -211,12 +235,23 @@ local function flow(container, anchor, mirror, width)
   call(container, "SetFlowLayoutPadding", 0, 0, 0, 0)
 end
 
-local function wanted(o, g)
-  local kind = g.debuff and o.debuffs or not g.debuff and o.buffs
-  return kind and (g.mine or not o.onlyMine) and true or false
+local function kindOn(o, debuff)
+  if debuff then return o.debuffs end
+  return o.buffs
 end
 
--- Our placeholders: debuffs on the first `rows` rows, buffs on the next.
+local function wanted(o, g)
+  return kindOn(o, g.debuff) and (g.mine or not o.onlyMine) and true or false
+end
+
+-- The top of a kind's rows (px below the aura frame's top): buffs sit under
+-- the debuffs' rows plus the gap; a kind that is off takes no space.
+local function kindTop(o, debuff)
+  if debuff or not o.debuffs then return 0 end
+  return o.rows * (o.size + ns.Theme.sizes.unit.auraGap)
+end
+
+-- Our placeholders, on the same rows as the containers.
 local function drawSamples(self)
   local o, gap = self.opts, ns.Theme.sizes.unit.auraGap
   local size, anchor = self.size, o.mirror and "TOPRIGHT" or "TOPLEFT"
@@ -224,16 +259,16 @@ local function drawSamples(self)
   for i, s in ipairs(SAMPLES) do
     local p = self.samples[i]
     local debuff = s.kind ~= "buff"
-    local index, rowBase
-    if debuff then nDebuff = nDebuff + 1; index, rowBase = nDebuff, 0
-    else nBuff = nBuff + 1; index, rowBase = nBuff, o.debuffs and o.rows or 0 end
-    local show = self.sampling and self.available and wanted(o, { debuff = debuff, mine = s.mine }) and index <= self.shown
+    local index
+    if debuff then nDebuff = nDebuff + 1; index = nDebuff
+    else nBuff = nBuff + 1; index = nBuff end
+    local show = self.sampling and wanted(o, { debuff = debuff, mine = s.mine }) and index <= self.shown
     if show then
       local col, row = (index - 1) % self.perRow, math.floor((index - 1) / self.perRow)
       local x = col * (size + gap)
       if o.mirror then x = -x end
       p.holder:ClearAllPoints()
-      p.holder:SetPoint(anchor, self.frame, anchor, x, -(rowBase + row) * (size + gap))
+      p.holder:SetPoint(anchor, self.frame, anchor, x, -(kindTop(o, debuff) + row * (size + gap)))
       p.holder:SetSize(size, size)
       local c, w = edgeOf(debuff, s.kind)
       tint(p.edge, c)
@@ -261,38 +296,46 @@ function Auras:layout(opts)
   }
   self.opts, self.size = o, o.size
   self.perRow, self.shown = ns.UnitLayout.auras(o.width, o.size, U.auraGap, o.rows, MAX_AURAS)
+  -- A kind's clip frame: its rows, the gap between them, nothing more.
+  local clipH = o.rows * o.size + (o.rows - 1) * U.auraGap
   local kinds = (o.debuffs and 1 or 0) + (o.buffs and 1 or 0)
-  local height = math.max(1, kinds * o.rows * (o.size + U.auraGap) - U.auraGap)
-  self.frame:SetSize(o.width, height)
+  self.frame:SetSize(o.width, math.max(1, kinds * clipH + math.max(0, kinds - 1) * U.auraGap))
 
-  local c = self.available and self.container
-  if c then
-    local anchor = o.mirror and "TOPRIGHT" or "TOPLEFT"
-    c:ClearAllPoints()
-    c:SetPoint(anchor, self.frame, anchor, 0, 0)
-    c:SetSize(o.width, height)
-    for i, g in ipairs(GROUPS) do
-      if self.groups[g.key] then
-        call(c, "SetAuraGroupLayout", g.key, groupLayout(self, i, g))
-        call(c, "SetAuraGroupMaxFrameCount", g.key, self.shown)
-        call(c, "SetAuraGroupEnabled", g.key, wanted(o, g))
+  local anchor = o.mirror and "TOPRIGHT" or "TOPLEFT"
+  for _, k in ipairs(KINDS) do
+    local entry, debuff = self.kinds[k.kind], k.kind == "debuff"
+    local clip, c = entry.clip, entry.container
+    clip:ClearAllPoints()
+    clip:SetPoint(anchor, self.frame, anchor, 0, -kindTop(o, debuff))
+    clip:SetSize(o.width, clipH)
+    if kindOn(o, debuff) then clip:Show() else clip:Hide() end
+    if c then
+      c:ClearAllPoints()
+      c:SetPoint(anchor, clip, anchor, 0, 0)
+      c:SetSize(o.width, clipH)
+      for _, gi in ipairs(entry.groups) do
+        call(c, "SetAuraGroupLayout", gi.g.key, groupLayout(self, gi.index))
+        call(c, "SetAuraGroupMaxFrameCount", gi.g.key, self.shown)
+        call(c, "SetAuraGroupEnabled", gi.g.key, wanted(o, gi.g))
       end
+      flow(c, anchor, o.mirror, o.width)
     end
-    flow(c, anchor, o.mirror, o.width)
-    -- Buttons built at an earlier size.
-    for button, entry in pairs(self.buttons) do initButton(self, button, entry.g) end
   end
+  -- Buttons built at an earlier size.
+  for button, entry in pairs(self.buttons) do initButton(self, button, entry.g) end
   drawSamples(self)
 end
 
--- Edit Mode: our placeholders over a hidden container (none without the
--- template: nothing shows then).
+-- Edit Mode: our placeholders over hidden containers (they show even
+-- without the template).
 function Auras:sample(on)
   self.sampling = on and true or false
   if not self.opts then self:layout({}) end
-  local c = self.available and self.container
-  if c then
-    if on then c:Hide() else c:Show() end
+  for _, entry in pairs(self.kinds) do
+    local c = entry.container
+    if c then
+      if on then c:Hide() else c:Show() end
+    end
   end
   drawSamples(self)
 end

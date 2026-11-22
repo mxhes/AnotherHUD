@@ -141,10 +141,19 @@ end)
 
 h.test("cast sample is a static bar", function()
   withUnits({ target = {} }, function(ns)
-    local cast = castBar(ns)
+    local cast = ns.Units.Parts.CastBar.create(fakes.frame(), "target")
+    local fill = fakes.frame()
+    cast.bar.GetStatusBarTexture = function() return fill end
+    local cleared = false
+    cast.bar.ClearTimerDuration = function() cleared = true end
+    cast:layout({ width = 200, height = 18, icon = true })
     cast:sample(true)
     h.eq(cast.frame:IsShown(), true)
-    h.eq(cast.bar:GetValue(), 0.62)
+    h.eq(cleared, true, "timer cleared")
+    h.eq(cast.sampleFill:IsShown(), true, "static sample fill")
+    -- Bar 200 - icon 18 - 2 gap - 2 x (Round edge 4 + 1) = 170 wide.
+    h.near(cast.sampleFill._width, 170 * 0.62, 1e-9)
+    h.eq(fill:GetAlpha(), 0, "timed fill hidden under the sample")
     h.eq(cast.name:GetText(), "Sample Spell")
     h.eq(cast.time:GetText(), "0.9")
     h.eq(cast.color, ns.Theme.unitColors.cast)
@@ -152,6 +161,8 @@ h.test("cast sample is a static bar", function()
     h.eq(cast.frame:IsShown(), true, "events leave the sample alone")
     cast:sample(false)
     h.eq(cast.frame:IsShown(), false, "no cast after the sample")
+    h.eq(cast.sampleFill:IsShown(), false)
+    h.eq(fill:GetAlpha(), 1, "timed fill back")
   end)
 end)
 
@@ -166,6 +177,12 @@ h.test("cast events list", function()
   end)
 end)
 
+local function shownSamples(auras)
+  local n = 0
+  for _, s in ipairs(auras.samples) do if s.icon:IsShown() then n = n + 1 end end
+  return n
+end
+
 h.test("auras without the template stay quiet", function()
   withUnits({}, function(ns)
     local create = _G.CreateFrame
@@ -177,7 +194,9 @@ h.test("auras without the template stay quiet", function()
     h.eq(auras.available, false)
     auras:layout({ size = 22, rows = 1, width = 200, buffs = true, debuffs = true, onlyMine = false })
     auras:sample(true)
+    h.eq(shownSamples(auras), 6, "the Edit Mode placeholders still show")
     auras:sample(false)
+    h.eq(shownSamples(auras), 0)
   end)
 end)
 
@@ -196,58 +215,106 @@ local function fakeContainer()
   return c
 end
 
-local function withContainer(fn)
+-- fn(ns, containers): every AuraContainer created, in order.
+local function withContainers(fn)
   withUnits({}, function(ns)
-    local container = fakeContainer()
+    local containers = {}
     local create = _G.CreateFrame
-    _G.CreateFrame = function(kind, ...)
-      if kind == "AuraContainer" then return container end
-      return create(kind, ...)
+    _G.CreateFrame = function(kind, name, parent, ...)
+      if kind == "AuraContainer" then
+        local c = fakeContainer()
+        c._parent = parent
+        containers[#containers + 1] = c
+        return c
+      end
+      local f = create(kind, name, parent, ...)
+      f.SetClipsChildren = function(self, on) self._clips = on end
+      return f
     end
     _G.AnchorUtil = { FlowLayoutAxis = { Horizontal = "H" }, FlowDirection = { Left = "L", Right = "R", Down = "D" } }
-    local ok, err = pcall(fn, ns, container)
+    local ok, err = pcall(fn, ns, containers)
     _G.AnchorUtil = nil
     if not ok then error(err, 0) end
   end)
 end
 
-h.test("aura groups follow the options", function()
-  withContainer(function(ns, c)
+local function point(frame, name)
+  for i = #frame.calls, 1, -1 do
+    local c = frame.calls[i]
+    if c[1] == "SetPoint" and c[2] == name then return c end
+  end
+end
+
+h.test("one clipped container per aura kind", function()
+  withContainers(function(ns, cs)
     local auras = ns.Units.Parts.Auras.create(fakes.frame(), "target")
     h.eq(auras.available, true)
-    h.eq(c.groups.debuffMine.filter, "HARMFUL|PLAYER")
-    h.eq(c.groups.debuffOther.filter, "HARMFUL|!PLAYER")
-    h.eq(c.groups.buffMine.filter, "HELPFUL|PLAYER")
-    h.eq(c.groups.buffOther.filter, "HELPFUL|!PLAYER")
+    h.eq(#cs, 2, "debuffs and buffs, both at create")
+    local debuff, buff = auras.kinds.debuff, auras.kinds.buff
+    h.eq(debuff.container, cs[1])
+    h.eq(buff.container, cs[2])
+    h.eq(cs[1]:GetParent(), debuff.clip, "inside its clip frame")
+    h.eq(debuff.clip._clips, true)
+    h.eq(buff.clip._clips, true)
+    h.eq(cs[1].groups.debuffMine.filter, "HARMFUL|PLAYER")
+    h.eq(cs[1].groups.debuffOther.filter, "HARMFUL|!PLAYER")
+    h.eq(cs[2].groups.buffMine.filter, "HELPFUL|PLAYER")
+    h.eq(cs[2].groups.buffOther.filter, "HELPFUL|!PLAYER")
+    h.eq(cs[1].groups.debuffMine.opts.layout.layoutIndex, 1, "mine first")
+    h.eq(cs[1].groups.debuffOther.opts.layout.layoutIndex, 2)
+
+    auras:layout({ size = 22, rows = 2, width = 200, buffs = true, debuffs = true, onlyMine = false })
+    h.eq(debuff.clip._height, 46, "2 rows x 22 + 2 gap")
+    h.eq(debuff.clip._width, 200)
+    h.eq(buff.clip._height, 46)
+    h.eq(point(debuff.clip, "TOPLEFT")[6], 0)
+    h.eq(point(buff.clip, "TOPLEFT")[6], -48, "buffs under the debuffs plus the gap")
+    h.eq(auras.frame._height, 94)
+    h.eq(cs[1].groups.debuffMine.max, 16, "8 per row x 2 rows")
+
+    auras:layout({ size = 22, rows = 1, width = 200, buffs = true, debuffs = false, onlyMine = false })
+    h.eq(debuff.clip:IsShown(), false, "debuffs off take no space")
+    h.eq(point(buff.clip, "TOPLEFT")[6], 0)
+    h.eq(auras.frame._height, 22)
+    h.eq(cs[1].groups.debuffMine.enabled, false)
+    h.eq(cs[1].groups.debuffOther.enabled, false)
+  end)
+end)
+
+h.test("aura groups follow the options", function()
+  withContainers(function(ns, cs)
+    local auras = ns.Units.Parts.Auras.create(fakes.frame(), "target")
     auras:layout({ size = 22, rows = 2, width = 200, buffs = true, debuffs = true, onlyMine = true })
-    h.eq(c.groups.debuffMine.enabled, true)
-    h.eq(c.groups.debuffOther.enabled, false, "only mine: others off")
-    h.eq(c.groups.buffMine.enabled, true)
-    h.eq(c.groups.buffOther.enabled, false)
-    h.eq(c.groups.debuffMine.max, 16, "8 per row x 2 rows")
-    h.eq(c.lineSize, 200)
-    h.eq(c.anchor, "TOPLEFT")
-    h.eq(c.growth, { "R", "D" })
-    h.eq(c.groups.buffMine.layout.forceNewLine, true, "buffs start a new line")
+    h.eq(cs[1].groups.debuffMine.enabled, true)
+    h.eq(cs[1].groups.debuffOther.enabled, false, "only mine: others off")
+    h.eq(cs[2].groups.buffMine.enabled, true)
+    h.eq(cs[2].groups.buffOther.enabled, false)
+    for _, c in ipairs(cs) do
+      h.eq(c.lineSize, 200)
+      h.eq(c.anchor, "TOPLEFT")
+      h.eq(c.growth, { "R", "D" })
+    end
     auras:layout({ size = 22, rows = 1, width = 200, buffs = false, debuffs = true, onlyMine = false, mirror = true })
-    h.eq(c.groups.debuffOther.enabled, true)
-    h.eq(c.groups.buffMine.enabled, false)
-    h.eq(c.anchor, "TOPRIGHT", "portrait on the right: start right")
-    h.eq(c.growth, { "L", "D" })
+    h.eq(cs[1].groups.debuffOther.enabled, true)
+    h.eq(cs[2].groups.buffMine.enabled, false)
+    h.eq(auras.kinds.buff.clip:IsShown(), false)
+    h.eq(cs[1].anchor, "TOPRIGHT", "portrait on the right: start right")
+    h.eq(cs[1].growth, { "L", "D" })
+    h.eq(point(auras.kinds.debuff.clip, "TOPRIGHT")[6], 0)
   end)
 end)
 
 h.test("aura sample draws placeholders", function()
-  withContainer(function(ns, c)
+  withContainers(function(ns, cs)
     local auras = ns.Units.Parts.Auras.create(fakes.frame(), "target")
     auras:layout({ size = 22, rows = 1, width = 200, buffs = true, debuffs = true, onlyMine = false })
     auras:sample(true)
-    local n = 0
-    for _, s in ipairs(auras.samples) do if s.icon:IsShown() then n = n + 1 end end
-    h.eq(n, 6, "4 debuffs + 2 buffs")
-    h.eq(c:IsShown(), false, "container hidden under the sample")
+    h.eq(shownSamples(auras), 6, "4 debuffs + 2 buffs")
+    h.eq(cs[1]:IsShown(), false, "containers hidden under the sample")
+    h.eq(cs[2]:IsShown(), false)
     auras:sample(false)
-    h.eq(c:IsShown(), true)
-    for _, s in ipairs(auras.samples) do h.eq(s.icon:IsShown(), false) end
+    h.eq(cs[1]:IsShown(), true)
+    h.eq(cs[2]:IsShown(), true)
+    h.eq(shownSamples(auras), 0)
   end)
 end)

@@ -95,6 +95,9 @@ function CastBar.create(parent, unit)
   self.full = bar:CreateTexture(nil, "ARTWORK", nil, 2)
   self.full:SetAllPoints(bar)
   self.full:Hide()
+  -- The Edit Mode sample's static fill (the timed fill is hidden under it).
+  self.sampleFill = bar:CreateTexture(nil, "ARTWORK", nil, 2)
+  self.sampleFill:Hide()
 
   local top = CreateFrame("Frame", nil, frame)
   top:SetAllPoints(frame)
@@ -126,6 +129,7 @@ function CastBar:paint(color)
   local r, g, b = T.barColor(color, self.texture)
   self.bar:SetStatusBarColor(r, g, b)
   self.bar.bg:SetVertexColor(r, g, b, T.sizes.unit.barBgAlpha)
+  self.sampleFill:SetVertexColor(r, g, b, 1)
   local gr, gg, gb = T.barColor(T.unitColors.uninterruptible, self.texture)
   self.grey:SetVertexColor(gr, gg, gb, 1)
   local ir, ig, ib = T.barColor(T.unitColors.interrupted, self.texture)
@@ -155,10 +159,12 @@ function CastBar:layout(opts)
     self.icon:ClearAllPoints()
     self.icon:SetPoint("TOPLEFT", frame, "TOPLEFT", e, -e)
     self.icon:SetSize(hgt - 2 * e, hgt - 2 * e)
-    self.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    local k = U.iconCrop
+    self.icon:SetTexCoord(k, 1 - k, k, 1 - k)
+    local sh = U.castShield
     self.shield:ClearAllPoints()
-    self.shield:SetPoint("TOPLEFT", frame, "TOPLEFT", hgt * 0.15, -hgt * 0.1)
-    self.shield:SetSize(hgt * 0.7, hgt * 0.8)
+    self.shield:SetPoint("TOPLEFT", frame, "TOPLEFT", hgt * sh.x, -hgt * sh.y)
+    self.shield:SetSize(hgt * sh.w, hgt * sh.h)
     self.iconEdge:Show(); self.icon:Show(); self.shield:Show()
     ox = hgt + 2
   else
@@ -182,28 +188,42 @@ function CastBar:layout(opts)
   bar.bg:SetTexture(file)
   self.grey:SetTexture(file)
   self.full:SetTexture(file)
+  self.sampleFill:SetTexture(file)
+  self.sampleFill:ClearAllPoints()
+  self.sampleFill:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
+  self.sampleFill:SetSize(bw * SAMPLE_FILL, bh)
   -- The grey and the spark follow the fill texture's right end.
-  local fill = bar:GetStatusBarTexture()
+  self.fill = bar:GetStatusBarTexture()
   self.grey:ClearAllPoints()
-  self.grey:SetAllPoints(fill or bar)
-  self.spark:ClearAllPoints()
-  if fill then
-    self.spark:SetPoint("CENTER", fill, "RIGHT", 0, 0)
-  else
-    self.spark:SetPoint("CENTER", bar, "LEFT", 0, 0)
-  end
-  self.spark:SetSize(4, bh + 4)
+  self.grey:SetAllPoints(self.fill or bar)
+  self:placeSpark()
+  self.spark:SetSize(U.castSparkWidth, bh + 2 * U.castSparkOverhang)
 
-  -- Texts (units.js cast): font max(9, min(10, h - 8)), 3 px inside the bar.
+  -- Texts (units.js cast): font max(9, min(10, h - 8)), castTextInset px
+  -- inside the bar.
   local size = math.max(9, math.min(10, hgt - 8))
+  local inset = U.castTextInset
   self.name:SetFont(T.fonts.file, size, "OUTLINE")
   self.time:SetFont(T.fonts.file, size, "OUTLINE")
   self.name:ClearAllPoints()
-  self.name:SetPoint("LEFT", bar, "LEFT", 3, 0)
-  self.name:SetWidth(math.max(1, bw * U.castNameShare - 3))
+  self.name:SetPoint("LEFT", bar, "LEFT", inset, 0)
+  self.name:SetWidth(math.max(1, bw * U.castNameShare - inset))
   self.time:ClearAllPoints()
-  self.time:SetPoint("RIGHT", bar, "RIGHT", -3, 0)
+  self.time:SetPoint("RIGHT", bar, "RIGHT", -inset, 0)
   self:paint(self.color or T.unitColors.cast)
+end
+
+-- The spark on the right end of the timed fill, or of the sample's fill.
+function CastBar:placeSpark()
+  local spark = self.spark
+  spark:ClearAllPoints()
+  if self.sampling then
+    spark:SetPoint("CENTER", self.sampleFill, "RIGHT", 0, 0)
+  elseif self.fill then
+    spark:SetPoint("CENTER", self.fill, "RIGHT", 0, 0)
+  else
+    spark:SetPoint("CENTER", self.bar, "LEFT", 0, 0)
+  end
 end
 
 -- Ends an interrupted hold (a callback still pending sees a newer token).
@@ -249,6 +269,8 @@ end
 -- UnitCastingInfo: name, text, texture, startMs, endMs, isTradeSkill,
 -- castID, notInterruptible, spellId. UnitChannelInfo: name, text, texture,
 -- startMs, endMs, isTradeSkill, notInterruptible, spellId.
+-- UNVERIFIED (check in client): both return no values at all when the unit
+-- is idle (select("#", ...) == 0), not a row of nils.
 local function readCast(unit)
   local n = select("#", UnitCastingInfo(unit))
   if n > 0 then
@@ -291,7 +313,9 @@ function CastBar:update(event, ...)
   local by = select(4, ...)
   local kicked = event == "UNIT_SPELLCAST_INTERRUPTED"
     -- (a kicked channel only says so through CHANNEL_STOP's interruptedBy; a
-    -- secret one is set, a plain one is compared only once known plain)
+    -- secret one is set, a plain one is compared only once known plain).
+    -- UNVERIFIED (check in client): INTERRUPTED (or CHANNEL_STOP with
+    -- interruptedBy) arrives before the cast's STOP, while the bar shows.
     or (event == "UNIT_SPELLCAST_CHANNEL_STOP" and self.channel and (ns.Util.isSecret(by) or by ~= nil))
   if kicked and self.frame:IsShown() and not self.holding then
     self:interrupted()
@@ -324,17 +348,23 @@ function CastBar:update(event, ...)
   self.frame:Show()
 end
 
--- Edit Mode: a static 62% bar in the cast color.
+-- Edit Mode: a static texture over 62% of the bar in the cast color; the
+-- timed fill is hidden under it (and its timer cleared when the client
+-- offers that) until the sample ends.
 function CastBar:sample(on)
+  local bar = self.bar
   if on then
     self.sampling = true
     endHold(self)
-    -- UNVERIFIED (check in client): the binding's Disable stops it writing
-    -- over the sample time (Enable again after).
+    -- UNVERIFIED (check in client): StatusBar:ClearTimerDuration (skipped
+    -- when missing); the binding's Disable stops it writing over the sample
+    -- time (Enable again after).
+    if type(bar.ClearTimerDuration) == "function" then pcall(bar.ClearTimerDuration, bar) end
     if self.binding then pcall(self.binding.Disable, self.binding) end
-    self.bar:SetMinMaxValues(0, 1)
-    self.bar:SetValue(SAMPLE_FILL)
-    self.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    if self.fill then self.fill:SetAlpha(0) end
+    self.sampleFill:Show()
+    self:placeSpark()
+    self.icon:SetTexture(ns.Theme.textures.sampleIcon)
     setTexts(self, ns.L["Sample Spell"], SAMPLE_TIME)
     self.grey:SetAlpha(0)
     self.shield:SetAlpha(0)
@@ -342,6 +372,9 @@ function CastBar:sample(on)
     self.frame:Show()
   else
     self.sampling = false
+    self.sampleFill:Hide()
+    if self.fill then self.fill:SetAlpha(1) end
+    self:placeSpark()
     self.time:SetText("")
     if self.binding then pcall(self.binding.Enable, self.binding) end
     self:update("UNIT_SPELLCAST_START", self.unit)

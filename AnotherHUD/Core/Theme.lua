@@ -30,6 +30,8 @@ Theme.textures = {
   shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
   -- A plain white tile for 1 px lines (unit frame edges and dividers).
   line = "Interface\\Buttons\\WHITE8X8",
+  -- The placeholder icon of Edit Mode samples (cast bar, auras).
+  sampleIcon = "Interface\\Icons\\INV_Misc_QuestionMark",
 }
 
 -- Bar fill textures. The files are grey-scale vertical gradients normalized to
@@ -138,7 +140,16 @@ Theme.sizes = {
     textFont = 11, nameShare = 0.6,
     -- The share of the cast bar width the spell name may take (the time
     -- keeps the rest).
-    castNameShare = 0.8 },
+    castNameShare = 0.8,
+    -- Cast bar (docs/mockups/units.js cast): the spark's width and how far
+    -- it reaches past the bar top and bottom, the texts' inset in the bar,
+    -- the shield over the icon (offset and size as shares of the bar
+    -- height).
+    castSparkWidth = 4, castSparkOverhang = 2, castTextInset = 3,
+    castShield = { x = 0.15, y = 0.1, w = 0.7, h = 0.8 },
+    -- Spell and aura icons: the share cut off each side of the icon art (its
+    -- baked-in frame).
+    iconCrop = 0.08 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which

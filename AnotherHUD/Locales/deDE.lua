@@ -90,7 +90,7 @@ ns.Locale.register("deDE", {
   ["Opacity of the frame out of combat, in percent."] = "Deckkraft des Rahmens außerhalb des Kampfes in Prozent.",
   ["Show on mouseover"] = "Beim Überfahren zeigen",
   ["Show the frame fully while the mouse is over it."] = "Zeigt den Rahmen voll, solange die Maus darüber ist.",
-  ["Group"] = "Gruppe",
+  ["Group"] = "Anordnung",
   ["Orientation"] = "Ausrichtung",
   ["Stack the frames on top of each other or side by side."] = "Stapelt die Rahmen übereinander oder nebeneinander.",
   ["Vertical"] = "Senkrecht",

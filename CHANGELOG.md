@@ -6,5 +6,8 @@
 - Target and Target of Target frames, with cast bar and auras on the Target.
 - Focus frame.
 - Pet frame.
+- Party frames (you and party1-4) with role badge, leader crown, dispel glow, range fade and sort by role; hidden in raids.
+- Boss frames with cast bars and your debuffs.
+- Dead and offline units show a grey bar and grey text on every unit frame.
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
 - A frame turned off in the Edit Mode box goes away at once and stays off.

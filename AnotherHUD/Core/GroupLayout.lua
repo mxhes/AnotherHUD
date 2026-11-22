@@ -70,8 +70,11 @@ function GroupLayout.partyVisibility()
   return "[petbattle] hide; [group:raid] hide; [@raid1,exists] hide; [@party1,exists] show; hide"
 end
 
+-- Shown while any boss unit exists, so the empty holder is no invisible
+-- snap target (Edit Mode shows the holder without a driver).
 function GroupLayout.bossVisibility()
-  return "[petbattle] hide; show"
+  return "[petbattle] hide; [@boss1,exists] show; [@boss2,exists] show; [@boss3,exists] show; "
+    .. "[@boss4,exists] show; [@boss5,exists] show; hide"
 end
 
 ns.GroupLayout = GroupLayout

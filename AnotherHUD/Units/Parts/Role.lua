@@ -106,8 +106,13 @@ function Role:setUnit(unit)
     self:setLeader(false)
     return
   end
-  self:setRole(UnitGroupRolesAssigned(unit))
-  self:setLeader(UnitIsGroupLeader(unit))
+  -- UNVERIFIED (check in client): UnitGroupRolesAssigned / UnitIsGroupLeader
+  -- exist on Forever; a missing one hides the badge / crown.
+  -- The answers may be secret: passed on untested (setRole / setLeader read
+  -- them only when plain).
+  local roleOf, leaderOf = _G.UnitGroupRolesAssigned, _G.UnitIsGroupLeader
+  if type(roleOf) == "function" then self:setRole(roleOf(unit)) else self:setRole(nil) end
+  if type(leaderOf) == "function" then self:setLeader(leaderOf(unit)) else self:setLeader(false) end
 end
 
 ns.Units.Parts.Role = Role

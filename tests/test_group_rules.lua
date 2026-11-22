@@ -85,6 +85,9 @@ end)
 
 h.test("boss visibility", function()
   local GL = load().GroupLayout
-  h.eq(GL.bossVisibility(), "[petbattle] hide; show")
+  -- No boss: hidden (no invisible snap target); Edit Mode shows the holder
+  -- without a driver.
+  h.eq(GL.bossVisibility(), "[petbattle] hide; [@boss1,exists] show; [@boss2,exists] show; "
+    .. "[@boss3,exists] show; [@boss4,exists] show; [@boss5,exists] show; hide")
   h.eq(GL.ROLES[1], "TANK"); h.eq(GL.ROLES[2], "HEALER"); h.eq(GL.ROLES[3], "DAMAGER")
 end)

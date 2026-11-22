@@ -59,6 +59,17 @@ and remove both once it is confirmed.
   sized to its rows: icons past the Aura rows setting are cut, and since
   mine come first only other players' auras are cut; buffs sit under the
   debuffs (none of the debuffs' space when Debuffs is off).
+- Unit frame base (`Units/Base.lua`): right click (`*type2 = "togglemenu"`)
+  opens the unit menu; the state driver (`[petbattle] hide; [vehicleui]
+  hide; [@unit,exists] show; hide`) hides the frames in pet battles and,
+  with Show in vehicle off, in vehicles; hiding `PlayerFrame`, `TargetFrame`,
+  `FocusFrame`, `PetFrame` and `PlayerCastingBarFrame` (events off, reparent
+  to a hidden frame, re-hide on `Show`) leaves no AnotherHUD lines in the
+  taint log; `UnitHealthPercent(unit, true, CurveConstants.ScaleTo100)` and
+  `UnitPowerPercent(unit, type, false, CurveConstants.ScaleTo100)` give the
+  percent texts 0-100; the tooltip shows on hover
+  (`GameTooltip_SetDefaultAnchor`, `GameTooltip:SetUnit`); Target of Target
+  follows its unit within 0.2 s.
 
 ### Edit Mode spike (Plan 1, Task 7)
 

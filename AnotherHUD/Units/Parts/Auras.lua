@@ -181,7 +181,7 @@ function Auras.create(parent, unit)
     -- UNVERIFIED (check in client): SetClipsChildren on the clip frame cuts
     -- the container's buttons past its rows.
     local clip = CreateFrame("Frame", nil, frame)
-    clip:SetClipsChildren(true)
+    if type(clip.SetClipsChildren) == "function" then pcall(clip.SetClipsChildren, clip, true) end
     local entry = { clip = clip, groups = {} }
     entry.container = makeContainer(clip, unit)
     if entry.container then

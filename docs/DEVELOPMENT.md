@@ -73,7 +73,7 @@ PowerShell; nothing here is done by the build.
 | `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
 | `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit)`, `auras:layout(opts)`, `auras:sample(on)` |
-| `Units/Base.lua` | shared unit frame parts (health, power, portrait, texts, cast bar, auras, icons) |
+| `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.hideBlizzard(names)`) |
 | `Units/Player.lua` ... `Units/Boss.lua` | one module per unit |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |
 | `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
@@ -179,8 +179,40 @@ module `spike` in `Spike/SpikeModule.lua` (Size: width, height; Look: Show
 border). To remove the spike: delete `Spike/` and its `.toc` line;
 `EditMode/SystemSettings.lua` either becomes the real bar look or goes too.
 
-*(Filled in as built.)* Planned topics: secret values and how texts are formatted, hiding
-Blizzard frames, party header attributes, sample data in Edit Mode, skinning
+**Unit frames.** A unit module's `create` calls `Units/Base.create(spec, o)`
+(`o = { unit, name, mirror, castBar, auras, badge }`): a
+`SecureUnitButtonTemplate` button on `UIParent` (`unit`, `*type1 = "target"`,
+`*type2 = "togglemenu"`, `RegisterForClicks("AnyUp")`, queued with
+`Combat.after`) holding the parts as children (Panel, Ring, Bars, and
+`frame.cast` / `frame.auras` when asked for, else `false`). Every field Base
+keeps on the frame is set at create (`false` for "none"). Events: the unit
+events with `RegisterUnitEvent`, the cast events (to `cast:update`), the
+unit's change event (`PLAYER_TARGET_CHANGED`, `PLAYER_FOCUS_CHANGED`,
+`UNIT_TARGET` of `target`, `UNIT_PET` of `player`), `PLAYER_ENTERING_WORLD`,
+and `PLAYER_REGEN_DISABLED` / `_ENABLED` for fading. `targettarget` gets no
+unit events: it refreshes every 0.2 s from `OnUpdate` while shown. Health /
+power events update only values and texts; the others (and the change
+events) also colors, portrait and level. `Base.update` passes every client
+value through untouched (`UnitHealthPercent` / `UnitPowerPercent` with
+`CurveConstants.ScaleTo100` for the percent texts); only the dead /
+connected flags, the power token, reaction and classification are read, and
+only when plain. `Base.apply(spec)` reads the options and, in one
+`Combat.after("unit:" .. id)`, sizes the frame, lays out the parts
+(`UnitLayout.frame`), places the cast bar `L.below` px under the frame
+(left-aligned, mirrored right-aligned; `Base.anchorCast(frame, holder)` moves
+it onto a detached holder) and the auras under it (`auraBelowCast` between)
+or `L.below` under the frame, and sets the state driver
+(`UnitState.visibility`). The opacity (`UnitState.alpha`) is set right away:
+`SetAlpha` is not protected. In Edit Mode (`Base.editMode`, a module's
+`onEditMode`) the driver goes, the frame shows a plain sample (health 72%,
+power 55%, the unit's label or the player's name, the cast bar and aura
+samples) at full opacity; on close the driver comes back and `Base.update`
+runs. `Base.hideBlizzard(names)` hides each Blizzard frame once, out of
+combat: `UnregisterAllEvents`, reparent to one hidden frame of ours (made on
+first use), and a `hooksecurefunc(frame, "Show", ...)` that hides it again
+(queued in combat).
+
+*(Filled in as built.)* Planned topics: secret values and how texts are formatted, party header attributes, sample data in Edit Mode, skinning
 Blizzard action buttons.
 
 ## Secret values and taint

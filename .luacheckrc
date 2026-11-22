@@ -29,4 +29,10 @@ read_globals = {
   "Enum", "C_ClassColor", "PowerBarColor", "SetPortraitTexture",
   "UnitCastingInfo", "UnitChannelInfo", "UnitCastingDuration", "UnitChannelDuration",
   "C_DurationUtil", "C_StringUtil", "C_AddOns", "C_Timer", "AnchorUtil",
+  "UnitExists", "UnitName", "UnitClass", "UnitLevel", "UnitEffectiveLevel", "UnitClassification",
+  "UnitReaction", "UnitIsPlayer", "UnitIsDeadOrGhost", "UnitIsConnected",
+  "UnitHealth", "UnitHealthMax", "UnitHealthPercent", "UnitPower", "UnitPowerMax",
+  "UnitPowerPercent", "UnitPowerType", "CurveConstants", "AbbreviateNumbers",
+  "RegisterStateDriver", "UnregisterStateDriver", "hooksecurefunc",
+  "GameTooltip", "GameTooltip_SetDefaultAnchor",
 }

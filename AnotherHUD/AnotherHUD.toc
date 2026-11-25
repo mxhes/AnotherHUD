@@ -3,7 +3,7 @@
 ## Notes: Unit frames and action bars with Edit Mode support.
 ## Version: @project-version@
 ## Author: Maximilian Henjes
-## X-Website: https://gitlab.com/mhhenjes/anotherhud
+## X-Website: https://github.com/mxhes/AnotherHUD
 ## SavedVariables: AnotherHUDDB
 ## SavedVariablesPerCharacter: AnotherHUDCharDB
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibEditMode

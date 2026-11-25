@@ -3,7 +3,7 @@ local fakes = dofile("tests/fakes.lua")
 
 local FILES = { "Core/Util.lua", "Core/Theme.lua", "Core/DB.lua", "Core/Modules.lua", "Core/Combat.lua",
   "Core/Options.lua", "EditMode/Panel.lua", "EditMode/Snap.lua", "EditMode/Glue.lua",
-  "EditMode/Checklist.lua", "EditMode/SystemSettings.lua" }
+  "EditMode/Checklist.lua" }
 
 local function load()
   local ns = h.load(FILES)
@@ -94,7 +94,7 @@ h.test("toggle of a module hiding Blizzard frames asks for a reload", function()
   end)
 end)
 
--- A fake LibEditMode with only what SystemSettings uses.
+-- A fake LibEditMode that records system settings (AnotherHUD adds none).
 local function fakeLem()
   local lem = { SettingType = { Checkbox = 1 }, added = {} }
   function lem:AddSystemSettings(system, settings, sub)
@@ -102,42 +102,6 @@ local function fakeLem()
   end
   return lem
 end
-
-h.test("system setting adds one checkbox to Action Bar 1", function()
-  local ns = load()
-  local lem = fakeLem()
-  fakes.withGlobals({ Enum = { EditModeSystem = { ActionBar = 0 },
-    EditModeActionBarSystemIndices = { MainBar = 1 } } }, function()
-    h.eq(ns.EditMode.SystemSettings.attach(lem), true)
-    h.eq(#lem.added, 1)
-    local added = lem.added[1]
-    h.eq(added.system, 0)
-    h.eq(added.sub, 1)
-    h.eq(#added.settings, 1)
-    local s = added.settings[1]
-    h.eq(s.name, "AnotherHUD look")
-    h.eq(s.kind, 1)
-    h.eq(s.default, false)
-    h.eq(s.get("Modern"), false)
-    ns.Util.say = function() end
-    s.set("Modern", true)
-    h.eq(ns.DB.profile().spike, { abLook = true })
-    h.eq(s.get("Modern"), true)
-    -- a second attach adds nothing
-    h.eq(ns.EditMode.SystemSettings.attach(lem), false)
-    h.eq(#lem.added, 1)
-  end)
-end)
-
-h.test("system setting needs the library and the client enums", function()
-  local ns = load()
-  local lem = fakeLem()
-  fakes.withGlobals({ Enum = fakes.NIL }, function()
-    h.eq(ns.EditMode.SystemSettings.attach(lem), false)
-    h.eq(#lem.added, 0)
-    h.eq(ns.EditMode.SystemSettings.attach({ SettingType = {} }), false)
-  end)
-end)
 
 h.test("checklist attach waits for Blizzard's Edit Mode window", function()
   withClient(function(ns)
@@ -182,7 +146,7 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
   end)
 end)
 
-h.test("Core.init attaches checklist and system setting with LibEditMode", function()
+h.test("Core.init attaches the checklist and adds no action bar setting", function()
   local client = fakes.client{}
   local lem = fakeLem()
   lem.frames = 0
@@ -207,7 +171,7 @@ h.test("Core.init attaches checklist and system setting with LibEditMode", funct
       ns.Core.init()
       h.eq(lem.frames, 8) -- the unit frames, the player cast bar holder, Party and Boss
       h.eq(ns.Modules.get("player").frame ~= nil, true)
-      h.eq(#lem.added, 1)
+      h.eq(#lem.added, 0) -- action bars are another addon's
       h.eq(hooked, true)
     end)
     units.restore()
@@ -220,7 +184,7 @@ end)
 h.test("German checklist texts fit 24 glyphs", function()
   local ns
   fakes.withGlobals({ GetLocale = function() return "deDE" end }, function() ns = h.load(h.toc()) end)
-  for _, text in ipairs({ "AnotherHUD look", "Width", "Height",
+  for _, text in ipairs({ "Width", "Height",
     "Size", "Look", "Type /reload to apply" }) do
     h.eq(ns.L[text] ~= text, true, text .. " translated")
     h.eq(ns.Options.glyphs(ns.L[text]) <= 24, true, ns.L[text])

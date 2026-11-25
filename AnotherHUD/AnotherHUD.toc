@@ -26,7 +26,6 @@ EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua
 EditMode/Checklist.lua
-EditMode/SystemSettings.lua
 Units/Settings.lua
 Units/Parts/Panel.lua
 Units/Parts/Ring.lua

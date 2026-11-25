@@ -48,7 +48,12 @@ function methods.GetValue(self) return self._value end
 -- SetMinMaxValues keeps _min / _max; SetStatusBarColor keeps { r, g, b, a }.
 function methods.SetMinMaxValues(self, lo, hi) self._min, self._max = lo, hi end
 function methods.SetStatusBarColor(self, r, g, b, a) self._barColor = { r, g, b, a } end
-function methods.SetText(self, t) self._text = t end
+-- A font string (from CreateFontString without a template) throws on
+-- SetText / SetFormattedText until SetFont was called, as the client does.
+local function needsFont(self)
+  if self._fontString and not self._font then error("FontString:SetText(): Font not set", 3) end
+end
+function methods.SetText(self, t) needsFont(self); self._text = t end
 function methods.GetText(self) return self._text end
 function methods.SetScript(self, ev, fn) self._scripts[ev] = fn end
 -- HookScript chains: the earlier handler (if any) runs first, then fn.
@@ -63,6 +68,7 @@ function methods.RegisterUnitEvent(self, ev) self._events[ev] = true end
 -- SetFormattedText keeps the format and the arguments as given (they may be
 -- secret values) and clears _text.
 function methods.SetFormattedText(self, fmt, ...)
+  needsFont(self)
   self._fmt, self._args, self._text = fmt, { ... }, nil
 end
 function methods.SetAttribute(self, k, v) self._attrs[k] = v end
@@ -96,6 +102,14 @@ function fakes.frame(name)
     local m = methods[k]
     if m then return m end
     if type(k) ~= "string" or k:sub(1, 1) == "_" then return nil end
+    if k == "CreateFontString" then
+      return function(_, _, _, template)
+        local fs = fakes.frame()
+        -- a template (font object) brings its font
+        if template == nil then fs._fontString = true end
+        return fs
+      end
+    end
     if k:match("^Create") then return function() return fakes.frame() end end
     return noop
   end })

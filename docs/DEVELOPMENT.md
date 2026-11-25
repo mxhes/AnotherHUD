@@ -82,7 +82,7 @@ PowerShell; nothing here is done by the build.
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
 | `Units/Party.lua` | the party block (`defineGroup`): player + party1-4, line auras, role badge, dispel glow, range fade, Sort by Role / Show Player; hides `PartyFrame`, `CompactPartyFrame` |
 | `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
-| `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`) |
+| `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`; `Segments.paintDivider(d, groove, lines)`, the skin-line divider painter the XP / Reputation bar shares) |
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
 | `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, divider, texts; hides Blizzard's status tracking bars |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |

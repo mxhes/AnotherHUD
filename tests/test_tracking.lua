@@ -284,3 +284,19 @@ h.test("fading follows combat and the mouse", function()
     h.eq(frame._alpha, 0.4)
   end)
 end)
+
+h.test("the divider uses the shared segment painter", function()
+  withBar({}, function(ns)
+    local spec = parts(ns)
+    local Segments = ns.Bars.Segments
+    local real, seen = Segments.paintDivider, nil
+    Segments.paintDivider = function(d, groove, lines)
+      seen = { d, groove, lines }
+      return real(d, groove, lines)
+    end
+    ns.Options.set("tracking", "skin", "Forge")
+    Segments.paintDivider = real
+    h.eq(seen, { spec.divider, spec.groove, "groove" })
+    h.eq(spec.groove:IsShown(), true, "Forge groove line")
+  end)
+end)

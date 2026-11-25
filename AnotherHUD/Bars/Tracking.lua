@@ -90,30 +90,6 @@ local function rowsOf(d)
   return rows, table.concat(rows, ",")
 end
 
--- The divider in the skin's Lines pick, as the segments' dividers
--- (Bars/Segments.lua) but lying: Gold and Dotted at the divider alpha,
--- Groove a dark line with a light one under it, Plain greyed toward the
--- panel.
-local function paintDivider(spec, lines)
-  local T = ns.Theme
-  local d, groove = spec.divider, spec.groove
-  local main, second = T.lineColors(lines, T.colors.goldLine, T.colors.panelTint)
-  local alpha = 1
-  if lines ~= "groove" and lines ~= "plain" then alpha = T.colors.divider[4] end
-  local dotted = false
-  if lines == "dotted" then
-    dotted = d:SetTexture(T.textures.skinDotted, "REPEAT", "CLAMP") ~= false
-  end
-  if not dotted then d:SetTexture(T.textures.line) end
-  d:SetHorizTile(dotted)
-  d:SetVertexColor(main[1], main[2], main[3], alpha)
-  if second then
-    groove:SetTexture(T.textures.line)
-    groove:SetVertexColor(second[1], second[2], second[3], T.skinScales.grooveLightAlpha)
-  end
-  return second ~= nil
-end
-
 local function hideRow(row)
   row.bg:Hide()
   row.bar:Hide()
@@ -235,7 +211,8 @@ local function apply(spec)
 
   local div, groove = spec.divider, spec.groove
   if #rows == 2 then
-    local second = paintDivider(spec, skin.lines)
+    -- painted like the segment dividers (shared painter)
+    local second = ns.Bars.Segments.paintDivider(div, groove, skin.lines)
     local y = -(e + hgt)
     div:ClearAllPoints()
     div:SetPoint("TOPLEFT", frame, "TOPLEFT", e, y)
@@ -283,6 +260,8 @@ local function row(spec, withRested)
   r.bar = CreateFrame("StatusBar", nil, spec.frame)
   r.bar:SetFrameLevel(spec.levels.bar)
   r.text = spec.top:CreateFontString(nil, "OVERLAY")
+  -- A font before any SetText: the client errors on a font string without one.
+  r.text:SetFont(ns.Theme.fonts.file, ns.Theme.sizes.tracking.textFont, "OUTLINE")
   r.text:SetText("")
   hideRow(r)
   return r

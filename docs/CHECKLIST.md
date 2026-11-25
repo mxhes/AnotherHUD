@@ -23,7 +23,7 @@ and remove both once it is confirmed.
 
 ## Unit frames (Plan 3)
 
-FlareUI's unit frames off for this test. Run with the Player, Target, Target of
+Other unit frame addons off for this test. Run with the Player, Target, Target of
 Target, Focus and Pet frames; a dummy and a group are enough.
 
 Frames and Edit Mode:
@@ -156,7 +156,7 @@ Combat and taint:
 
 Results:
 
-- 2026-11-22, first run by the player (FlareUI's unit frames off): the
+- 2026-11-22, first run by the player (other unit frame addons off): the
   frames work, no Lua errors and no blocked / forbidden action messages.
   The items above were not checked one by one and the taint log was not
   captured, so they stay open until a closer pass.
@@ -212,7 +212,7 @@ below are history.
 Results:
 
 - 2026-11-21, first run (LibEditMode MINOR 19 from the `package-dry-run`
-  artifact, FlareUI still enabled):
+  artifact, another UI addon still enabled):
   - **Fail, fixed:** the library check printed `true`, but AnotherHUD fell
     back to "no LibEditMode": `Glue.lib()` expected `LibStub` to be a
     function, while the real one is a callable table. Fixed by looking it up

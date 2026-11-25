@@ -15,7 +15,7 @@ Docs:
 
 - **Artwork: mockups first.** Any new or changed art (portrait ring, bar textures, borders, button skins, icons, colors of a new skin) is shown as a mockup and built only after the player approves it. Wait for the answer; don't build "in the meantime".
 - **Ask questions.** When a request leaves something open that changes what gets built, ask (one question at a time, with your recommendation) instead of guessing.
-- **FlareUI is a reference, not a source.** It is installed at `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\FlareUI` and shows how Edit Mode integration and secret-value-safe unit frames work on Forever. Read it to learn which client APIs work; never copy its code or art.
+- **Other addons are not a source or an inspiration.** Only the player's own addons (AnotherLedger and the rest of the suite) may be copied and adapted. Other installed addons may be read for basic client facts only (how a hook or API call works, whether an API exists), never for design, features, code or art.
 - **AnotherLedger is a source.** Its tooling, `Theme.lua`, fonts, skins, widgets, test harness and conventions may be copied and adapted (same author).
 - Never put tokens or passwords in files, commits or chat.
 

@@ -22,7 +22,7 @@
 - Texts go through `ns.L`; every new English key gets a German text in `Locales/deDE.lua`.
 - Every unconfirmed client API: `-- UNVERIFIED (check in client)` comment plus a line in `docs/CHECKLIST.md`.
 - New `.lua` file: `.toc` line and a row in the layout table of `docs/DEVELOPMENT.md`.
-- FlareUI is read only to learn which APIs work; no code or art is copied from it. AnotherLedger code may be copied.
+- Other addons are read only to learn which APIs work; no code or art is copied from them. AnotherLedger code may be copied.
 - Approved art values, verbatim (APPROVED.md 1 and 2):
   - Player 200 x 60, power 15, 1 px divider; bars inset by the skin's border width + 1 px.
   - Ring diameter = 125% of frame height x Portrait Scale; ring center x = 32% of the diameter (mirrored for Target); bars start 2 px past the ring.
@@ -322,7 +322,7 @@
 
 - [ ] **Step 1:** Write the docs. `CHECKLIST.md` gets a "Unit frames (Plan 3)" block: every UNVERIFIED item from Tasks 7-9, plus: the five frames show with samples in Edit Mode and drag; leaving Edit Mode with no target hides Target / ToT / Focus; combat on a dummy with `/console taintLog 1`: no AnotherHUD lines, no blocked actions, target / menu clicks work in combat; secrets: a fight against a dummy and in a group shows health and power texts without Lua errors; Blizzard's Player / Target / Focus / Pet / cast bar never reappear (also after a vehicle and a pet battle); `/reload` in combat.
 - [ ] **Step 2:** Run `lua tests/run.lua` (PASS); push the branch, open the MR, CI `test` and `lint` green.
-- [ ] **Step 3:** Ask the player to run the client checks (FlareUI's unit frames off for the test); record the results in `CHECKLIST.md`; fix what fails (each fix TDD, own commit).
+- [ ] **Step 3:** Ask the player to run the client checks (other unit frame addons off for the test); record the results in `CHECKLIST.md`; fix what fails (each fix TDD, own commit).
 - [ ] **Step 4: Commit** `docs: unit frames`; merge the MR once the player is happy.
 
 ## Not in this plan

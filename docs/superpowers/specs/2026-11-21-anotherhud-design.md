@@ -4,22 +4,21 @@ Date: 2026-11-21. Status: draft for approval.
 
 ## Intent
 
-The player wants to stop using FlareUI and run their own UI suite instead:
+The player wants to run their own UI suite:
 **AnotherLedger** (exists, `D:\GitRepos\LootLedger`), **AnotherHUD** (this
 addon) and a minimap addon (later). AnotherHUD is the frames part of that
-suite. It does not have to match FlareUI feature for feature; FlareUI is the
-reference only for how the Edit Mode integration feels:
+suite. The Edit Mode integration should feel like this:
 
 - every AnotherHUD frame can be moved and snapped in Blizzard's Edit Mode,
 - each one has a toggle in the Edit Mode window's checklist (like the "WIM ..."
-  entries FlareUI's screenshot shows below the Blizzard list),
+  entries some addons show below the Blizzard list),
 - clicking a frame in Edit Mode opens a settings panel next to it with
   collapsible sections (Size, Text, Look, Behaviour, Cast Bar, Auras, ...) and
   footer buttons (Settings, Reset Settings, Reset To Default Position).
 
 The addon must be easy to extend: more Blizzard frames will be replaced later.
 
-## Goals (first release: the player can switch FlareUI off)
+## Goals (first release: the player's old UI addon can be switched off)
 
 Unit frames (own frames, Blizzard's are hidden):
 
@@ -78,11 +77,11 @@ Everywhere:
 ## Non-goals (first release)
 
 - Raid frames, nameplates, minimap, chat, bags, tooltips, objective tracker,
-  damage meter, cooldown manager, loot rolls: FlareUI has them, AnotherHUD
-  does not (raid frames come next; minimap goes to its own addon).
+  damage meter, cooldown manager, loot rolls: AnotherHUD
+  does not do them (raid frames come next; minimap goes to its own addon).
 - Own action buttons with free layouts (radial menus, custom paging).
 - Languages other than English and German.
-- Importing FlareUI's settings.
+- Importing another addon's settings.
 
 ## Anti-goals (a failure even if it works)
 
@@ -90,9 +89,9 @@ Everywhere:
   actions, or bars that can't be changed in combat because we touched them.
 - **Lua errors from secret values**: math or comparisons on health, power or
   cast values in combat.
-- Copying FlareUI's code or art. It is a reference for behaviour only; its
-  fork `FlareEditMode` is p3lim's LibEditMode under a different name.
-- A FlareUI-sized options maze: settings live in the Edit Mode panel next to
+- Copying or imitating other addons' code, art or design. Only the player's
+  own addons (AnotherLedger) may be copied.
+- A huge options maze: settings live in the Edit Mode panel next to
   the frame; the Settings window only holds what is addon-wide.
 - New artwork shipped without the player having approved a mockup.
 
@@ -100,11 +99,10 @@ Everywhere:
 
 - **WoW Forever**, retail engine, `## Interface: 16001`, Lua 5.1.
 - **Secret values.** In combat the client hands addons health, power and cast
-  numbers as secret values (FlareUI reads `UnitHealthPercent(unit, true,
-  curve)` and notes the result is secret). Code may pass them to widgets
+  numbers as secret values (e.g. `UnitHealthPercent(unit, true, curve)`). Code may pass them to widgets
   (`StatusBar:SetValue`, `FontString:SetText`, curve / color APIs) but must not
   do arithmetic or comparisons on them. Exact API surface: UNVERIFIED, check
-  in the client and in FlareUI's `UnitFrames.lua` for which calls work.
+  in the client which calls work.
 - **Combat lockdown.** Secure frames can't be created, moved, shown/hidden or
   re-anchored in combat; all layout changes queue until
   `PLAYER_REGEN_ENABLED`.
@@ -122,7 +120,7 @@ Everywhere:
 - **A. Re-skin Blizzard's bars (picked).** Blizzard keeps the secure logic
   (clicks, paging, cooldowns, procs, keybinds) and Edit Mode already places
   these bars; we add the look and our settings to their Edit Mode panel. Least
-  taint, survives patches. FlareUI does the same.
+  taint, survives patches.
 - B. Own secure action buttons: full layout freedom, but cooldowns, proc
   glows, paging, keybinds and drag & drop rebuilt under the secret-value rules.
 - LibActionButton: no sign it supports Forever; dropped.
@@ -139,7 +137,7 @@ Everywhere:
 
 - **A. Embed LibEditMode unmodified (picked)**, fetched by the packager, plus
   a small own piece for snapping and the checklist toggles.
-- B. Fork it as FlareUI did: we would own its upkeep.
+- B. Fork it: we would own its upkeep.
 
 ## Design
 
@@ -209,7 +207,7 @@ UI code never names a module.
   fixed frames) with orientation, growth, gap and role sort.
 - Blizzard's frames are hidden by reparenting to a hidden frame and
   unregistering their events, out of combat, once.
-- Edit Mode shows sample data (FlareUI shows fake party members) so frames
+- Edit Mode shows sample data (fake party members) so frames
   can be placed with nobody in the group.
 
 ### Look and artwork

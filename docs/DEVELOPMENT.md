@@ -35,7 +35,7 @@ PowerShell; nothing here is done by the build.
    `Libs` folder over). Or copy https://github.com/p3lim-wow/LibEditMode
    (the whole repo; `embed.xml` sits at its root, checked against upstream)
    into `AnotherHUD\Libs\LibEditMode\`, plus LibStub and CallbackHandler-1.0
-   from their own releases. Never from FlareUI (its copy is modified).
+   from their own releases. Never from another addon's copy (it may be modified).
 3. Start the game, enable AnotherHUD in the AddOns list, log in. First check
    the library loaded: `/dump LibStub and LibStub("LibEditMode", true) ~= nil`
    must print `true` (else the files are not where `embeds.xml` looks; fix

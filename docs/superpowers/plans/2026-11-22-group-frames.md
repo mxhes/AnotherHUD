@@ -11,7 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-11-21-anotherhud-design.md` (Goals: the Party and Boss rows and section contents; Design: Unit frames, Edit Mode integration) and the approved art in `docs/mockups/APPROVED.md` section 3 (page `3-party-boss.html`, drawing rules in `units.js` / `kit.js`).
 
 **Calls made here (the player may overrule):**
-- **Fixed member frames instead of `SecureGroupHeaderTemplate`** (the spec said header): five `SecureUnitButtonTemplate` buttons at fixed tokens (`player`, `party1`-`party4`; `boss1`-`boss5`), each with its own state driver. Their order (sort by role, existing members first) is set out of combat on roster / role changes. Cost: someone who joins mid-fight shows in the next free slot and moves into role order when combat ends. Gain: it reuses Plan 3's Base unchanged in spirit, no restricted-environment snippets, and it's fully testable. (FlareUI does the same on Forever.)
+- **Fixed member frames instead of `SecureGroupHeaderTemplate`** (the spec said header): five `SecureUnitButtonTemplate` buttons at fixed tokens (`player`, `party1`-`party4`; `boss1`-`boss5`), each with its own state driver. Their order (sort by role, existing members first) is set out of combat on roster / role changes. Cost: someone who joins mid-fight shows in the next free slot and moves into role order when combat ends. Gain: it reuses Plan 3's Base unchanged in spirit, no restricted-environment snippets, and it's fully testable.
 - **In a raid the party frames hide** (the player's answer, 2026-11-22): Blizzard's raid frames take over.
 - **Both Blizzard party frames are hidden**: `PartyFrame` and `CompactPartyFrame` (the "raid-style party frames" look), else one of them doubles ours. Raid frames are left alone.
 - **No raid target icon** yet: it is not in the approved mockup (backlog).
@@ -29,7 +29,7 @@
 - Texts go through `ns.L`; every new English key gets a German text in `Locales/deDE.lua`.
 - Every unconfirmed client API: `-- UNVERIFIED (check in client)` comment plus a line in `docs/CHECKLIST.md`.
 - New `.lua` file: `.toc` line and a row in the layout table of `docs/DEVELOPMENT.md`.
-- FlareUI is read only to learn which APIs work; no code or art is copied from it. AnotherLedger code may be copied.
+- Other addons are read only to learn which APIs work; no code or art is copied from them. AnotherLedger code may be copied.
 - Approved art values, verbatim (APPROVED.md 3):
   - Party: vertical, 5 frames (player included), 8 px gap; frame 160 x 40, power 5; ring = the Player rule at 92% Portrait Scale (46 px); no level badge; texts 10 pt.
   - Role icon: our own glyphs (tank: blue shield, healer: green cross, damage: silver sword with red hilt) on a 15 px round badge (ring lines, panel fill) at the ring's lower left. Leader: gold crown (12 px) on top of the ring.
@@ -209,5 +209,5 @@
 
 - [ ] **Step 1:** Full run: `lua tests/run.lua`, `luacheck AnotherHUD`.
 - [ ] **Step 2:** Push the branch, open the MR, CI `test` and `lint` green.
-- [ ] **Step 3:** Ask the player to run the client checks (FlareUI's party and boss frames off for the test); record the results in `CHECKLIST.md`.
+- [ ] **Step 3:** Ask the player to run the client checks (other party and boss frame addons off for the test); record the results in `CHECKLIST.md`.
 - [ ] **Step 4:** Merge once the player is happy.

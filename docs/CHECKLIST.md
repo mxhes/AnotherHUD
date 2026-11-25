@@ -51,7 +51,7 @@ Frames and Edit Mode:
 - Expected, not a bug: with the Player frame on, the class resource bars
   (combo points, holy power, runes, shards, chi, essence, arcane charges),
   the totem bar and the alternate power bar are gone with `PlayerFrame`
-  until Plan 6.
+  until the resource bar (totems: the suite's action bar addon).
 - The state driver (`[petbattle] hide; [vehicleui] hide; [@unit,exists] show;
   hide`) hides the frames in pet battles and, with Show in vehicle off, in
   vehicles.
@@ -170,7 +170,9 @@ Setup first: link the addon and copy the libraries as in
 `docs/DEVELOPMENT.md` (Setup, "Spike check"). Results go here (date,
 pass / fail, what was seen). The spike's test frame is gone since Plan 3: run
 these checks with the Player frame, whose panel has the sections Size, Text,
-Look, Behaviour, Cast Bar, Auras and Fading.
+Look, Behaviour, Cast Bar, Auras and Fading. The Action Bar 1 setting was
+removed on 2026-11-25 (action bars moved to their own addon); its items
+below are history.
 
 - **First:** the library loaded: `/dump LibStub and LibStub("LibEditMode", true) ~= nil`
   prints `true`. Library source: the CI `package-dry-run` job artifact (its

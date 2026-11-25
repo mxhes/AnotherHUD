@@ -2,10 +2,11 @@
 
 Status: Plan 1 is built: the core (saved state, options, module registry,
 combat queue, theme, texts), the Edit Mode glue (frames, settings panels,
-snapping, positions per layout, checklist toggles) and the Edit Mode spike
-(one Action Bar 1 setting; its test frame is gone). Plan 3 adds the Player,
-Target, Target of Target, Focus and Pet frames; party, boss and the bars
-are not built yet, their rows below are the plan. The design and its reasons are in
+snapping, positions per layout, checklist toggles). Plan 3 adds the Player,
+Target, Target of Target, Focus and Pet frames, Plan 4 Party and Boss. The
+class resource bar and XP / Reputation are not built yet, their rows below
+are the plan. Action bars, stance, pet and totem bars belong to the suite's
+action bar addon (scope change 2026-11-25); AnotherHUD does not touch them. The design and its reasons are in
 `docs/superpowers/specs/2026-11-21-anotherhud-design.md`.
 
 ## Setup
@@ -44,10 +45,8 @@ PowerShell; nothing here is done by the build.
    `C:\Program Files (x86)\World of Warcraft\_forever_\Logs\taint.log` (written on logout / `/reload`): search it
    for `AnotherHUD`.
 5. Write the results under "Results" in `docs/CHECKLIST.md`. If the checklist
-   or the Action Bar setting taints, the fallback from the design applies:
-   action bar look goes into our own panel (opened from the Settings window),
-   module toggles live only in the Settings window; note it here and in
-   Plan 5's notes.
+   taints, the fallback from the design applies: module toggles live only
+   in the Settings window; note it here.
 6. `/console taintLog 0` when done.
 
 ## Code layout
@@ -69,7 +68,6 @@ PowerShell; nothing here is done by the build.
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
 | `EditMode/Snap.lua` | snapping to grid, screen and frames |
 | `EditMode/Checklist.lua` | module toggles in the Edit Mode window |
-| `EditMode/SystemSettings.lua` | spike: one checkbox in Action Bar 1's Edit Mode panel (still writes `profile.spike.abLook` until Plan 5 replaces it) |
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
 | `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
@@ -83,9 +81,7 @@ PowerShell; nothing here is done by the build.
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
 | `Units/Party.lua` | the party block (`defineGroup`): player + party1-4, line auras, role badge, dispel glow, range fade, Sort by Role / Show Player; hides `PartyFrame`, `CompactPartyFrame` |
 | `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
-| `Bars/ActionSkin.lua` | look for Blizzard action buttons |
-| `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
-| `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
+| `Bars/Resource.lua`, `Bars/Tracking.lua` | planned: class resource bar, XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
 | `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
@@ -167,8 +163,8 @@ anchors to the frame's parent (as the library does).
 Without LibEditMode the frames go to their positions in the last layout
 seen (`db.lastLayout`) or their defaults, and nothing else happens.
 
-With LibEditMode, `Core.init` then attaches two spike pieces (taint test,
-results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
+With LibEditMode, `Core.init` then attaches the checklist toggles (taint
+test results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
 `EditModeManagerFrame` with `HookScript("OnShow")` and `HookScript("OnHide")`
 (no writes into Blizzard tables or frames); on the first show it builds a
 small box on `UIParent`, anchored under the window, with one checkbox per
@@ -180,12 +176,10 @@ with `Combat.after("show:" .. id)`) or, for a module that was off at login,
 `Glue.registerAll` creates it and prints "Reopen Edit Mode to move it" (the
 library makes it selectable from the next open); a module that hides
 Blizzard frames prints a `/reload` hint.
-`EditMode/SystemSettings.lua` adds one checkbox, "AnotherHUD look", to Action
-Bar 1's panel (`AddSystemSettings(Enum.EditModeSystem.ActionBar, ...,
-Enum.EditModeActionBarSystemIndices.MainBar)`); its value is
-`profile.spike.abLook` and only prints a line; it keeps doing so until
-Plan 5 turns it into the real bar look or removes it. The spike's test frame
-(`Spike/`) is gone: the unit frames replaced it.
+AnotherHUD adds no settings to Blizzard's own Edit Mode systems (the Action
+Bar 1 spike setting was removed when action bars moved to their own addon;
+its client result, `AddSystemSettings` works, is in `docs/CHECKLIST.md`).
+Old saved data may still hold `profile.spike`; nothing reads it.
 
 **Unit frames.** A unit module's `create` calls `Units/Base.create(spec, o)`
 (`o = { unit, name, mirror, castBar, auras, badge }`): a

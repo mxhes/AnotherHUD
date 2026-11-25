@@ -9,11 +9,6 @@ ns.Locale.register("deDE", {
   -- Checklist toggles (EditMode/Checklist.lua)
   ["Type /reload to apply"] = "Mit /reload übernehmen",
   ["Reopen Edit Mode to move it"] = "Zum Verschieben Bearbeitungsmodus neu öffnen",
-  -- Action Bar 1 spike setting (EditMode/SystemSettings.lua)
-  ["AnotherHUD look"] = "AnotherHUD-Optik",
-  ["Test setting, changes nothing yet."] = "Testoption, ändert noch nichts.",
-  ["on"] = "an",
-  ["off"] = "aus",
   -- Unit frame modules (Units/Player.lua ... Units/Boss.lua)
   ["Player"] = "Spieler",
   ["Player Cast Bar"] = "Spielerzauberleiste",

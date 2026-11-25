@@ -1,8 +1,8 @@
 # AnotherHUD
 
-WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the action bars and unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Action Bars 1-8, Stance, Pet Bar, Cast Bar, class resource bar, totem bar, XP / Reputation) and plugs them into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`) and a minimap addon (not built yet). The addon folder is `AnotherHUD/` inside the repo.
+WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Cast Bar) and adds a class resource bar and XP / Reputation, plugged into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`), an action bar addon (Action Bars 1-8, Stance, Pet Bar, totem bar; not built yet) and a minimap addon (not built yet). AnotherHUD does not touch Blizzard's action bars. The addon folder is `AnotherHUD/` inside the repo.
 
-**Status:** Plans 1-4 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss); Plan 4 checked in the client; Bars (Plan 5) next. See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+**Status:** Plans 1-4 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss); Plan 4 checked in the client. Next: class resource bar, then XP / Reputation (action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 Docs:
 - `README.md`: player guide (keep it free of texture paths, API names and pixel sizes).
@@ -28,8 +28,8 @@ Docs:
 
 ## Architecture (planned; details in `docs/DEVELOPMENT.md`)
 
-- **Modules.** Every replaced frame is one `ns.Modules.define{...}` in its own file (`Units/` or `Bars/`). Its `settings` list feeds both the Edit Mode panel and the Settings window. UI and Edit Mode code never name a module. New frame = new file + `.toc` line.
-- **Unit frames are ours** (`SecureUnitButtonTemplate`; Party and Boss as fixed member frames in a holder (`Units/Group.lua`)); Blizzard's are hidden. **Action bars are Blizzard's, re-skinned**; Blizzard keeps clicks, paging, cooldowns, procs, keybinds.
+- **Modules.** Every replaced frame is one `ns.Modules.define{...}` in its own file (`Units/`, or `Bars/` for the resource and XP / Reputation bars). Its `settings` list feeds both the Edit Mode panel and the Settings window. UI and Edit Mode code never name a module. New frame = new file + `.toc` line.
+- **Unit frames are ours** (`SecureUnitButtonTemplate`; Party and Boss as fixed member frames in a holder (`Units/Group.lua`)); Blizzard's are hidden. Action bars are not ours: they belong to the suite's action bar addon.
 - **Edit Mode** goes through LibEditMode (unmodified, packager external) plus `EditMode/` glue: settings panels, snapping, checklist toggles. Positions per Edit Mode layout; look settings per profile.
 - **Pure vs client code** as in AnotherLedger: files in `Core/` are plain Lua and tested with `h.load`; client calls only inside functions, never at file load.
 - **Look** lives in `Core/Theme.lua` (colors, fonts, sizes, textures); change it there, not in UI files.

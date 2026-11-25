@@ -1,6 +1,6 @@
 # AnotherHUD
 
-AnotherHUD replaces the default unit frames and action bars of WoW Forever with its own, and plugs them into Blizzard's Edit Mode so you can move and size them the usual way. It is part of a small suite of addons together with AnotherLedger.
+AnotherHUD replaces the default unit frames of WoW Forever with its own, and plugs them into Blizzard's Edit Mode so you can move and size them the usual way. It is part of a small suite of addons together with AnotherLedger; action bars will come in a separate addon of the suite.
 
 **Status: in development.** There is nothing to install yet.
 
@@ -39,4 +39,4 @@ Target, Target of Target and Focus only show while you have that unit, and Pet o
 
 ## Known gaps
 
-- Class resources (combo points, holy power, runes, soul shards, chi, essence, arcane charges), totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. They come back with AnotherHUD's own resource bar.
+- Class resources (combo points, holy power, runes, soul shards, chi, essence, arcane charges), totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. Class resources come back with AnotherHUD's own resource bar; totems with the suite's action bar addon.

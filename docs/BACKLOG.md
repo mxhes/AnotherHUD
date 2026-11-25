@@ -3,8 +3,9 @@
 Ideas not built yet.
 
 - Raid frames.
-- Resource bar and totem bar (Plan 6): they replace what hiding `PlayerFrame` removes (class
-  resources, totem bar, alternate power bar).
+- Class resource bar (next plan): it replaces what hiding `PlayerFrame` removes (class
+  resources, alternate power bar). The totem bar goes to the suite's action bar addon.
+- XP / Reputation bar.
 - Evoker empowered casts on the cast bar.
 - Party Style.
 - Pets & Targets.

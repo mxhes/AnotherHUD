@@ -174,6 +174,22 @@ Theme.sizes = {
   -- the most segments and the update interval (s).
   resource = { attachedHeight = 18, gap = 4, detachedWidth = 200, detachedHeight = 20,
     partialShade = 0.55, timerFont = 9, maxSegments = 10, tick = 0.1 },
+  -- XP / Reputation bar: width and height of one bar, the gap between the two,
+  -- the alpha of the rested XP band and the text font size.
+  tracking = { width = 500, height = 10, gap = 1, restedAlpha = 0.4, textFont = 10 },
+}
+
+-- XP / Reputation bar colors, {r, g, b}: the game's usual XP purple and
+-- rested blue, and the standard reputation colors by reaction (1 Hated .. 8
+-- Exalted), the fallback when the client's FACTION_BAR_COLORS is missing.
+Theme.trackingColors = {
+  xp = { 0.58, 0, 0.55 },
+  rested = { 0, 0.39, 0.88 },
+  reaction = {
+    [1] = { 0.8, 0.3, 0.22 }, [2] = { 0.8, 0.3, 0.22 }, [3] = { 0.75, 0.27, 0 },
+    [4] = { 0.9, 0.7, 0 }, [5] = { 0, 0.6, 0.1 }, [6] = { 0, 0.6, 0.1 },
+    [7] = { 0, 0.6, 0.1 }, [8] = { 0, 0.6, 0.1 },
+  },
 }
 
 -- Class resource bar colors (approved art): one per resource, {r, g, b}.

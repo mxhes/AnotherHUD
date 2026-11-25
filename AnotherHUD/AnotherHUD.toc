@@ -23,6 +23,7 @@ Core/UnitState.lua
 Core/UnitLayout.lua
 Core/GroupLayout.lua
 Core/Resource.lua
+Core/Tracking.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua

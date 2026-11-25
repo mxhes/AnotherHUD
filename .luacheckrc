@@ -37,5 +37,5 @@ read_globals = {
   "GameTooltip", "GameTooltip_SetDefaultAnchor", "UnitGUID",
   "UnitGroupRolesAssigned", "UnitIsGroupLeader", "UnitInRange",
   "GetSpecialization", "GetRuneCooldown", "UnitPartialPower", "GetPowerRegenForPowerType",
-  "UnitPowerDisplayMod", "GetTime",
+  "UnitPowerDisplayMod", "GetTime", "BreakUpLargeNumbers", "FACTION_BAR_COLORS",
 }

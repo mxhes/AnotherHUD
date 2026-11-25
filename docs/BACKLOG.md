@@ -3,7 +3,7 @@
 Ideas not built yet.
 
 - Raid frames.
-- Brewmaster stagger, Rogue charged combo points on the resource bar.
+- Rogue charged combo points on the resource bar.
 - XP / Reputation bar.
 - Evoker empowered casts on the cast bar.
 - Party Style.

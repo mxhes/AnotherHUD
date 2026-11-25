@@ -205,6 +205,13 @@ In the client:
   (`UNIT_MAXPOWER`).
 - The Encounter Bar still shows in a fight that uses it.
 
+Results:
+
+- 2026-11-25, run by the player: everything that can be checked on WoW
+  Forever works. Forever has no Death Knights, Demon Hunters or Monks, so
+  the runes (and their API lines above) and Windwalker chi cannot be
+  checked there; that code stays, tested only in `tests/test_resource.lua`.
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

@@ -2,7 +2,7 @@
 
 WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Cast Bar) and adds a class resource bar and XP / Reputation, plugged into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`), an action bar addon (Action Bars 1-8, Stance, Pet Bar, totem bar; not built yet) and a minimap addon (not built yet). AnotherHUD does not touch Blizzard's action bars. The addon folder is `AnotherHUD/` inside the repo.
 
-**Status:** Plans 1-4 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss); Plan 4 checked in the client. Next: class resource bar, then XP / Reputation (action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+**Status:** Plans 1-5 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss; class resource bar); Plan 4 checked in the client. Next: XP / Reputation (action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 Docs:
 - `README.md`: player guide (keep it free of texture paths, API names and pixel sizes).

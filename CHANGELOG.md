@@ -8,6 +8,7 @@
 - Pet frame.
 - Party frames (you and party1-4) with role badge, leader crown, dispel glow, range fade and sort by role; hidden in raids.
 - Boss frames with cast bars and your debuffs.
+- Class resource bar under the Player frame (combo points, holy power, runes, soul shards, chi, arcane charges, essence); it can be detached and moved on its own.
 - Dead and offline units show a grey bar and grey text on every unit frame.
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
 - A frame turned off in the Edit Mode box goes away at once and stays off.

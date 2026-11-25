@@ -63,6 +63,7 @@ PowerShell; nothing here is done by the build.
 | `Core/UnitText.lua`, `Core/UnitColor.lua`, `Core/UnitState.lua` | pure unit frame rules: bar / level texts, health / ring / power / cast colors, fading, visibility conditions |
 | `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, studs, aura rows |
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
+| `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
@@ -74,14 +75,16 @@ PowerShell; nothing here is done by the build.
 | `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit, mode)` (mode `"line"` for group frames: one container, debuffs then my buffs only, one line), `auras:layout(opts)`, `auras:sample(on)` |
 | `Units/Parts/Role.lua` | group frames: role badge (disc stack in the skin's line shades, panel fill, glyph at 72%) at the ring's lower left and the leader crown above the ring; a secret role or leader flag hides them; `create(parent)`, `role:layout(L, opts)`, `role:setRole(r)`, `role:setLeader(b)`, `role:setUnit(unit)` |
 | `Units/Parts/Dispel.lua` | group frames: dispellable-debuff glow, a 9-slice texture reaching `glow` px outside the frame; live one is an `AuraContainer` slot (raid dispel filter) whose button carries the glow texture tinted by `AddDispelTypeTexture`; `available` false without the template; `create(parent, unit)`, `dispel:layout()`, `dispel:sample(colorOrNil)` |
-| `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.hideBlizzard(names)`) |
+| `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.reserveBelow(frame, px)`, `Base.hideBlizzard(names)`) |
 | `Units/Define.lua` | `ns.Units.define(o)`: the shared unit module shape (settings from `Units/Settings.lua`, create / apply / onEditMode through `Units/Base.lua`) |
 | `Units/Group.lua` | `ns.Units.defineGroup(o)`: the shared group module shape (Party, Boss): a plain holder frame (the Edit Mode frame) with member unit buttons at fixed tokens, their order (existing first, by role; index order in Edit Mode), anchors and holder size out of combat, the holder's visibility driver, the range ticker |
 | `Units/Player.lua`, `Units/Target.lua`, `Units/TargetTarget.lua`, `Units/Focus.lua`, `Units/Pet.lua` | one unit module each (`ns.Units.define{...}`) |
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
 | `Units/Party.lua` | the party block (`defineGroup`): player + party1-4, line auras, role badge, dispel glow, range fade, Sort by Role / Show Player; hides `PartyFrame`, `CompactPartyFrame` |
 | `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
-| `Bars/Resource.lua`, `Bars/Tracking.lua` | planned: class resource bar, XP / reputation |
+| `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`) |
+| `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
+| `Bars/Tracking.lua` | planned: XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
 | `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
@@ -241,8 +244,9 @@ flags), `defaults` (overrides), `blizzard`, `defaultPosition`, optional
 
 | id | frame | unit | sections | overrides | hides |
 | --- | --- | --- | --- | --- | --- |
-| `player` | `AnotherHUDPlayerFrame` | player, badge 18 | Size (portrait, power), Text, Look, Behaviour, Cast Bar (detach), Auras, Fading | none | `PlayerFrame`, `PlayerCastingBarFrame` |
+| `player` | `AnotherHUDPlayerFrame` | player, badge 18 | Size (portrait, power), Text, Look, Behaviour, Cast Bar (detach), Resource Bar, Auras, Fading | none | `PlayerFrame`, `PlayerCastingBarFrame` |
 | `playercast` | `AnotherHUDPlayerCastBarHolder` | (holder, child of `player`) | none | none | none |
+| `resource` (kind `bar`) | `AnotherHUDResourceBarHolder` | (holder, child of `player`; `Bars/Resource.lua`) | none | none | none |
 | `target` | `AnotherHUDTargetFrame` | target, mirrored, badge 18 | as Player, Cast Bar without detach | health Percent, power None | `TargetFrame` |
 | `targettarget` | `AnotherHUDTargetTargetFrame` | targettarget, mirrored | Size (portrait), Text, Look, Fading | 120 x 26, 10 pt, health None | none (inside `TargetFrame`) |
 | `focus` | `AnotherHUDFocusFrame` | focus, badge 14 | as Target | 160 x 40, power 8, 10 pt, health Percent, power None | `FocusFrame` |
@@ -260,6 +264,39 @@ before the holder exists, anchors the bar under the frame); the holder's
 own create applies the Player's state once it exists. Size and visibility
 go through `Combat.after("unit:playercast")`, the move through
 `Base.anchorCast`, so both change together after combat.
+
+**Resource bar.** `Bars/Resource.lua` defines `resource` (kind `bar`,
+child of `player`, no settings of its own: the Player's Resource Bar
+section). Its Edit Mode frame is the holder `AnotherHUDResourceBarHolder`,
+built like the cast bar holder; the bar `AnotherHUDResourceBar` is a plain
+frame holding a `Bars/Segments` widget (`spec.bar`, `spec.seg`). The
+resource (`spec.def`) is `Resource.forPlayer(class, GetSpecialization())`,
+recomputed on `PLAYER_ENTERING_WORLD` and `PLAYER_SPECIALIZATION_CHANGED`.
+It is on with the module enabled, Show resource bar and a resource for the
+class / spec. Apply, in one `Combat.after("bar:resource")`: attached, the
+bar is parented to the Player frame at `Resource.attached(frame.L)`
+(right of the ring, as wide as the bars, `gap` px under the frame) and the
+holder hidden; detached, the holder is sized and shown and the bar fills
+it; off, both hide. The segments are laid out there too (the Player's skin
+and bar texture, the resource color, `Resource.count` of `UnitPowerMax`).
+Then `Base.reserveBelow(playerFrame, Resource.reserve(h))` (0 when
+detached or off) makes the Player's cast bar and auras keep that space,
+queued under `unit:player:cast`. The Player's `apply` runs `Base.apply`,
+then the resource apply, then the cast holder's, so the reserved space is
+set before the cast bar is placed. The bar's own `Show` / `Hide` runs at
+once, also in combat (Druid Cat Form: `Resource.active` on the power token
+from `UnitPowerType`, on `UNIT_DISPLAYPOWER` / `UPDATE_SHAPESHIFT_FORM`);
+the reserved space does not follow it. Values: whole points and soul shard
+fragments go to the widget untouched (they may be secret); rune
+cooldowns, partial essence, the regeneration rate and
+`UnitPowerDisplayMod` are read only when plain (a secret rune start /
+duration / ready becomes nil and the rune shows empty, an unreadable
+essence clears the partial). While a rune recharges or essence
+regenerates, an `OnUpdate` on the bar refreshes every
+`Theme.sizes.resource.tick` s and removes itself when nothing recharges.
+`UNIT_MAXPOWER` re-runs apply when the segment count changes. In Edit Mode
+the bar shows three points (and, for runes / essence, the fourth segment
+at 55% with "2"), also while the resource is inactive.
 
 **Group modules (Party, Boss).** `ns.Units.defineGroup{...}` (`Units/Group.lua`) builds
 one module of several unit frames. The module's frame is a plain holder

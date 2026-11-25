@@ -264,7 +264,7 @@ Results:
   - **Fail, fixed:** the library check printed `true`, but AnotherHUD fell
     back to "no LibEditMode": `Glue.lib()` expected `LibStub` to be a
     function, while the real one is a callable table. Fixed by looking it up
-    with `LibStub:GetLibrary` (merge request 3).
+    with `LibStub:GetLibrary`.
   - **Pass after the fix:** the test frame is selectable and draggable in
     Edit Mode with its panel; the layout callback works (`lastLayout` saved
     as the active layout); the "AnotherHUD look" setting on Action Bar 1

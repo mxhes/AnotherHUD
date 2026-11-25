@@ -107,11 +107,11 @@ Everywhere:
   re-anchored in combat; all layout changes queue until
   `PLAYER_REGEN_ENABLED`.
 - Same tooling as AnotherLedger: plain-Lua tests (`lua tests/run.lua`, 5.1 and
-  5.4 in CI), luacheck, GitLab CI, BigWigs packager, CurseForge release.
+  5.4 in CI), luacheck, GitHub Actions, BigWigs packager, CurseForge release.
 - Development copy works without `Libs/` except for Edit Mode (LibEditMode is
   required for the Edit Mode part; without it frames stay where they are and
   the Settings window still works).
-- Remote: `https://gitlab.com/mhhenjes/anotherhud`, branch `main`.
+- Remote: `https://github.com/mxhes/AnotherHUD`, branch `main`.
 
 ## Approaches (picked by the player: A / A / A)
 

@@ -12,7 +12,7 @@ action bar addon (scope change 2026-11-25); AnotherHUD does not touch them. The 
 ## Setup
 
 - Repo: https://github.com/mxhes/AnotherHUD (`main`, changes through pull
-  requests). Backup: https://gitlab.com/mhhenjes/anotherhud (remote `gitlab`).
+  requests).
 - Client: WoW Forever, `C:\Program Files (x86)\World of Warcraft\_forever_\`.
   For testing in game, link the addon folder into `Interface\AddOns`:
   `New-Item -ItemType Junction -Path "<WoW>\_forever_\Interface\AddOns\AnotherHUD" -Target "D:\GitRepos\AnotherHUD\AnotherHUD"`.

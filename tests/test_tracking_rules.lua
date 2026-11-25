@@ -104,6 +104,24 @@ h.test("reactionColor falls back to the theme", function()
   end)
 end)
 
+h.test("xp percent rounds down", function()
+  local T = load().Tracking
+  h.eq(T.xpText(5, 29, 100, 0), "Level 5  29 / 100 (29%)")
+  h.eq(T.xp({ xp = 29, max = 100, level = 5 }).text, "Level 5  29 / 100 (29%)")
+  h.eq(T.xpText(5, 999, 1000, 0), "Level 5  999 / 1,000 (99%)")
+end)
+
+h.test("reactionColor fallback is a copy", function()
+  local ns = load()
+  local T = ns.Tracking
+  local c = T.reactionColor(5)
+  c[1] = 42
+  h.eq(ns.Theme.trackingColors.reaction[5], { 0, 0.6, 0.1 })
+  local n = T.reactionColor(nil)
+  n[2] = 42
+  h.eq(ns.Theme.trackingColors.reaction[4], { 0.9, 0.7, 0 })
+end)
+
 h.test("number separates thousands", function()
   local T = load().Tracking
   h.eq(T.number(0), "0"); h.eq(T.number(999), "999"); h.eq(T.number(1000), "1,000")

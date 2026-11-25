@@ -43,7 +43,7 @@ end
 function Tracking.xpText(level, xp, max, rested)
   local text = string.format("%s %d  %s / %s", L["Level"], level or 0, Tracking.number(xp), Tracking.number(max))
   if max > 0 then
-    text = text .. string.format(" (%d%%)", math.floor(xp / max * 100))
+    text = text .. string.format(" (%d%%)", math.floor(xp * 100 / max))
   end
   if plain(rested) and rested > 0 then
     text = text .. "  +" .. Tracking.number(rested) .. " " .. L["rested"]
@@ -102,7 +102,9 @@ function Tracking.reactionColor(reaction)
     return { c.r, c.g, c.b }
   end
   local t = Theme.trackingColors.reaction
-  return (plain(reaction) and t[reaction]) or t[NEUTRAL]
+  local f = (plain(reaction) and t[reaction]) or t[NEUTRAL]
+  -- A copy: callers must not be able to change the Theme.
+  return { f[1], f[2], f[3] }
 end
 
 ns.Tracking = Tracking

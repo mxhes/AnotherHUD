@@ -212,6 +212,41 @@ Results:
   the runes (and their API lines above) and Windwalker chi cannot be
   checked there; that code stays, tested only in `tests/test_resource.lua`.
 
+## Plan 6: XP / reputation bar
+
+Client APIs (`Core/Tracking.lua`, `Bars/Tracking.lua`, `UNVERIFIED (check in client)`):
+
+- `UnitXP("player")` / `UnitXPMax("player")` answer the level's XP and its
+  maximum; `GetXPExhaustion()` the rested XP (nil when not rested).
+- `IsPlayerAtEffectiveMaxLevel()` is true at the level cap (also a trial or
+  expansion cap); `IsXPUserDisabled()` is true with XP gain turned off.
+- `C_Reputation.GetWatchedFactionData()` answers `name`, `reaction`,
+  `currentReactionThreshold`, `nextReactionThreshold`, `currentStanding`
+  (nil or no name when nothing is watched); else `GetWatchedFactionInfo()`
+  answers name, reaction, min, max, value.
+- `FACTION_BAR_COLORS[reaction]` has `r`, `g`, `b` (else the Theme copy).
+- `BreakUpLargeNumbers` groups thousands in the client language.
+- `PLAYER_XP_UPDATE` (unit event, player), `UPDATE_EXHAUSTION`,
+  `PLAYER_LEVEL_UP`, `ENABLE_XP_GAIN`, `DISABLE_XP_GAIN`, `UPDATE_FACTION`
+  fire for what they say.
+- Blizzard's bars live in `StatusTrackingBarManager`,
+  `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`.
+
+In the client:
+
+- The XP bar and the rested band fill to the right values (compare with
+  the character pane); the rested band shows ahead of the XP fill.
+- At the level cap (or with XP gain turned off) the XP bar goes and the
+  reputation bar moves up.
+- Watching a faction in the reputation pane shows its bar at once;
+  unwatching hides it. Renown / friendship factions show plain values.
+- Blizzard's experience and reputation bars are gone (also after a level
+  up and a zone change), and come back after /reload with the module off.
+- Edit Mode moves the frame, its panel works (every setting changes the
+  bar) and the sample shows both rows.
+- Texts show on mouse-over only (default), the mouse-over does not block
+  clicks around the bar, the divider looks sharp between the two bars.
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

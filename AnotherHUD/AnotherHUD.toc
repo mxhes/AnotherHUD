@@ -43,6 +43,7 @@ Units/Player.lua
 Units/PlayerCastBar.lua
 Bars/Segments.lua
 Bars/Resource.lua
+Bars/Tracking.lua
 Units/Target.lua
 Units/TargetTarget.lua
 Units/Focus.lua

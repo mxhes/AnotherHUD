@@ -75,7 +75,17 @@ end
 
 -- What the bars show now: { xp, rep } (each nil when that bar is off).
 local function current(spec)
-  if editing(spec) then return sampleData() end
+  if editing(spec) then
+    -- A sample row whose option is off is left out; with both off both stay,
+    -- so the frame remains selectable.
+    local d = sampleData()
+    local xp, rep = opt("showXP") == true, opt("showReputation") == true
+    if xp or rep then
+      if not xp then d.xp = nil end
+      if not rep then d.rep = nil end
+    end
+    return d
+  end
   local d = {}
   if opt("showXP") == true then d.xp = readXP() end
   if opt("showReputation") == true then d.rep = readReputation() end
@@ -204,6 +214,8 @@ local function apply(spec)
     end
     row.text:ClearAllPoints()
     row.text:SetPoint("CENTER", row.bg, "CENTER", 0, 0)
+    -- the row's inner width: a long name is cut by the client, not run over
+    row.text:SetWidth(iw)
     row.text:SetFont(T.fonts.file, opt("fontSize"), "OUTLINE")
     row.text:SetWordWrap(false)
     spec.shownRows[k] = true

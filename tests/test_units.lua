@@ -75,7 +75,7 @@ h.test("checklist shows the unit frames and the XP / Reputation bar", function()
   withInit({}, function(ns)
     local ids = {}
     for _, entry in ipairs(ns.EditMode.Checklist.entries()) do ids[#ids + 1] = entry.id end
-    h.eq(ids, { "player", "tracking", "target", "targettarget", "focus", "pet", "party", "boss" })
+    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss", "tracking" })
   end)
 end)
 

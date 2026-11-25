@@ -237,11 +237,14 @@ In the client:
 - The XP bar and the rested band fill to the right values (compare with
   the character pane); the rested band shows ahead of the XP fill.
 - At the level cap (or with XP gain turned off) the XP bar goes and the
-  reputation bar moves up.
+  reputation bar moves up; after a level-up the level in the text is right.
 - Watching a faction in the reputation pane shows its bar at once;
   unwatching hides it. Renown / friendship factions show plain values.
 - Blizzard's experience and reputation bars are gone (also after a level
   up and a zone change), and come back after /reload with the module off.
+- Opening and closing Edit Mode, switching or resetting a layout, and
+  saving: no Lua error and no blocked-action message with Blizzard's XP /
+  reputation bars hidden; Blizzard's action bars keep their place.
 - Edit Mode moves the frame, its panel works (every setting changes the
   bar) and the sample shows both rows.
 - Texts show on mouse-over only (default), the mouse-over does not block

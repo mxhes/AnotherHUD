@@ -248,10 +248,10 @@ flags), `defaults` (overrides), `blizzard`, `defaultPosition`, optional
 | `playercast` | `AnotherHUDPlayerCastBarHolder` | (holder, child of `player`) | none | none | none |
 | `resource` (kind `bar`) | `AnotherHUDResourceBarHolder` | (holder, child of `player`; `Bars/Resource.lua`) | none | none | none |
 | `target` | `AnotherHUDTargetFrame` | target, mirrored, badge 18 | as Player, Cast Bar without detach | health Percent, power None | `TargetFrame` |
-| `tracking` (kind `bar`) | `AnotherHUDTrackingBar` | (plain frame; `Bars/Tracking.lua`) | Size, Text, Look, Behaviour, Fading (own controls) | none | `StatusTrackingBarManager`, `MainStatusTrackingBarContainer`, `SecondaryStatusTrackingBarContainer` |
 | `targettarget` | `AnotherHUDTargetTargetFrame` | targettarget, mirrored | Size (portrait), Text, Look, Fading | 120 x 26, 10 pt, health None | none (inside `TargetFrame`) |
 | `focus` | `AnotherHUDFocusFrame` | focus, badge 14 | as Target | 160 x 40, power 8, 10 pt, health Percent, power None | `FocusFrame` |
 | `pet` | `AnotherHUDPetFrame` | pet | Size (portrait, power), Text, Look, Auras, Fading | 120 x 34, power 6, 10 pt, health Percent, power None | `PetFrame` |
+| `tracking` (kind `bar`) | `AnotherHUDTrackingBar` | (plain frame; `Bars/Tracking.lua`, loaded after `Units/Boss.lua`) | Size, Text, Look, Behaviour, Fading (own controls) | none | `StatusTrackingBarManager`, `MainStatusTrackingBarContainer`, `SecondaryStatusTrackingBarContainer` |
 
 `targettarget` has no `blizzard` list (nil, not `{}`), so turning it off
 needs no `/reload`. The detached cast bar: `playercast` is a plain frame on

@@ -54,6 +54,8 @@ end
 -- s = { xp, max, rested, level, atMax, disabled } -> nil | { value, max, restedEnd, text }
 function Tracking.xp(s)
   if not s or s.atMax or s.disabled then return nil end
+  -- nil only (== nil is safe for a secret value): no row without numbers.
+  if s.xp == nil or s.max == nil then return nil end
   local r = { value = s.xp, max = s.max }
   if plain(s.xp) and plain(s.max) and s.max > 0 then
     if plain(s.rested) and s.rested > 0 then
@@ -79,15 +81,17 @@ function Tracking.reputation(d)
   end
   name = Util.plainString(name)
   if not name then return nil end
+  if min == nil or max == nil or value == nil then return nil end
   local r = { name = name, min = min, max = max, value = value, reaction = reaction }
   if plain(min) and plain(max) and plain(value) then
     local standing = Tracking.standing(plain(reaction) and reaction or nil)
+    -- An empty standing (secret reaction) is left out: no doubled space.
+    local head = standing ~= "" and (name .. "  " .. standing) or name
     if max > min then
-      r.text = string.format("%s  %s  %s / %s", name, standing, Tracking.number(value - min),
-        Tracking.number(max - min))
+      r.text = string.format("%s  %s / %s", head, Tracking.number(value - min), Tracking.number(max - min))
     else
       r.min, r.max, r.value = 0, 1, 1
-      r.text = string.format("%s  %s", name, standing)
+      r.text = head
     end
   end
   return r

@@ -85,6 +85,31 @@ h.test("no watched faction gives nil", function()
   end)
 end)
 
+h.test("nil client values give no row", function()
+  local T = load().Tracking
+  h.eq(T.xp({ xp = nil, max = 100, level = 1 }), nil)
+  h.eq(T.xp({ xp = 5, max = nil, level = 1 }), nil)
+  local base = { name = "A", reaction = 5, currentReactionThreshold = 0, nextReactionThreshold = 10,
+    currentStanding = 5 }
+  for _, k in ipairs({ "currentReactionThreshold", "nextReactionThreshold", "currentStanding" }) do
+    local d = {}
+    for key, v in pairs(base) do d[key] = v end
+    d[k] = nil
+    h.eq(T.reputation(d), nil, k)
+  end
+  h.eq(T.reputation({ legacy = { name = "A", reaction = 5, min = 0, max = 10 } }), nil)
+end)
+
+h.test("an empty standing is left out of the text", function()
+  local T = load().Tracking
+  local r = T.reputation({ name = "Argent Dawn", reaction = nil, currentReactionThreshold = 3000,
+    nextReactionThreshold = 9000, currentStanding = 4200 })
+  h.eq(r.text, "Argent Dawn  1,200 / 6,000")
+  local top = T.reputation({ name = "Argent Dawn", currentReactionThreshold = 5, nextReactionThreshold = 5,
+    currentStanding = 5 })
+  h.eq(top.text, "Argent Dawn")
+end)
+
 h.test("standing names the eight reactions", function()
   local T = load().Tracking
   local want = { "Hated", "Hostile", "Unfriendly", "Neutral", "Friendly", "Honored", "Revered", "Exalted" }

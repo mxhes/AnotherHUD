@@ -248,3 +248,10 @@ h.test("unknown section name raises", function()
   h.eq(ok, false)
   h.eq(tostring(err):find("Cast bar", 1, true) ~= nil, true)
 end)
+
+h.test("the resource size defaults come from the Theme", function()
+  local ns = load()
+  ns.Theme.sizes.resource.detachedWidth, ns.Theme.sizes.resource.detachedHeight = 250, 30
+  local _, defaults = ns.Units.Settings.build({ "Resource Bar", resource = true }, {})
+  h.eq({ defaults.resourceWidth, defaults.resourceHeight }, { 250, 30 })
+end)

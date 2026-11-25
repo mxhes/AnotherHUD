@@ -210,9 +210,10 @@ h.test("recharging runes sort and show seconds", function()
     h.eq(seg.slots[5].text._text, "", "no timers")
 
     r.runes[1] = { fakes.secret(95), 10, fakes.secret(false) }
+    r.power[5] = 5
     client.fire("RUNE_POWER_UPDATE", 1)
-    h.eq(seg.slots[6].partial._value, 0, "secret rune last and empty")
-    h.eq(seg.slots[6].full._value, 5)
+    h.eq(seg.slots[6].partial._value, 0, "unreadable rune: no partials")
+    h.eq(seg.slots[6].full._value, 5, "whole points fallback")
 
     for i = 1, 6 do r.runes[i] = { 0, 10, true } end
     client.fire("RUNE_POWER_UPDATE", 1)
@@ -290,5 +291,81 @@ h.test("a fire mage has no bar", function()
     h.eq(bar:IsShown(), true, "arcane shown")
     h.eq(seg.count, 4)
     h.eq(castPoint(player)[6], -26)
+  end)
+end)
+
+h.test("unreadable rune cooldowns fall back to whole points", function()
+  local runes = {}
+  for i = 1, 6 do runes[i] = { fakes.secret(95), 10, fakes.secret(false) } end
+  withBar({ class = "DEATHKNIGHT", spec = 1, runes = runes, max = { [5] = 6 } }, function(ns, r, client)
+    local _, _, _, seg = parts(ns)
+    local s = fakes.secret(4)
+    r.power[5] = s
+    client.fire("RUNE_POWER_UPDATE", 1)
+    for i = 1, 6 do h.eq(rawequal(seg.slots[i].full._value, s), true, "slot " .. i) end
+  end)
+end)
+
+h.test("slots added while in combat get their values when combat ends", function()
+  withBar({ class = "ROGUE", token = "ENERGY", power = { [4] = 3 }, max = { [4] = 5 } }, function(ns, r, client)
+    local _, _, _, seg = parts(ns)
+    client.setCombat(true)
+    r.max[4] = 7
+    client.fire("UNIT_MAXPOWER", "player", "COMBO_POINTS")
+    client.setCombat(false)
+    client.fire("PLAYER_REGEN_ENABLED")
+    h.eq(seg.count, 7)
+    for i = 6, 7 do h.eq(seg.slots[i].full._value, 3, "slot " .. i) end
+  end)
+end)
+
+h.test("power events of another resource are ignored", function()
+  withBar({ class = "ROGUE", token = "ENERGY", power = { [4] = 3 }, max = { [4] = 5 } }, function(ns, r, client)
+    local _, _, _, seg = parts(ns)
+    local calls = 0
+    local orig = _G.UnitPower
+    _G.UnitPower = function(unit, ptype, raw)
+      if ptype ~= nil then calls = calls + 1 end
+      return orig(unit, ptype, raw)
+    end
+    client.fire("UNIT_POWER_FREQUENT", "player", "ENERGY")
+    h.eq(calls, 0, "energy event ignored")
+    r.power[4] = 4
+    client.fire("UNIT_POWER_FREQUENT", "player", "COMBO_POINTS")
+    h.eq(seg.slots[1].full._value, 4, "combo event handled")
+    r.power[4] = 2
+    client.fire("UNIT_POWER_UPDATE", "player")
+    h.eq(seg.slots[1].full._value, 2, "missing token updates")
+    r.power[4] = 1
+    client.fire("UNIT_POWER_UPDATE", "player", fakes.secret("COMBO_POINTS"))
+    h.eq(seg.slots[1].full._value, 1, "secret token updates")
+    _G.UnitPower = orig
+  end)
+end)
+
+h.test("Edit Mode keeps a warrior's holder hidden", function()
+  withBar({ class = "WARRIOR" }, function(ns, _, _, lem)
+    local _, bar, holder = parts(ns)
+    lem.callbacks.enter()
+    h.eq(holder:IsShown(), false, "holder hidden")
+    h.eq(bar:IsShown(), false, "bar hidden")
+  end)
+end)
+
+h.test("detached, then Show resource bar off hides the holder and gives the space back", function()
+  withBar({ class = "PALADIN" }, function(ns)
+    local _, bar, holder, _, player = parts(ns)
+    ns.Options.set("player", "resourceDetach", true)
+    ns.Options.set("player", "showResource", false)
+    h.eq(holder:IsShown(), false, "holder hidden")
+    h.eq(bar:IsShown(), false, "bar hidden")
+    h.eq(castPoint(player)[6], -14)
+  end)
+end)
+
+h.test("Base exports skinOf", function()
+  withBar({ class = "PALADIN" }, function(ns)
+    h.eq(type(ns.Units.Base.skinOf), "function")
+    h.eq(ns.Units.Base.skinOf(ns.Modules.get("player").frame) ~= nil, true)
   end)
 end)

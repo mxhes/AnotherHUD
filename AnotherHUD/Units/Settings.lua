@@ -100,7 +100,7 @@ end
 builders["Resource Bar"] = function(d, opts)
   if not opts.resource then return {} end
   d.showResource, d.resourceDetach, d.resourceWidth, d.resourceHeight, d.resourceTimers =
-    true, false, 200, 20, true
+    true, false, ns.Theme.sizes.resource.detachedWidth, ns.Theme.sizes.resource.detachedHeight, true
   return {
     checkbox("showResource", "Show resource bar",
       "Show your class resource (combo points, holy power, runes, ...)."),

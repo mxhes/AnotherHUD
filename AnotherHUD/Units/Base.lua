@@ -98,6 +98,7 @@ local function skinOf(frame)
   local skins = ns.Theme.skins
   return (type(id) == "string" and skins[string.lower(id)]) or skins.classic
 end
+Base.skinOf = skinOf
 
 local function castOn(frame)
   return frame.cast and opt(frame, "castBar") == true or false

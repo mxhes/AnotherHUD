@@ -95,14 +95,26 @@ end
 -- ready (GetTime seconds), any of them secret in restricted contexts.
 local function runes(spec, seg, timers)
   local list = {}
+  local unreadable = false
   for i = 1, seg.count do
     local start, duration, ready = GetRuneCooldown(i)
     if not plain(start) then start = nil end
     if not plain(duration) then duration = nil end
-    if Util.isSecret(ready) or type(ready) ~= "boolean" then ready = nil end
+    if Util.isSecret(ready) or type(ready) ~= "boolean" then
+      ready = nil
+      unreadable = true
+    end
     list[i] = { start, duration, ready }
   end
+  if unreadable then
+    -- No cooldowns to sort: the whole points (a secret count passes through).
+    seg:clearPartials()
+    seg:setPoints(UnitPower("player", powerType(spec.def)))
+    return false
+  end
   local busy = false
+  -- UNVERIFIED (check in client): GetTime() answers plain seconds on the same
+  -- clock as GetRuneCooldown's start.
   for i, r in ipairs(Resource.runes(list, GetTime())) do
     seg:setSlot(i, r.fill, timers and r.left)
     if r.fill < 1 and r.left then busy = true end
@@ -169,11 +181,6 @@ local function sample(spec)
   end
 end
 
-local function skinOf()
-  local id = ns.Options.get("player", "skin")
-  return (type(id) == "string" and ns.Theme.skin(string.lower(id))) or ns.Theme.skins.classic
-end
-
 -- Reads every option: places the bar (attached / detached / off), lays the
 -- segments out and keeps the space under the Player frame; then the values
 -- and the bar's show.
@@ -213,9 +220,11 @@ local function apply(spec)
       bar:Hide()
     end
     if w and count >= 1 then
-      seg:layout({ w = w, h = h, count = count, skin = skinOf(), texture = get("player", "barTexture"),
+      seg:layout({ w = w, h = h, count = count, skin = ns.Units.Base.skinOf(pframe), texture = get("player", "barTexture"),
         rgb = ns.Theme.resourceColors[def.color] })
+      update(spec)
     end
+    refreshShown(spec)
   end)
   if pframe then
     ns.Units.Base.reserveBelow(pframe, attached and Resource.reserve(ns.Theme.sizes.resource.attachedHeight) or 0)
@@ -232,7 +241,11 @@ end
 
 local SHOWN = { UNIT_DISPLAYPOWER = true, UPDATE_SHAPESHIFT_FORM = true }
 
-local function onEvent(spec, event)
+-- The power-type token a UNIT_POWER_* event carries, per resource.
+local TOKENS = { combo = "COMBO_POINTS", holy = "HOLY_POWER", runes = "RUNES", shards = "SOUL_SHARDS",
+  chi = "CHI", arcane = "ARCANE_CHARGES", essence = "ESSENCE" }
+
+local function onEvent(spec, event, _, token)
   if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_SPECIALIZATION_CHANGED" then
     refreshDef(spec)
     return
@@ -243,6 +256,10 @@ local function onEvent(spec, event)
     return
   end
   if SHOWN[event] then refreshShown(spec) end
+  if (event == "UNIT_POWER_FREQUENT" or event == "UNIT_POWER_UPDATE") and token ~= nil
+    and not Util.isSecret(token) and type(token) == "string" and token ~= TOKENS[spec.def.key] then
+    return
+  end
   update(spec)
 end
 
@@ -266,7 +283,7 @@ ns.Modules.define({
     spec.sampling, spec.ticking, spec.elapsed, spec.count = false, false, 0, 0
     for _, ev in ipairs(UNIT_EVENTS) do bar:RegisterUnitEvent(ev, "player") end
     for _, ev in ipairs(EVENTS) do bar:RegisterEvent(ev) end
-    bar:SetScript("OnEvent", function(_, event) onEvent(spec, event) end)
+    bar:SetScript("OnEvent", function(_, event, ...) onEvent(spec, event, ...) end)
     spec.def = currentDef()
     apply(spec)
   end,

@@ -36,4 +36,6 @@ read_globals = {
   "RegisterStateDriver", "UnregisterStateDriver", "hooksecurefunc",
   "GameTooltip", "GameTooltip_SetDefaultAnchor", "UnitGUID",
   "UnitGroupRolesAssigned", "UnitIsGroupLeader", "UnitInRange",
+  "GetSpecialization", "GetRuneCooldown", "UnitPartialPower", "GetPowerRegenForPowerType",
+  "UnitPowerDisplayMod", "GetTime",
 }

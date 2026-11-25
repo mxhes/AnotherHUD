@@ -3,8 +3,7 @@
 Ideas not built yet.
 
 - Raid frames.
-- Class resource bar (next plan): it replaces what hiding `PlayerFrame` removes (class
-  resources, alternate power bar). The totem bar goes to the suite's action bar addon.
+- Brewmaster stagger, Rogue charged combo points on the resource bar.
 - XP / Reputation bar.
 - Evoker empowered casts on the cast bar.
 - Party Style.
@@ -12,3 +11,4 @@ Ideas not built yet.
 - Shared "Another" suite core (code shared with AnotherLedger and the minimap addon).
 - Raid target icon on unit frames.
 - Turned-off unit frames could unregister their events.
+- Detached resource bar (and detached cast bar) hide in pet battles and vehicles like the Player frame.

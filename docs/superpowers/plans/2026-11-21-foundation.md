@@ -24,7 +24,7 @@ ones). Mockups (Plan 2) can run in parallel with Plan 1.
 | 4. Group frames | Party (header, orientation, growth, gap, sort by role, show player, sample data in Edit Mode), Boss 1-5 | client check |
 | 5. Bars | action button skin, Action Bars 1-8, Stance, Pet Bar, proc glow, bar fading, XP / Reputation | client check |
 | 6. Resource & totems | class resource bar, totem bar | client check |
-| 7. Release 1 | Settings window, profiles UI, German texts, README, CHANGELOG, CurseForge project, tag v1.0.0 | player plays a week without FlareUI |
+| 7. Release 1 | Settings window, profiles UI, German texts, README, CHANGELOG, CurseForge project, tag v1.0.0 | player plays a week on the suite alone |
 
 Approved art from Plan 2 is swapped into Plans 3-6 as it is approved; until
 then they use AnotherLedger's look.
@@ -38,7 +38,7 @@ then they use AnotherLedger's look.
 - LibEditMode unmodified (packager external), no hooks into its internals.
 - No arithmetic or comparison on client health / power / cast values.
 - Nothing touches secure frames in combat (`ns.Combat.after`).
-- No FlareUI code or art copied. AnotherLedger code may be copied.
+- No other addon's code or art copied. AnotherLedger code may be copied.
 - Commits `feat:` / `fix:` / `docs:` / `refactor:`; remote `https://gitlab.com/mhhenjes/anotherhud`, branch `main`.
 
 ## Review Focus

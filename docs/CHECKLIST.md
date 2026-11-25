@@ -23,7 +23,7 @@ and remove both once it is confirmed.
 
 ## Unit frames (Plan 3)
 
-FlareUI's unit frames off for this test. Run with the Player, Target, Target of
+Other unit frame addons off for this test. Run with the Player, Target, Target of
 Target, Focus and Pet frames; a dummy and a group are enough.
 
 Frames and Edit Mode:
@@ -48,10 +48,9 @@ Frames and Edit Mode:
   leaving and reopening Edit Mode and on unit changes, and comes back (with
   its values, or its sample in Edit Mode) when turned on; Player off also
   hides a detached cast bar.
-- Expected, not a bug: with the Player frame on, the class resource bars
-  (combo points, holy power, runes, shards, chi, essence, arcane charges),
-  the totem bar and the alternate power bar are gone with `PlayerFrame`
-  until the resource bar (totems: the suite's action bar addon).
+- Expected, not a bug: with the Player frame on, the totem bar is gone with
+  `PlayerFrame` (it comes with the suite's action bar addon); class
+  resources are on AnotherHUD's resource bar (Plan 5).
 - The state driver (`[petbattle] hide; [vehicleui] hide; [@unit,exists] show;
   hide`) hides the frames in pet battles and, with Show in vehicle off, in
   vehicles.
@@ -156,13 +155,55 @@ Combat and taint:
 
 Results:
 
-- 2026-11-22, first run by the player (FlareUI's unit frames off): the
+- 2026-11-22, first run by the player (other unit frame addons off): the
   frames work, no Lua errors and no blocked / forbidden action messages.
   The items above were not checked one by one and the taint log was not
   captured, so they stay open until a closer pass.
 - 2026-11-22, Plan 4 (Party and Boss) run by the player: "all works".
   The Plan 4 items were not reported one by one, so they stay open until a
   closer pass.
+
+## Plan 5: resource bar
+
+Client APIs (`Bars/Resource.lua`, `UNVERIFIED (check in client)`):
+
+- `GetSpecialization()` answers the 1-based spec index.
+- `GetRuneCooldown(i)` answers start, duration, ready in `GetTime()`
+  seconds (no Lua error when any of them is secret).
+- `RUNE_POWER_UPDATE` fires when a rune starts or ends recharging.
+- `UnitPartialPower("player", Enum.PowerType.Essence)` answers the next
+  essence's progress 0..1000 and `GetPowerRegenForPowerType` (first return)
+  the essence per second: the regenerating segment fills and its seconds
+  count down.
+- `UnitPower("player", Enum.PowerType.SoulShards, true)` answers the
+  unmodified fragments and `UnitPowerDisplayMod` the fragments per shard
+  (10): the next shard fills (Destruction shows fractions).
+- `GetTime()` is plain while runes recharge in combat.
+- The bar's `Show` / `Hide` in combat (Druid Cat Form) while parented to
+  the Player frame: no blocked action message.
+- The segments draw above their panel after the bar is reparented to the
+  Player frame or the holder (frame levels follow the new parent).
+- LibEditMode does not show or select the holder while it is hidden
+  (Detach resource bar off).
+
+In the client:
+
+- Each class's bar: Rogue and Druid combo points, Paladin holy power,
+  Death Knight runes (Blood red, Frost blue, Unholy green, recharging ones
+  last with their seconds), Warlock soul shards, Windwalker chi, Arcane
+  charges, Evoker essence; no bar for other classes and specs; a spec
+  change adds or removes it.
+- Druid Cat Form in combat: the bar shows in Cat Form and hides out of
+  it; the cast bar under the Player frame does not move.
+- Attached, the bar sits 4 px under the Player frame, right of the ring,
+  and the cast bar and auras sit under it; Detach resource bar moves it
+  onto its own Edit Mode frame ("Player Resource Bar") and the cast bar
+  moves back up.
+- Segment edges and dividers look sharp at the default and other sizes
+  (slot widths can be fractional pixels).
+- A talent that raises the combo point maximum adds segments
+  (`UNIT_MAXPOWER`).
+- The Encounter Bar still shows in a fight that uses it.
 
 ## Edit Mode spike (Plan 1, Task 7)
 
@@ -212,7 +253,7 @@ below are history.
 Results:
 
 - 2026-11-21, first run (LibEditMode MINOR 19 from the `package-dry-run`
-  artifact, FlareUI still enabled):
+  artifact, another UI addon still enabled):
   - **Fail, fixed:** the library check printed `true`, but AnotherHUD fell
     back to "no LibEditMode": `Glue.lib()` expected `LibStub` to be a
     function, while the real one is a callable table. Fixed by looking it up

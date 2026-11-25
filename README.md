@@ -26,10 +26,15 @@ Move every frame in Edit Mode: with Edit Mode open each one shows sample data, s
 - **Look**: skin, class colors and bar texture.
 - **Behaviour**: whether the frame also shows in a vehicle.
 - **Cast Bar**: show it, its size, the spell icon, and (Player only) Detach cast bar.
+- **Resource Bar** (Player only): show it, Detach resource bar, its size when detached, and the recharge timers.
 - **Auras**: buffs, debuffs, icon size, rows, and only your own auras.
 - **Fading**: opacity out of combat and showing fully on mouseover.
 
 Not every frame has every section; a section only appears where it makes sense. The Player's cast bar can be detached ("Detach cast bar" in the Cast Bar section) and then moves as its own frame, "Player Cast Bar". Left off, it hangs under the Player frame.
+
+## Class resources
+
+The Player frame brings a class resource bar: combo points (Rogue, and Druid in Cat Form), holy power (Paladin), runes in the color of your spec (Death Knight), soul shards with the next shard filling up (Warlock), chi (Windwalker Monk), arcane charges (Arcane Mage) and essence (Evoker). Classes and specs without one of these get no bar. It sits right under the Player frame, next to the portrait, and the cast bar and auras move down to make room. Turn on "Detach resource bar" in the Resource Bar section to move it as its own frame, "Player Resource Bar", with its own width and height. Recharging runes and the regenerating essence show the seconds left on their segment; turn that off with "Show recharge timers". In Edit Mode the bar shows a sample.
 
 Party shows while you are in a party and hides in a raid; Boss shows while a boss encounter has boss units. In Edit Mode both show sample frames so you can place the whole block. Someone who joins your party in a fight appears in the next free place and is sorted when combat ends.
 
@@ -39,4 +44,4 @@ Target, Target of Target and Focus only show while you have that unit, and Pet o
 
 ## Known gaps
 
-- Class resources (combo points, holy power, runes, soul shards, chi, essence, arcane charges), totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. Class resources come back with AnotherHUD's own resource bar; totems with the suite's action bar addon.
+- Totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. Totems come back with the suite's action bar addon.

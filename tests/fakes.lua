@@ -45,6 +45,9 @@ function methods.GetParent(self) return self._parent end
 function methods.GetName(self) return self._name end
 function methods.SetValue(self, v) self._value = v end
 function methods.GetValue(self) return self._value end
+-- SetMinMaxValues keeps _min / _max; SetStatusBarColor keeps { r, g, b, a }.
+function methods.SetMinMaxValues(self, lo, hi) self._min, self._max = lo, hi end
+function methods.SetStatusBarColor(self, r, g, b, a) self._barColor = { r, g, b, a } end
 function methods.SetText(self, t) self._text = t end
 function methods.GetText(self) return self._text end
 function methods.SetScript(self, ev, fn) self._scripts[ev] = fn end

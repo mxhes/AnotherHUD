@@ -2,7 +2,7 @@
 
 WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Cast Bar) and adds a class resource bar and XP / Reputation, plugged into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`), an action bar addon (Action Bars 1-8, Stance, Pet Bar, totem bar; not built yet) and a minimap addon (not built yet). AnotherHUD does not touch Blizzard's action bars. The addon folder is `AnotherHUD/` inside the repo.
 
-**Status:** Plans 1-4 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss); Plan 4 checked in the client. Next: class resource bar, then XP / Reputation (action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+**Status:** Plans 1-5 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss; class resource bar); Plan 4 checked in the client. Next: XP / Reputation (action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 Docs:
 - `README.md`: player guide (keep it free of texture paths, API names and pixel sizes).
@@ -15,7 +15,7 @@ Docs:
 
 - **Artwork: mockups first.** Any new or changed art (portrait ring, bar textures, borders, button skins, icons, colors of a new skin) is shown as a mockup and built only after the player approves it. Wait for the answer; don't build "in the meantime".
 - **Ask questions.** When a request leaves something open that changes what gets built, ask (one question at a time, with your recommendation) instead of guessing.
-- **FlareUI is a reference, not a source.** It is installed at `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\FlareUI` and shows how Edit Mode integration and secret-value-safe unit frames work on Forever. Read it to learn which client APIs work; never copy its code or art.
+- **Other addons are not a source or an inspiration.** Only the player's own addons (AnotherLedger and the rest of the suite) may be copied and adapted. Other installed addons may be read for basic client facts only (how a hook or API call works, whether an API exists), never for design, features, code or art.
 - **AnotherLedger is a source.** Its tooling, `Theme.lua`, fonts, skins, widgets, test harness and conventions may be copied and adapted (same author).
 - Never put tokens or passwords in files, commits or chat.
 

@@ -169,6 +169,24 @@ Theme.sizes = {
     -- the aura rows and the boss cast bar, the dispel glow and its edge.
     roleBadge = 15, crown = 12, crownLift = 7, rangeAlpha = 0.55, rangeTick = 0.5,
     partyAuraGap = 6, bossAuraGap = 4, bossCastGap = 4, glow = 8, glowEdge = 2 },
+  -- Class resource bar: the attached bar's height and its gap to the Player
+  -- frame, the detached size, the shade of a partial point, the seconds font,
+  -- the most segments and the update interval (s).
+  resource = { attachedHeight = 18, gap = 4, detachedWidth = 200, detachedHeight = 20,
+    partialShade = 0.55, timerFont = 9, maxSegments = 10, tick = 0.1 },
+}
+
+-- Class resource bar colors (approved art): one per resource, {r, g, b}.
+Theme.resourceColors = {
+  combo = { 0.95, 0.35, 0.2 },
+  holy = { 1, 0.82, 0.25 },
+  runes = { 0.85, 0.2, 0.25 },
+  runesFrost = { 0.3, 0.7, 1 },
+  runesUnholy = { 0.4, 0.85, 0.3 },
+  shards = { 0.62, 0.35, 0.95 },
+  chi = { 0.45, 0.95, 0.75 },
+  arcane = { 0.45, 0.55, 1 },
+  essence = { 0.35, 0.85, 0.8 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which

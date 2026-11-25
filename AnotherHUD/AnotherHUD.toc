@@ -22,6 +22,7 @@ Core/UnitColor.lua
 Core/UnitState.lua
 Core/UnitLayout.lua
 Core/GroupLayout.lua
+Core/Resource.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua
@@ -39,6 +40,8 @@ Units/Define.lua
 Units/Group.lua
 Units/Player.lua
 Units/PlayerCastBar.lua
+Bars/Segments.lua
+Bars/Resource.lua
 Units/Target.lua
 Units/TargetTarget.lua
 Units/Focus.lua

@@ -41,6 +41,7 @@ Units/Group.lua
 Units/Player.lua
 Units/PlayerCastBar.lua
 Bars/Segments.lua
+Bars/Resource.lua
 Units/Target.lua
 Units/TargetTarget.lua
 Units/Focus.lua

@@ -45,6 +45,10 @@ h.test("active needs Cat Form for druids", function()
   h.eq(R.active(druid, "Rage"), false)
   h.eq(R.active(R.forPlayer("ROGUE", 1), "Energy"), true)
   h.eq(R.active(nil, "Energy"), false)
+  -- UnitPowerType answers the token in capitals.
+  h.eq(R.active(druid, "ENERGY"), true)
+  h.eq(R.active(druid, "MANA"), false)
+  h.eq(R.active(druid, nil), false)
 end)
 
 h.test("runeColor follows the death knight spec", function()

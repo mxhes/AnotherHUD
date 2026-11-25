@@ -35,10 +35,13 @@ function Resource.forPlayer(class, spec)
 end
 
 -- Whether the resource shows now: a form-bound one (Druid combo points) only
--- while the player's power token is that form's.
+-- while the player's power token is that form's. The client's token is in
+-- capitals ("ENERGY"), so the match ignores case; a non-string never matches.
 function Resource.active(d, powerToken)
   if not d then return false end
-  if d.form then return powerToken == d.form end
+  if d.form then
+    return type(powerToken) == "string" and string.upper(powerToken) == string.upper(d.form)
+  end
   return true
 end
 

@@ -2,7 +2,9 @@ local ADDON, ns = ...
 
 -- The player frame. Its cast bar hangs under the frame, or (Detach cast bar)
 -- sits on the `playercast` holder (Units/PlayerCastBar.lua); apply re-applies
--- the holder so both follow the option.
+-- the holder so both follow the option. The class resource bar
+-- (Bars/Resource.lua) is applied before the holder: it sets the space kept
+-- under the frame, which the cast bar's placement reads.
 ns.Units.define({
   id = "player", label = "Player", unit = "player", name = "AnotherHUDPlayerFrame",
   castBar = true, auras = true, badge = ns.Theme.sizes.unit.badge,
@@ -12,6 +14,8 @@ ns.Units.define({
   defaultPosition = { point = "CENTER", x = -260, y = -200 },
   apply = function(spec)
     ns.Units.Base.apply(spec)
+    local resource = ns.Modules.get("resource")
+    if resource and resource.frame then resource.apply(resource) end
     local holder = ns.Modules.get("playercast")
     if holder and holder.frame then
       holder.apply(holder)

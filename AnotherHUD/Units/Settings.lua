@@ -158,7 +158,8 @@ builders["Group"] = function(d, opts)
 end
 
 -- `parts`: section names in panel order plus the option fields `portrait`,
--- `power`, `detach`, `orientation`, `roles`, `resource`.`defaults` overrides the shared defaults per unit.
+-- `power`, `detach`, `orientation`, `roles`, `resource`. `defaults`
+-- overrides the shared defaults per unit.
 -- Returns a fresh settings list and a fresh merged defaults table.
 function Settings.build(parts, defaults)
   local opts = { portrait = parts.portrait, power = parts.power, detach = parts.detach,

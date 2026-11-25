@@ -49,13 +49,15 @@ local function withInit(opts, fn)
   if not ok then error(err, 0) end
 end
 
-h.test("all eight modules register with Edit Mode", function()
+h.test("all nine modules register with Edit Mode", function()
   withInit({}, function(ns, _, lem)
-    h.eq(lem.frames, 8)
-    for _, id in ipairs({ "player", "playercast", "target", "targettarget", "focus", "pet", "party", "boss" }) do
+    h.eq(lem.frames, 9)
+    for _, id in ipairs({ "player", "playercast", "resource", "target", "targettarget", "focus", "pet", "party",
+      "boss" }) do
       h.eq(ns.Modules.get(id) ~= nil and ns.Modules.get(id).frame ~= nil, true, id .. " frame")
-      h.eq(ns.Modules.get(id).kind, "unit", id .. " kind")
+      h.eq(ns.Modules.get(id).kind, id == "resource" and "bar" or "unit", id .. " kind")
     end
+    h.eq(ns.Modules.get("resource").frame:GetName(), "AnotherHUDResourceBarHolder")
     h.eq(ns.Modules.get("spike"), nil, "no spike module")
     h.eq(ns.Modules.get("player").frame:GetName(), "AnotherHUDPlayerFrame")
     h.eq(ns.Modules.get("playercast").frame:GetName(), "AnotherHUDPlayerCastBarHolder")

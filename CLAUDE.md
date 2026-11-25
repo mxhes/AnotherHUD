@@ -21,10 +21,10 @@ Docs:
 
 ## Commands
 
-- Tests: `lua tests/run.lua` from the repo root (plain Lua, no client; exit 1 on failure). Run after every change; all must pass. Local `lua` is 5.4; GitLab CI also runs 5.1, so write 5.1 code (no `goto`, `//`, `table.unpack`, integer-only APIs).
+- Tests: `lua tests/run.lua` from the repo root (plain Lua, no client; exit 1 on failure). Run after every change; all must pass. Local `lua` is 5.4; GitHub Actions also runs 5.1, so write 5.1 code (no `goto`, `//`, `table.unpack`, integer-only APIs).
 - Lint: `luacheck AnotherHUD` (`.luacheckrc`; CI fails on any warning). A WoW API the code starts to read goes in its `read_globals`.
 - No build step: the client loads files in `.toc` order. Without `Libs/` (packager-fetched, git-ignored) everything but the Edit Mode part works.
-- Remote: GitLab `origin` (https://gitlab.com/mhhenjes/anotherhud), branch `main`. Commits are `feat:` / `fix:` / `refactor:` / `docs:` style, one-line summary plus a short body.
+- Remote: GitHub `origin` (https://github.com/mxhes/AnotherHUD, public), branch `main`; changes go in through pull requests (`gh`). GitLab (https://gitlab.com/mhhenjes/anotherhud) is kept as the backup remote `gitlab`; its history before 2026-11-25 has the old commit hashes. Commits are `feat:` / `fix:` / `refactor:` / `docs:` style, one-line summary plus a short body.
 
 ## Architecture (planned; details in `docs/DEVELOPMENT.md`)
 

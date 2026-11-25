@@ -11,15 +11,15 @@ action bar addon (scope change 2026-11-25); AnotherHUD does not touch them. The 
 
 ## Setup
 
-- Repo: https://gitlab.com/mhhenjes/anotherhud (`main`, changes through merge
-  requests once the branch is protected).
+- Repo: https://github.com/mxhes/AnotherHUD (`main`, changes through pull
+  requests). Backup: https://gitlab.com/mhhenjes/anotherhud (remote `gitlab`).
 - Client: WoW Forever, `C:\Program Files (x86)\World of Warcraft\_forever_\`.
   For testing in game, link the addon folder into `Interface\AddOns`:
   `New-Item -ItemType Junction -Path "<WoW>\_forever_\Interface\AddOns\AnotherHUD" -Target "D:\GitRepos\AnotherHUD\AnotherHUD"`.
 - `Libs/` is fetched by the packager (`.pkgmeta` externals). For a local copy
   with Edit Mode, run the packager dry run once or copy LibStub,
   CallbackHandler-1.0 and LibEditMode into `AnotherHUD/Libs/` (git-ignored).
-- Tools: Lua 5.4 (local), luacheck, glab.
+- Tools: Lua 5.4 (local), luacheck, gh.
 
 **Spike check (Edit Mode, Plan 1 Task 7).** Run once by the player, in
 PowerShell; nothing here is done by the build.
@@ -386,4 +386,5 @@ English (keys) and German (`Locales/deDE.lua`).
 
 BigWigs packager from the repo root (`.pkgmeta`: `package-as: AnotherHUD`,
 move-folders, externals for LibStub, CallbackHandler-1.0 and LibEditMode).
-GitLab CI: test (Lua 5.1 + 5.4), lint, package on tags.
+GitHub Actions (`.github/workflows/ci.yml`): test (Lua 5.1 + 5.4), lint,
+package on `v*` tags, package-dry-run when the workflow is run by hand.

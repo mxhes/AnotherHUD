@@ -21,6 +21,7 @@ Core/UnitText.lua
 Core/UnitColor.lua
 Core/UnitState.lua
 Core/UnitLayout.lua
+Core/GroupLayout.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua
@@ -32,13 +33,18 @@ Units/Parts/Ring.lua
 Units/Parts/Bars.lua
 Units/Parts/CastBar.lua
 Units/Parts/Auras.lua
+Units/Parts/Role.lua
+Units/Parts/Dispel.lua
 Units/Base.lua
 Units/Define.lua
+Units/Group.lua
 Units/Player.lua
 Units/PlayerCastBar.lua
 Units/Target.lua
 Units/TargetTarget.lua
 Units/Focus.lua
 Units/Pet.lua
+Units/Party.lua
+Units/Boss.lua
 Core/Core.lua
 Boot.lua

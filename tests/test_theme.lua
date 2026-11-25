@@ -102,6 +102,21 @@ h.test("unit art files exist on disk", function()
   end
 end)
 
+h.test("group textures exist", function()
+  local T = load().Theme
+  local paths = { T.textures.role.TANK, T.textures.role.HEALER, T.textures.role.DAMAGER,
+    T.textures.crown, T.textures.glow }
+  h.eq(#paths, 5)
+  for _, p in ipairs(paths) do
+    local name = p:match("Media\\Units\\([%w_]+)$")
+    h.eq(name ~= nil, true, p)
+    local f = name and io.open("AnotherHUD/Media/Units/" .. name .. ".tga", "rb")
+    h.eq(f ~= nil, true, p)
+    if f then f:close() end
+  end
+  h.eq(T.sizes.unit.glowSlice, 12)
+end)
+
 h.test("unit art headers are 32-bit uncompressed TGA of the right size", function()
   local sizes = { Disc = { 256, 256 }, BarSmooth = { 4, 64 }, BarGloss = { 4, 64 },
     Spark = { 16, 64 }, Shield = { 32, 32 } }

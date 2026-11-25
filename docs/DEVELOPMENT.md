@@ -63,6 +63,7 @@ PowerShell; nothing here is done by the build.
 | `Core/Combat.lua` | combat-lockdown queue |
 | `Core/UnitText.lua`, `Core/UnitColor.lua`, `Core/UnitState.lua` | pure unit frame rules: bar / level texts, health / ring / power / cast colors, fading, visibility conditions |
 | `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, studs, aura rows |
+| `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
@@ -72,18 +73,22 @@ PowerShell; nothing here is done by the build.
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
 | `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
-| `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit)`, `auras:layout(opts)`, `auras:sample(on)` |
+| `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit, mode)` (mode `"line"` for group frames: one container, debuffs then my buffs only, one line), `auras:layout(opts)`, `auras:sample(on)` |
+| `Units/Parts/Role.lua` | group frames: role badge (disc stack in the skin's line shades, panel fill, glyph at 72%) at the ring's lower left and the leader crown above the ring; a secret role or leader flag hides them; `create(parent)`, `role:layout(L, opts)`, `role:setRole(r)`, `role:setLeader(b)`, `role:setUnit(unit)` |
+| `Units/Parts/Dispel.lua` | group frames: dispellable-debuff glow, a 9-slice texture reaching `glow` px outside the frame; live one is an `AuraContainer` slot (raid dispel filter) whose button carries the glow texture tinted by `AddDispelTypeTexture`; `available` false without the template; `create(parent, unit)`, `dispel:layout()`, `dispel:sample(colorOrNil)` |
 | `Units/Base.lua` | unit frame base: `SecureUnitButtonTemplate` button with the parts, unit events, Edit Mode sample, fading, hiding Blizzard frames (`Base.create(spec, o)`, `Base.apply(spec)`, `Base.update(frame)`, `Base.editMode(spec, active)`, `Base.anchorCast(frame, holder)`, `Base.hideBlizzard(names)`) |
 | `Units/Define.lua` | `ns.Units.define(o)`: the shared unit module shape (settings from `Units/Settings.lua`, create / apply / onEditMode through `Units/Base.lua`) |
+| `Units/Group.lua` | `ns.Units.defineGroup(o)`: the shared group module shape (Party, Boss): a plain holder frame (the Edit Mode frame) with member unit buttons at fixed tokens, their order (existing first, by role; index order in Edit Mode), anchors and holder size out of combat, the holder's visibility driver, the range ticker |
 | `Units/Player.lua`, `Units/Target.lua`, `Units/TargetTarget.lua`, `Units/Focus.lua`, `Units/Pet.lua` | one unit module each (`ns.Units.define{...}`) |
 | `Units/PlayerCastBar.lua` | `playercast`: the detached player cast bar's holder (child of `player`) |
-| `Units/Party.lua`, `Units/Boss.lua` | planned |
+| `Units/Party.lua` | the party block (`defineGroup`): player + party1-4, line auras, role badge, dispel glow, range fade, Sort by Role / Show Player; hides `PartyFrame`, `CompactPartyFrame` |
+| `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
 | `Bars/ActionSkin.lua` | look for Blizzard action buttons |
 | `Bars/ActionBars.lua`, `Bars/Stance.lua`, `Bars/Pet.lua` | bar modules |
 | `Bars/CastBar.lua`, `Bars/Tracking.lua` | player cast bar, XP / reputation |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
-| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield); generated, see below |
+| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
 
 `tools/render_units.py` (repo root, not packaged) draws the `Media/Units`
@@ -198,7 +203,10 @@ only while `UnitGUID` stays the same; a new or secret GUID and
 `UNIT_TARGET` / `PLAYER_TARGET_CHANGED` update everything). Every unit
 frame also runs a full `Base.update` from `HookScript("OnShow")`. Health /
 power events update only values and texts; the others (and the change
-events) also colors, portrait and level. `Base.update` passes every client
+events) also colors, portrait and level. A death, rez or disconnect arrives
+with `UNIT_HEALTH`: `Base.update` keeps the plain flags of the last update
+(`frame.deadState` / `frame.offlineState`) and repaints the bar colors when
+one changed, also on a values-only update. `Base.update` passes every client
 value through untouched (`UnitHealthPercent` / `UnitPowerPercent` with
 `CurveConstants.ScaleTo100` for the percent texts; without that API the
 text mode falls back, "Percent" to "None" and "Value + Percent" to
@@ -259,7 +267,58 @@ own create applies the Player's state once it exists. Size and visibility
 go through `Combat.after("unit:playercast")`, the move through
 `Base.anchorCast`, so both change together after combat.
 
-*(Filled in as built.)* Planned topics: secret values and how texts are formatted, party header attributes, sample data in Edit Mode, skinning
+**Group modules (Party, Boss).** `ns.Units.defineGroup{...}` (`Units/Group.lua`) builds
+one module of several unit frames. The module's frame is a plain holder
+frame on `UIParent` (`o.name`): it is the Edit Mode frame, and the member
+frames are children anchored to it, so LibEditMode moves, snaps and saves
+the block as one. `spec.members[i]` are `Base.create` frames with
+`member = true`, `key = id .. ":" .. i` and one unit token each (`party`:
+player, party1-4; `boss`: boss1-5). Members take part in `Base.apply` like
+any unit frame but are not modules of their own; their combat keys are
+`unit:<id>:<i>` (size, layout, driver), `unit:<id>:<i>:edit`,
+`unit:<id>:<i>:cast` (cast bar placement) and `unit:<id>:<i>:init` (secure
+attributes at create). The group's own keys are `group:<id>` (the holder's
+visibility driver: `o.visibility()`, `GroupLayout.partyVisibility` hides
+it with `[group:raid]`; unregistered and shown in Edit Mode, hidden when
+the module is off) and `group:<id>:order` (`place`: which slots exist, the
+order from `GroupLayout.order`, anchors from `GroupLayout.offsets`, the
+holder size). `place` runs on `GROUP_ROSTER_UPDATE`, `PLAYER_ENTERING_WORLD`,
+`PLAYER_ROLES_ASSIGNED` (with `roles`) and every event in `o.orderEvents`
+(Boss passes `INSTANCE_ENCOUNTER_ENGAGE_UNIT`, since bosses fire neither
+roster event). `GroupLayout.bossVisibility` shows the Boss holder only while
+a `boss1`-`boss5` unit exists, so the empty block is no invisible snap
+target. Only groups with `o.roster` (Party) give their members
+`GROUP_ROSTER_UPDATE` for a full update. Blizzard builds `CompactPartyFrame`
+late (raid-style party frames turned on), so the holder calls
+`Base.hideBlizzard(o.blizzard)` again on `GROUP_ROSTER_UPDATE` and
+`PLAYER_ENTERING_WORLD` (hidden frames are skipped) and hooks every function
+in `o.blizzardHooks` (Party: `CompactPartyFrame_Generate`) to do the same.
+`o.auraSide` places the aura line beside each member in Vertical
+orientation; in Horizontal the group's apply sets each member's
+`frame.auraSide` to `false` before `Base.applyFrame`, so the auras sit
+`L.below` under each frame (the block height stays the frame height).
+`UnitExists` and `UnitGroupRolesAssigned` answers are only read when plain
+(`GroupLayout` skips secrets). Range has no event: with `o.range` the holder
+`OnUpdate` calls `Base.fade` on every shown member each
+`Theme.sizes.unit.rangeTick` seconds.
+
+*Fixed frames instead of `SecureGroupHeaderTemplate`.* The member frames are
+created once at login at fixed unit tokens and positioned by us, instead of
+a secure group header that creates and sorts its children itself. That keeps
+every frame's parts (cast bar, auras, role badge) ours and the same code as
+the single unit frames, and makes Edit Mode samples trivial. The cost:
+anchors are protected, so nothing can be re-ordered in combat. Someone who
+joins mid-fight shows in the next slot (their token) wherever that slot
+happens to sit, and the block is re-sorted by role when combat ends
+(`Combat.after` runs `group:<id>:order` on `PLAYER_REGEN_ENABLED`).
+
+**Modules honor `isEnabled`.** A module's `apply` (and `onEditMode`) must
+honor `Modules.isEnabled(id)`: off means hide, drop the sample and the driver,
+nothing shown. A second way to turn frames on and off (Settings window, a
+profile switch) relies on this; the test "every module's `apply` honors
+`isEnabled`" (`tests/test_units.lua`) pins it for every defined module.
+
+*(Filled in as built.)* Planned topics: secret values and how texts are formatted, member frames, sample data in Edit Mode, skinning
 Blizzard action buttons.
 
 ## Secret values and taint

@@ -119,6 +119,79 @@ h.test("English labels fit 24 glyphs", function()
   end
 end)
 
+local function controlsOf(settings)
+  local list = {}
+  for _, control in ipairs(settings[1].controls) do list[#list + 1] = control end
+  return list
+end
+
+h.test("group section for party", function()
+  local settings, defaults = load().Units.Settings.build({ "Group", orientation = true, roles = true }, {})
+  h.eq(settings[1].section, "Group")
+  local c = controlsOf(settings)
+  local want = { "orientation", "growth", "gap", "sortByRole", "showPlayer" }
+  h.eq(#c, #want)
+  for i, key in ipairs(want) do h.eq(c[i].key, key) end
+  h.eq(c[1].type, "dropdown")
+  h.eq(c[1].label, "Orientation")
+  h.eq(c[1].values[1], "Vertical")
+  h.eq(c[1].values[2], "Horizontal")
+  h.eq(c[1].tooltip, "Stack the frames on top of each other or side by side.")
+  h.eq(c[2].label, "Growth")
+  h.eq(c[2].values[1], "Down / Right")
+  h.eq(c[2].values[2], "Up / Left")
+  h.eq(c[2].tooltip, "Which way new frames are added.")
+  h.eq(c[3].type, "slider")
+  h.eq(c[3].label, "Frame gap")
+  h.eq(c[3].min, 0)
+  h.eq(c[3].max, 40)
+  h.eq(c[3].step, 1)
+  h.eq(c[3].tooltip, "Space between the frames.")
+  h.eq(c[4].type, "checkbox")
+  h.eq(c[4].label, "Sort by role")
+  h.eq(c[4].tooltip, "Tanks first, then healers, then damage.")
+  h.eq(c[5].label, "Show player")
+  h.eq(c[5].tooltip, "Show your own frame in the group.")
+  h.eq(defaults.orientation, "Vertical")
+  h.eq(defaults.growth, "Down / Right")
+  h.eq(defaults.gap, 8)
+  h.eq(defaults.sortByRole, true)
+  h.eq(defaults.showPlayer, true)
+end)
+
+h.test("group section for boss", function()
+  local settings, defaults = load().Units.Settings.build({ "Group" }, {})
+  local c = controlsOf(settings)
+  h.eq(#c, 2)
+  h.eq(c[1].key, "growth")
+  h.eq(c[1].values[1], "Down")
+  h.eq(c[1].values[2], "Up")
+  h.eq(c[2].key, "gap")
+  h.eq(defaults.growth, "Down")
+  h.eq(defaults.gap, 8)
+  h.eq(defaults.orientation, nil)
+  h.eq(defaults.sortByRole, nil)
+  h.eq(defaults.showPlayer, nil)
+end)
+
+h.test("German group labels fit 24 glyphs", function()
+  local ns = load("deDE")
+  local L, glyphs = ns.L, ns.Options.glyphs
+  for _, parts in ipairs({ { "Group", orientation = true, roles = true }, { "Group" } }) do
+    local settings = ns.Units.Settings.build(parts, {})
+    local function check(x)
+      h.eq(L[x] ~= x, true, x .. " translated")
+      h.eq(glyphs(L[x]) <= 24, true, L[x])
+    end
+    check(settings[1].section)
+    for _, control in ipairs(settings[1].controls) do
+      check(control.label)
+      h.eq(L[control.tooltip] ~= control.tooltip, true, control.tooltip .. " translated")
+      for _, v in ipairs(control.values or {}) do check(v) end
+    end
+  end
+end)
+
 h.test("unit overrides only apply to keys a section produced", function()
   local _, defaults = load().Units.Settings.build({ "Size", power = false }, { powerHeight = 8, bogus = 1 })
   h.eq(defaults.powerHeight, nil)

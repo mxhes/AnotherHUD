@@ -116,11 +116,36 @@ builders["Fading"] = function(d)
   }
 end
 
+builders["Group"] = function(d, opts)
+  d.growth, d.gap = "Down", 8
+  local controls = {}
+  if opts.orientation then
+    d.orientation, d.growth = "Vertical", "Down / Right"
+    controls[#controls + 1] = dropdown("orientation", "Orientation",
+      "Stack the frames on top of each other or side by side.", { "Vertical", "Horizontal" })
+    controls[#controls + 1] = dropdown("growth", "Growth", "Which way new frames are added.",
+      { "Down / Right", "Up / Left" })
+  else
+    controls[#controls + 1] = dropdown("growth", "Growth", "Which way new frames are added.",
+      { "Down", "Up" })
+  end
+  controls[#controls + 1] = slider("gap", "Frame gap", "Space between the frames.", 0, 40, 1)
+  if opts.roles then
+    d.sortByRole, d.showPlayer = true, true
+    controls[#controls + 1] = checkbox("sortByRole", "Sort by role",
+      "Tanks first, then healers, then damage.")
+    controls[#controls + 1] = checkbox("showPlayer", "Show player",
+      "Show your own frame in the group.")
+  end
+  return controls
+end
+
 -- `parts`: section names in panel order plus the option fields `portrait`,
--- `power`, `detach`. `defaults` overrides the shared defaults per unit.
+-- `power`, `detach`, `orientation`, `roles`. `defaults` overrides the shared defaults per unit.
 -- Returns a fresh settings list and a fresh merged defaults table.
 function Settings.build(parts, defaults)
-  local opts = { portrait = parts.portrait, power = parts.power, detach = parts.detach }
+  local opts = { portrait = parts.portrait, power = parts.power, detach = parts.detach,
+    orientation = parts.orientation, roles = parts.roles }
   local merged, settings = {}, {}
   for _, name in ipairs(parts) do
     local builder = builders[name]

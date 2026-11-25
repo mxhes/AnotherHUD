@@ -125,6 +125,24 @@ Hiding Blizzard's frames (`Units/Base.lua`):
   after a vehicle, a pet battle, an Edit Mode layout switch or the
   lock-to-player toggle (the `SetParent` hook parks the cast bar again).
 - Blizzard's Target of Target goes away with `TargetFrame`.
+- Blizzard's party frames (`PartyFrame`, `CompactPartyFrame`) and boss frames (`BossTargetFrameContainer`) stay hidden.
+- Raid-style party frames turned on mid-session stay hidden: `CompactPartyFrame_Generate` exists and may be hooked, and the holder's re-hide on `GROUP_ROSTER_UPDATE` / `PLAYER_ENTERING_WORLD` catches a `CompactPartyFrame` built after login (`Units/Group.lua`).
+- The Boss block re-orders when a boss appears or leaves: `INSTANCE_ENCOUNTER_ENGAGE_UNIT` fires for boss units (`orderEvents`).
+
+Group frames (Plan 4):
+
+- `AuraContainer:AddAuraSlot(key, filter, { initializeFrame })` works and the `HARMFUL|RAID` filter returns the debuffs I can dispel (`Units/Parts/Dispel.lua`).
+- `AddDispelTypeTexture` with `PreserveAsset` tints our white glow by debuff type; `SetTextureSliceMargins` on a texture is accepted.
+- The dispel slot button covers the frame inside the client's flow layout (hover / click targets the member).
+- Closing Edit Mode in combat gives no error from the dispel `AuraContainer` Show / Hide (it runs outside `Combat.after`).
+- The role badge and the leader crown draw above the portrait ring and the glow draws above the panel (frame levels).
+- `UnitInRange` answers (inRange, checked) with a secret pair in restricted contexts and `SetAlphaFromBoolean` takes it; a member beyond about 40 yards fades (`Units/Base.lua`).
+- `UnitGroupRolesAssigned` / `UnitIsGroupLeader` exist and answer plain or secret values without an error (`Units/Parts/Role.lua`).
+- The `[group:raid]` / `[@raid1,exists]` state driver on the plain holder frame with secure children hides Party in a raid and shows it in a party (`Units/Group.lua`).
+- The Boss holder is hidden with no boss (`[@boss1,exists]` ... `[@boss5,exists]` driver) and shows when an encounter starts; Edit Mode still shows it.
+- `INSTANCE_ENCOUNTER_ENGAGE_UNIT` / `UNIT_TARGETABLE_CHANGED` fire when boss units appear or change (the `orderEvents` line above covers the first).
+- Hiding `PartyFrame`, `CompactPartyFrame` and `BossTargetFrameContainer` leaves no taint, and they don't reappear after a layout switch or the "raid-style party frames" toggle.
+- Play checks: join and leave a party; a raid hides the Party block; role and leader changes update the badge and crown; someone going offline or dying shows grey, also on Target, Focus, Target of Target and Pet; a unit dies and is rezzed with no other event: the bar turns grey and back; a member out of range at about 40 yards fades; a dispellable debuff on a member glows; a boss encounter shows the Boss frames with casts and my debuffs; Sort by role after a fight in which someone joined re-sorts when combat ends.
 
 Combat and taint:
 
@@ -142,6 +160,9 @@ Results:
   frames work, no Lua errors and no blocked / forbidden action messages.
   The items above were not checked one by one and the taint log was not
   captured, so they stay open until a closer pass.
+- 2026-11-22, Plan 4 (Party and Boss) run by the player: "all works".
+  The Plan 4 items were not reported one by one, so they stay open until a
+  closer pass.
 
 ## Edit Mode spike (Plan 1, Task 7)
 

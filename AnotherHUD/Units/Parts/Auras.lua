@@ -21,15 +21,20 @@ local MAX_AURAS = 40
 
 -- UNVERIFIED (check in client): the "!PLAYER" filter token (auras other
 -- players / NPCs applied).
+local G = {
+  debuffMine = { key = "debuffMine", filter = "HARMFUL|PLAYER", debuff = true, mine = true },
+  debuffOther = { key = "debuffOther", filter = "HARMFUL|!PLAYER", debuff = true, mine = false },
+  buffMine = { key = "buffMine", filter = "HELPFUL|PLAYER", debuff = false, mine = true },
+  buffOther = { key = "buffOther", filter = "HELPFUL|!PLAYER", debuff = false, mine = false },
+}
 local KINDS = {
-  { kind = "debuff", groups = {
-    { key = "debuffMine", filter = "HARMFUL|PLAYER", debuff = true, mine = true },
-    { key = "debuffOther", filter = "HARMFUL|!PLAYER", debuff = true, mine = false },
-  } },
-  { kind = "buff", groups = {
-    { key = "buffMine", filter = "HELPFUL|PLAYER", debuff = false, mine = true },
-    { key = "buffOther", filter = "HELPFUL|!PLAYER", debuff = false, mine = false },
-  } },
+  { kind = "debuff", groups = { G.debuffMine, G.debuffOther } },
+  { kind = "buff", groups = { G.buffMine, G.buffOther } },
+}
+-- "line" mode (group frames): one container, debuffs first, then only my
+-- buffs, all in the same flow.
+local LINE_KINDS = {
+  { kind = "line", groups = { G.debuffMine, G.debuffOther, G.buffMine } },
 }
 
 -- Edit Mode placeholders (docs/mockups/2-target.html): kind = Theme.unitColors
@@ -154,9 +159,10 @@ end
 -- UNVERIFIED (check in client): Blizzard_AuraContainer loads on demand and
 -- CreateFrame("AuraContainer", ..., CustomAuraContainerTemplate) works at
 -- login (created later the client refuses it).
-local function makeContainer(parent, unit)
+-- `method` is the add function the caller needs (AddAuraGroup by default).
+local function makeContainer(parent, unit, method)
   local ok, container = pcall(CreateFrame, "AuraContainer", nil, parent, TEMPLATE)
-  if not ok or type(container) ~= "table" or type(container.AddAuraGroup) ~= "function" then return nil end
+  if not ok or type(container) ~= "table" or type(container[method or "AddAuraGroup"]) ~= "function" then return nil end
   pcall(container.SetUnit, container, unit)
   return container
 end
@@ -170,14 +176,17 @@ local function groupLayout(self, i)
   }
 end
 
--- Both kinds' clip frame and container are made here, at login.
-function Auras.create(parent, unit)
+-- Both kinds' clip frame and container are made here, at login. mode "rows"
+-- (default): debuff and buff rows; "line": one line, debuffs then my buffs.
+function Auras.create(parent, unit, mode)
   local frame = CreateFrame("Frame", nil, parent)
-  local self = setmetatable({ frame = frame, parent = parent, unit = unit, size = 22,
+  local line = mode == "line"
+  local self = setmetatable({ frame = frame, parent = parent, unit = unit, size = 22, line = line,
+    kindList = line and LINE_KINDS or KINDS,
     buttons = setmetatable({}, { __mode = "k" }), samples = {}, kinds = {} }, Auras)
   loadAuraContainer()
   local any = false
-  for _, k in ipairs(KINDS) do
+  for _, k in ipairs(self.kindList) do
     -- UNVERIFIED (check in client): SetClipsChildren on the clip frame cuts
     -- the container's buttons past its rows.
     local clip = CreateFrame("Frame", nil, frame)
@@ -246,8 +255,8 @@ end
 
 -- The top of a kind's rows (px below the aura frame's top): buffs sit under
 -- the debuffs' rows plus the gap; a kind that is off takes no space.
-local function kindTop(o, debuff)
-  if debuff or not o.debuffs then return 0 end
+local function kindTop(self, o, debuff)
+  if self.line or debuff or not o.debuffs then return 0 end
   return o.rows * (o.size + ns.Theme.sizes.unit.auraGap)
 end
 
@@ -260,7 +269,12 @@ local function drawSamples(self)
     local p = self.samples[i]
     local debuff = s.kind ~= "buff"
     local index
-    if debuff then nDebuff = nDebuff + 1; index = nDebuff
+    if self.line then
+      -- One line: debuffs first, no other players' buffs.
+      if (debuff or s.mine) and wanted(o, { debuff = debuff, mine = s.mine }) then
+        nDebuff = nDebuff + 1; index = nDebuff
+      else index = math.huge end
+    elseif debuff then nDebuff = nDebuff + 1; index = nDebuff
     else nBuff = nBuff + 1; index = nBuff end
     local show = self.sampling and wanted(o, { debuff = debuff, mine = s.mine }) and index <= self.shown
     if show then
@@ -268,7 +282,7 @@ local function drawSamples(self)
       local x = col * (size + gap)
       if o.mirror then x = -x end
       p.holder:ClearAllPoints()
-      p.holder:SetPoint(anchor, self.frame, anchor, x, -(kindTop(o, debuff) + row * (size + gap)))
+      p.holder:SetPoint(anchor, self.frame, anchor, x, -(kindTop(self, o, debuff) + row * (size + gap)))
       p.holder:SetSize(size, size)
       local c, w = edgeOf(debuff, s.kind)
       tint(p.edge, c)
@@ -299,16 +313,17 @@ function Auras:layout(opts)
   -- A kind's clip frame: its rows, the gap between them, nothing more.
   local clipH = o.rows * o.size + (o.rows - 1) * U.auraGap
   local kinds = (o.debuffs and 1 or 0) + (o.buffs and 1 or 0)
+  if self.line then kinds = math.min(1, kinds) end
   self.frame:SetSize(o.width, math.max(1, kinds * clipH + math.max(0, kinds - 1) * U.auraGap))
 
   local anchor = o.mirror and "TOPRIGHT" or "TOPLEFT"
-  for _, k in ipairs(KINDS) do
+  for _, k in ipairs(self.kindList) do
     local entry, debuff = self.kinds[k.kind], k.kind == "debuff"
     local clip, c = entry.clip, entry.container
     clip:ClearAllPoints()
-    clip:SetPoint(anchor, self.frame, anchor, 0, -kindTop(o, debuff))
+    clip:SetPoint(anchor, self.frame, anchor, 0, -kindTop(self, o, debuff))
     clip:SetSize(o.width, clipH)
-    if kindOn(o, debuff) then clip:Show() else clip:Hide() end
+    if (self.line and (o.debuffs or o.buffs)) or kindOn(o, debuff) then clip:Show() else clip:Hide() end
     if c then
       c:ClearAllPoints()
       c:SetPoint(anchor, clip, anchor, 0, 0)
@@ -339,5 +354,9 @@ function Auras:sample(on)
   end
   drawSamples(self)
 end
+
+-- Shared with Dispel (its own container).
+Auras.loadAuraContainer = loadAuraContainer
+Auras.makeContainer = makeContainer
 
 ns.Units.Parts.Auras = Auras

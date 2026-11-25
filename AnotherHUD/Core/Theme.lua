@@ -28,6 +28,15 @@ Theme.textures = {
   disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
   spark = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Spark",
   shield = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Shield",
+  -- Group frames: role glyphs (colored, 32 x 32), the leader crown (32 x 24)
+  -- and a white 9-slice glow frame (slice margin Theme.sizes.unit.glowSlice).
+  role = {
+    TANK = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleTank",
+    HEALER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleHealer",
+    DAMAGER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleDamage",
+  },
+  crown = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Crown",
+  glow = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Glow",
   -- A plain white tile for 1 px lines (unit frame edges and dividers).
   line = "Interface\\Buttons\\WHITE8X8",
   -- The placeholder icon of Edit Mode samples (cast bar, auras).
@@ -101,6 +110,11 @@ Theme.unitColors = {
   uninterruptible = { 0.60, 0.60, 0.62, 1 },
   -- The dark 1 px halo behind the portrait ring.
   ringShadow = { 0, 0, 0, 0.6 },
+  -- Group frames: bar colors of a dead / offline member and the grey of the
+  -- "Dead" / "Offline" text (the mockup's #bbb).
+  dead = { 0.35, 0.35, 0.35, 1 },
+  offline = { 0.3, 0.3, 0.3, 1 },
+  deadText = { 0.733, 0.733, 0.733, 1 },
   debuff = {
     Magic = { 0.20, 0.60, 1.00, 1 },
     Curse = { 0.60, 0.00, 1.00, 1 },
@@ -134,7 +148,7 @@ Theme.sizes = {
   -- Unit frames.
   unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
     castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
-    interruptHold = 0.6, badgeFont = 10,
+    interruptHold = 0.6, badgeFont = 10, glowSlice = 12,
     -- Bar texts: the font size before a layout sets one, and the share of
     -- the health bar width the name may take (the value text keeps the rest).
     textFont = 11, nameShare = 0.6,
@@ -149,7 +163,12 @@ Theme.sizes = {
     castShield = { x = 0.15, y = 0.1, w = 0.7, h = 0.8 },
     -- Spell and aura icons: the share cut off each side of the icon art (its
     -- baked-in frame).
-    iconCrop = 0.08 },
+    iconCrop = 0.08,
+    -- Group frames: role badge and leader crown, how far the crown sits above
+    -- the ring, out-of-range alpha and the range check interval, the gaps of
+    -- the aura rows and the boss cast bar, the dispel glow and its edge.
+    roleBadge = 15, crown = 12, crownLift = 7, rangeAlpha = 0.55, rangeTick = 0.5,
+    partyAuraGap = 6, bossAuraGap = 4, bossCastGap = 4, glow = 8, glowEdge = 2 },
 }
 
 -- The portrait ring's line shades (outside in) for the Round border, which

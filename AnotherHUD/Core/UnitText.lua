@@ -14,8 +14,12 @@ UnitText.FORMATS = { "None", "Percent", "Value", "Value + Percent" }
 -- string and the argument list for SetFormattedText.
 function UnitText.bar(mode, src, abbr)
   if mode == "Percent" or mode == "Value" or mode == "Value + Percent" then
-    if src.dead then return "%s", { L["Dead"] } end
-    if src.offline then return "%s", { L["Offline"] } end
+    if src.dead or src.offline then
+      local c = ns.Theme.unitColors.deadText
+      local function hex(v) return string.format("%02x", math.floor(v * 255 + 0.5)) end
+      local fmt = "|cff" .. hex(c[1]) .. hex(c[2]) .. hex(c[3]) .. "%s|r"
+      return fmt, { src.dead and L["Dead"] or L["Offline"] }
+    end
     if mode == "Percent" then return "%.0f%%", { src.pct } end
     if mode == "Value" then return "%s / %s", { abbr(src.cur), abbr(src.max) } end
     return "%s | %.0f%%", { abbr(src.cur), src.pct }

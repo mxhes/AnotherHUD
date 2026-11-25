@@ -289,7 +289,7 @@ local function placeAuras(frame)
   elseif castOn(frame) and not frame.castHolder then
     auras.frame:SetPoint(top, frame.cast.frame, bottom, 0, -U.auraBelowCast)
   else
-    auras.frame:SetPoint(top, frame, bottom, 0, -L.below)
+    auras.frame:SetPoint(top, frame, bottom, 0, -math.max(L.below, frame.reserved))
   end
 end
 
@@ -305,9 +305,17 @@ local function placeCast(frame)
     cast.frame:SetParent(frame)
     local mirror = frame.mirror
     local top, bottom = mirror and "TOPRIGHT" or "TOPLEFT", mirror and "BOTTOMRIGHT" or "BOTTOMLEFT"
-    cast.frame:SetPoint(top, frame, bottom, 0, -(frame.castGap or L.below))
+    cast.frame:SetPoint(top, frame, bottom, 0, -math.max(frame.castGap or L.below, frame.reserved))
   end
   placeAuras(frame)
+end
+
+-- Keeps `px` free under the frame (the Player's resource bar sits there): the
+-- cast bar and the auras directly under the frame move down to at least that
+-- far. 0 / nil: today's placement. Queued, as it anchors to a secure frame.
+function Base.reserveBelow(frame, px)
+  frame.reserved = px or 0
+  ns.Combat.after("unit:" .. frame.key .. ":cast", function() placeCast(frame) end)
 end
 
 -- Moves the cast bar onto `holder` (a detached cast bar's frame), or back
@@ -397,6 +405,8 @@ function Base.create(spec, o)
   frame.mirror, frame.badge = o.mirror and true or false, o.badge or false
   frame.combat = InCombatLockdown() and true or false
   frame.hover, frame.sampling, frame.castHolder = false, false, false
+  -- Pixels kept free under the frame (Base.reserveBelow).
+  frame.reserved = 0
   frame.L, frame.hasPower, frame.cast, frame.auras = false, false, false, false
   frame.slotOn, frame.range = true, o.range and true or false
   frame.castGap, frame.auraSide = o.castGap or false, o.auraSide or false

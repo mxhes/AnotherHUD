@@ -6,8 +6,8 @@ local ADDON, ns = ...
 ns.Units.define({
   id = "player", label = "Player", unit = "player", name = "AnotherHUDPlayerFrame",
   castBar = true, auras = true, badge = ns.Theme.sizes.unit.badge,
-  parts = { "Size", "Text", "Look", "Behaviour", "Cast Bar", "Auras", "Fading",
-    portrait = true, power = true, detach = true },
+  parts = { "Size", "Text", "Look", "Behaviour", "Cast Bar", "Resource Bar", "Auras", "Fading",
+    portrait = true, power = true, detach = true, resource = true },
   blizzard = { "PlayerFrame", "PlayerCastingBarFrame" },
   defaultPosition = { point = "CENTER", x = -260, y = -200 },
   apply = function(spec)

@@ -83,6 +83,50 @@ h.test("gated controls are left out without their option", function()
   h.eq(set.healthText ~= nil, true)
 end)
 
+h.test("the Resource Bar section has its five controls and defaults", function()
+  local ns = load()
+  local settings, defaults = ns.Units.Settings.build(
+    { "Cast Bar", "Resource Bar", detach = true, resource = true }, {})
+  h.eq(settings[1].section, "Cast Bar")
+  h.eq(settings[2].section, "Resource Bar")
+  local c = settings[2].controls
+  local want = { "showResource", "resourceDetach", "resourceWidth", "resourceHeight", "resourceTimers" }
+  h.eq(#c, #want)
+  for i, key in ipairs(want) do h.eq(c[i].key, key) end
+  h.eq({ c[1].type, c[2].type, c[3].type, c[4].type, c[5].type },
+    { "checkbox", "checkbox", "slider", "slider", "checkbox" })
+  h.eq({ c[1].label, c[2].label, c[3].label, c[4].label, c[5].label },
+    { "Show resource bar", "Detach resource bar", "Resource bar width", "Resource bar height",
+      "Show recharge timers" })
+  h.eq(c[1].tooltip, "Show your class resource (combo points, holy power, runes, ...).")
+  h.eq(c[2].tooltip, "Make the resource bar a separate frame you can move.")
+  h.eq(c[3].tooltip, "Width of the resource bar when detached.")
+  h.eq(c[4].tooltip, "Height of the resource bar when detached.")
+  h.eq(c[5].tooltip, "Show the seconds left on recharging runes and essence.")
+  h.eq({ c[3].min, c[3].max, c[3].step }, { 80, 400, 1 })
+  h.eq({ c[4].min, c[4].max, c[4].step }, { 10, 40, 1 })
+  h.eq({ defaults.showResource, defaults.resourceDetach, defaults.resourceWidth, defaults.resourceHeight,
+    defaults.resourceTimers }, { true, false, 200, 20, true })
+  for _, control in ipairs(c) do
+    h.eq(ns.Options.glyphs(control.label) <= 24, true, control.label)
+  end
+  local plain, d2 = ns.Units.Settings.build({ "Cast Bar", "Resource Bar" }, {})
+  h.eq(#plain[2].controls, 0, "no controls without the resource option")
+  h.eq(d2.showResource, nil)
+end)
+
+h.test("German Resource Bar texts fit 24 glyphs", function()
+  local ns = load("deDE")
+  local settings = ns.Units.Settings.build({ "Resource Bar", resource = true }, {})
+  h.eq(ns.L["Resource Bar"], "Ressourcenleiste")
+  h.eq(ns.L["Player Resource Bar"], "Spielerressourcenleiste")
+  for _, control in ipairs(settings[1].controls) do
+    h.eq(ns.L[control.label] ~= control.label, true, control.label .. " translated")
+    h.eq(ns.Options.glyphs(ns.L[control.label]) <= 24, true, ns.L[control.label])
+    h.eq(ns.L[control.tooltip] ~= control.tooltip, true, control.tooltip .. " translated")
+  end
+end)
+
 h.test("fresh tables per call", function()
   local S = load().Units.Settings
   local s1, d1 = S.build({ "Size" }, {})

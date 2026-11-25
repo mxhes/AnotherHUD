@@ -254,6 +254,15 @@ local function sectionsOf(spec)
   return out
 end
 
+h.test("Player lists Resource Bar after Cast Bar", function()
+  withInit({}, function(ns)
+    h.eq(sectionsOf(ns.Modules.get("player")),
+      { "Size", "Text", "Look", "Behaviour", "Cast Bar", "Resource Bar", "Auras", "Fading" })
+    h.eq(ns.Options.get("player", "showResource"), true)
+    h.eq(ns.Options.get("target", "showResource"), nil, "only the Player has it")
+  end)
+end)
+
 h.test("party panel sections in spec order", function()
   withInit({}, function(ns)
     h.eq(sectionsOf(ns.Modules.get("party")),

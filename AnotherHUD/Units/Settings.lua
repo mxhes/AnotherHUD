@@ -96,6 +96,23 @@ builders["Cast Bar"] = function(d, opts)
   return controls
 end
 
+-- The class resource bar (Bars/Resource.lua); only with `resource`.
+builders["Resource Bar"] = function(d, opts)
+  if not opts.resource then return {} end
+  d.showResource, d.resourceDetach, d.resourceWidth, d.resourceHeight, d.resourceTimers =
+    true, false, 200, 20, true
+  return {
+    checkbox("showResource", "Show resource bar",
+      "Show your class resource (combo points, holy power, runes, ...)."),
+    checkbox("resourceDetach", "Detach resource bar",
+      "Make the resource bar a separate frame you can move."),
+    slider("resourceWidth", "Resource bar width", "Width of the resource bar when detached.", 80, 400, 1),
+    slider("resourceHeight", "Resource bar height", "Height of the resource bar when detached.", 10, 40, 1),
+    checkbox("resourceTimers", "Show recharge timers",
+      "Show the seconds left on recharging runes and essence."),
+  }
+end
+
 builders["Auras"] = function(d)
   d.buffs, d.debuffs, d.auraSize, d.auraRows, d.onlyMine = true, true, 22, 1, false
   return {
@@ -141,11 +158,11 @@ builders["Group"] = function(d, opts)
 end
 
 -- `parts`: section names in panel order plus the option fields `portrait`,
--- `power`, `detach`, `orientation`, `roles`. `defaults` overrides the shared defaults per unit.
+-- `power`, `detach`, `orientation`, `roles`, `resource`.`defaults` overrides the shared defaults per unit.
 -- Returns a fresh settings list and a fresh merged defaults table.
 function Settings.build(parts, defaults)
   local opts = { portrait = parts.portrait, power = parts.power, detach = parts.detach,
-    orientation = parts.orientation, roles = parts.roles }
+    orientation = parts.orientation, roles = parts.roles, resource = parts.resource }
   local merged, settings = {}, {}
   for _, name in ipairs(parts) do
     local builder = builders[name]

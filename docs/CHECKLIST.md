@@ -250,6 +250,12 @@ In the client:
 - Texts show on mouse-over only (default), the mouse-over does not block
   clicks around the bar, the divider looks sharp between the two bars.
 
+Results:
+
+- 2026-11-26, run by the player: everything that can be checked on WoW
+  Forever works. Forever has no renown, friendship or paragon factions, so
+  the "Renown / friendship factions" line above cannot be checked there.
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

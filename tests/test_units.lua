@@ -33,6 +33,8 @@ local function withInit(opts, fn)
     LibStub = fakes.libstub({ LibEditMode = lem }),
     AnotherHUDDB = fakes.NIL, AnotherHUDCharDB = fakes.NIL,
     EditModeManagerFrame = fakes.NIL,
+    -- some XP, so the XP / Reputation bar has a row to show
+    UnitXP = function() return 10 end, UnitXPMax = function() return 100 end,
   }
   for _, name in ipairs(BLIZZARD) do
     blizzard[name] = fakes.frame(name)
@@ -49,15 +51,17 @@ local function withInit(opts, fn)
   if not ok then error(err, 0) end
 end
 
-h.test("all nine modules register with Edit Mode", function()
+h.test("all ten modules register with Edit Mode", function()
   withInit({}, function(ns, _, lem)
-    h.eq(lem.frames, 9)
-    for _, id in ipairs({ "player", "playercast", "resource", "target", "targettarget", "focus", "pet", "party",
-      "boss" }) do
+    h.eq(lem.frames, 10)
+    for _, id in ipairs({ "player", "playercast", "resource", "tracking", "target", "targettarget", "focus", "pet",
+      "party", "boss" }) do
       h.eq(ns.Modules.get(id) ~= nil and ns.Modules.get(id).frame ~= nil, true, id .. " frame")
-      h.eq(ns.Modules.get(id).kind, id == "resource" and "bar" or "unit", id .. " kind")
+      local bar = id == "resource" or id == "tracking"
+      h.eq(ns.Modules.get(id).kind, bar and "bar" or "unit", id .. " kind")
     end
     h.eq(ns.Modules.get("resource").frame:GetName(), "AnotherHUDResourceBarHolder")
+    h.eq(ns.Modules.get("tracking").frame:GetName(), "AnotherHUDTrackingBar")
     h.eq(ns.Modules.get("spike"), nil, "no spike module")
     h.eq(ns.Modules.get("player").frame:GetName(), "AnotherHUDPlayerFrame")
     h.eq(ns.Modules.get("playercast").frame:GetName(), "AnotherHUDPlayerCastBarHolder")
@@ -67,11 +71,11 @@ h.test("all nine modules register with Edit Mode", function()
   end)
 end)
 
-h.test("checklist shows seven unit frames", function()
+h.test("checklist shows the unit frames and the XP / Reputation bar", function()
   withInit({}, function(ns)
     local ids = {}
     for _, entry in ipairs(ns.EditMode.Checklist.entries()) do ids[#ids + 1] = entry.id end
-    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss" })
+    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss", "tracking" })
   end)
 end)
 

@@ -42,6 +42,12 @@ Dead and offline units show a grey bar and grey text on every unit frame (Target
 
 Target, Target of Target and Focus only show while you have that unit, and Pet only while you have a pet; right click opens the unit menu, and hovering shows the tooltip.
 
+## XP and reputation
+
+A bar at the bottom of the screen shows your experience while you can still gain XP (not at the level cap, not with XP gain turned off), with your rested XP as a lighter band ahead of it, and the reputation of the faction you watch in its standing's color. With both, XP is on top. Watch a faction in the reputation pane and its bar appears at once; reach the level cap and the XP bar goes away. With nothing to show the bar hides.
+
+The numbers (level, XP and percent, rested XP; faction, standing and progress) show while the mouse is over the bar; "Show text" in the Text section makes them show always or never. In Edit Mode the bar shows a sample of both, so you can move it, and its panel sets the width, bar height, text size, skin, bar texture, which bars to show and the fading. It replaces Blizzard's experience and reputation bars; turned off in the AnotherHUD box, Blizzard's come back after a /reload.
+
 ## Known gaps
 
 - Totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. Totems come back with the suite's action bar addon.

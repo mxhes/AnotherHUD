@@ -4,7 +4,7 @@ Ideas not built yet.
 
 - Raid frames.
 - Rogue charged combo points on the resource bar.
-- XP / Reputation bar.
+- XP / Reputation bar: honor, renown / friendship / paragon details, click to open the reputation pane, hide in pet battles.
 - Evoker empowered casts on the cast bar.
 - Party Style.
 - Pets & Targets.

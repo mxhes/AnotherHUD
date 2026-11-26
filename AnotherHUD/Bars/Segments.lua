@@ -60,19 +60,14 @@ function Segments.create(parent)
   return self
 end
 
--- The divider in the skin's Lines pick, as in Units/Parts/Bars.lua: Gold and
--- Dotted at the divider alpha, Groove a dark line (alpha 1) with a light one
--- next to it, Plain greyed toward the panel (alpha 1). Returns the groove
--- texture when the skin has a second line.
-local function divider(self, i, lines)
+-- Paints divider texture `d` (and `groove`, the second line) in the skin's
+-- Lines pick `lines`, as in Units/Parts/Bars.lua: Gold and Dotted at the
+-- divider alpha, Groove a dark line (alpha 1) with a light one next to it,
+-- Plain greyed toward the panel (alpha 1). Returns true when the skin has a
+-- second line (the caller places and shows `groove`, else hides it). Shared
+-- with the XP / Reputation bar (Bars/Tracking.lua).
+function Segments.paintDivider(d, groove, lines)
   local T = ns.Theme
-  local d = self.dividers[i]
-  if not d then
-    d = self.top:CreateTexture(nil, "OVERLAY")
-    self.dividers[i] = d
-    self.grooves[i] = self.top:CreateTexture(nil, "OVERLAY")
-  end
-  local groove = self.grooves[i]
   local main, second = T.lineColors(lines, T.colors.goldLine, T.colors.panelTint)
   local alpha = 1
   if lines ~= "groove" and lines ~= "plain" then alpha = T.colors.divider[4] end
@@ -87,6 +82,20 @@ local function divider(self, i, lines)
     groove:SetTexture(T.textures.line)
     groove:SetVertexColor(second[1], second[2], second[3], T.skinScales.grooveLightAlpha)
   end
+  return second ~= nil
+end
+
+-- Divider `i` (made on demand) painted for `lines`; returns it and the
+-- groove texture when the skin has a second line.
+local function divider(self, i, lines)
+  local d = self.dividers[i]
+  if not d then
+    d = self.top:CreateTexture(nil, "OVERLAY")
+    self.dividers[i] = d
+    self.grooves[i] = self.top:CreateTexture(nil, "OVERLAY")
+  end
+  local groove = self.grooves[i]
+  local second = Segments.paintDivider(d, groove, lines)
   return d, second and groove or nil
 end
 

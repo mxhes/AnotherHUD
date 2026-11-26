@@ -121,3 +121,16 @@ h.test("setSlot fills one slot with its timer", function()
     end
   end)
 end)
+
+h.test("paintDivider paints one divider in a skin's Lines pick", function()
+  withClient(function(ns)
+    local T = ns.Theme
+    local d, groove = fakes.frame(), fakes.frame()
+    h.eq(ns.Bars.Segments.paintDivider(d, groove, "gold"), false, "gold: one line")
+    h.eq(d._color[4], T.colors.divider[4])
+    h.eq(ns.Bars.Segments.paintDivider(d, groove, "groove"), true, "groove: two lines")
+    h.eq(d._color[4], 1)
+    h.eq(groove._color[4], T.skinScales.grooveLightAlpha)
+    h.eq(groove._texture, T.textures.line)
+  end)
+end)

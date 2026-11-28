@@ -70,6 +70,32 @@ local function withMap(opts, fn)
   }
   local backdrop = fakeBackdrop()
   for k, v in pairs(backdrop) do globals[k] = v end
+  -- The elements' client: zone, PvP type, realm time, clock CVars, map
+  -- position, pending invites; panel openers record into r.calls.
+  local r = { zone = "Elwynn Forest", pvp = "friendly", hour = 14, minute = 5, cvars = {}, mapID = 1429,
+    x = 0.421, y = 0.658, invites = 0, calls = {} }
+  for k, v in pairs(opts.state or {}) do r[k] = v end
+  local function record(name) return function(...) r.calls[#r.calls + 1] = name .. table.concat({ ... }, ",") end end
+  -- WoW's global date() (plain Lua only has os.date)
+  globals.date = os.date
+  globals.GetMinimapZoneText = function() return r.zone end
+  globals.GetZonePVPInfo = function() return r.pvp end
+  globals.C_PvP = fakes.NIL
+  globals.GetGameTime = function() return r.hour, r.minute end
+  globals.GetCVarBool = function(name) return r.cvars[name] end
+  globals.C_Map = {
+    GetBestMapForUnit = function() return r.mapID end,
+    GetPlayerMapPosition = function()
+      if r.x == nil then return nil end
+      return { GetXY = function() return r.x, r.y end }
+    end,
+  }
+  globals.C_Calendar = { GetNumPendingInvites = function() return r.invites end }
+  globals.ToggleCalendar = record("calendar")
+  globals.ToggleWorldMap = record("worldmap")
+  globals.TimeManager_Toggle = record("clock")
+  globals.C_AddOns = { LoadAddOn = record("load:") }
+  opts.r = r
   if opts.off then
     globals.AnotherHUDDB = { profileKeys = {}, profiles = { Default = { modules = { minimap = { enabled = false } } } } }
   end
@@ -78,7 +104,7 @@ local function withMap(opts, fn)
     local ns = h.load(h.toc())
     ns.Util.say = function() end
     ns.Core.init()
-    fn(ns, client, map, cluster, backdrop)
+    fn(ns, client, map, cluster, backdrop, r)
   end)
   units.restore()
   client.restore()
@@ -297,5 +323,133 @@ h.test("turned off, the map goes back to Blizzard", function()
     h.eq(ns.Modules.get("minimap").frame, nil, "not built when off at login")
     h.eq(cluster:IsShown(), true, "cluster stays")
     h.eq(map:GetParent(), cluster, "map stays")
+  end)
+end)
+
+local function elements(ns)
+  return ns.Modules.get("minimap")
+end
+
+h.test("the zone name shows above the map in its PvP color", function()
+  withMap({}, function(ns, client, _, _, _, r)
+    local spec = elements(ns)
+    h.eq(spec.zone:GetText(), "Elwynn Forest")
+    local c = ns.MinimapRules.zoneColor("friendly")
+    h.eq(spec.zone._textColor, { c[1], c[2], c[3], nil })
+    h.eq(lastPoint(spec.zone), { "SetPoint", "BOTTOM", spec.frame, "TOP", 0, 4 })
+    r.zone, r.pvp = "Stormwind City", "sanctuary"
+    client.fire("ZONE_CHANGED_NEW_AREA")
+    h.eq(spec.zone:GetText(), "Stormwind City")
+    c = ns.MinimapRules.zoneColor("sanctuary")
+    h.eq(spec.zone._textColor, { c[1], c[2], c[3], nil })
+  end)
+  withMap({ state = { zone = fakes.secret("Hidden"), pvp = 7 } }, function(ns)
+    local spec = elements(ns)
+    h.eq(spec.zone:GetText(), "")
+    local c = ns.MinimapRules.zoneColor(nil)
+    h.eq(spec.zone._textColor, { c[1], c[2], c[3], nil })
+  end)
+end)
+
+h.test("the clock follows Blizzard's clock settings", function()
+  withMap({ state = { cvars = { timeMgrUseMilitaryTime = true } } }, function(ns, _, _, _, _, r)
+    local spec = elements(ns)
+    h.eq(spec.clock:GetText(), "14:05")
+    h.eq(lastPoint(spec.clock), { "SetPoint", "TOP", spec.frame, "BOTTOM", -14, -4 })
+    r.cvars.timeMgrUseMilitaryTime = false
+    r.minute = 6
+    local tick = spec.elements._scripts.OnUpdate
+    tick(spec.elements, 0.5)
+    h.eq(spec.clock:GetText(), "14:05", "not before a second")
+    tick(spec.elements, 0.5)
+    h.eq(spec.clock:GetText(), "2:06 PM")
+    r.cvars.timeMgrUseLocalTime = true
+    tick(spec.elements, 1)
+    local t = date("*t")
+    h.eq(spec.clock:GetText(), ns.MinimapRules.clockText(t.hour, t.min, false))
+  end)
+end)
+
+h.test("coordinates are off by default and empty without a position", function()
+  withMap({}, function(ns, _, _, _, _, r)
+    local spec = elements(ns)
+    h.eq(spec.coords:IsShown(), false)
+    ns.Options.set("minimap", "showCoords", true)
+    h.eq(spec.coords:IsShown(), true)
+    h.eq(spec.coords:GetText(), "42.1, 65.8")
+    h.eq(lastPoint(spec.coords), { "SetPoint", "TOP", spec.frame, "BOTTOM", 0, -22 })
+    local tick = spec.elements._scripts.OnUpdate
+    r.mapID = nil
+    tick(spec.elements, 0.2)
+    h.eq(spec.coords:GetText(), "")
+    r.mapID, r.x = 1429, nil
+    tick(spec.elements, 0.2)
+    h.eq(spec.coords:GetText(), "")
+  end)
+end)
+
+h.test("the calendar badge glows with pending invites", function()
+  withMap({}, function(ns, client, _, _, _, r)
+    local spec = elements(ns)
+    local cal = spec.calendar
+    h.eq(cal.glow:IsShown(), false)
+    h.eq(cal.icon._texture, ns.Theme.textures.calendar)
+    h.eq(lastPoint(cal.button), { "SetPoint", "CENTER", spec.frame, "BOTTOM", 20, -11 })
+    h.eq(cal.button._width, 18)
+    r.invites = 2
+    client.fire("CALENDAR_UPDATE_PENDING_INVITES")
+    h.eq(cal.glow:IsShown(), true)
+    r.invites = 0
+    client.fire("CALENDAR_UPDATE_PENDING_INVITES")
+    h.eq(cal.glow:IsShown(), false)
+    cal.button._scripts.OnClick(cal.button, "LeftButton")
+    h.eq(r.calls, { "calendar" })
+    client.setCombat(true)
+    cal.button._scripts.OnClick(cal.button, "LeftButton")
+    h.eq(r.calls, { "calendar" }, "nothing in combat")
+  end)
+end)
+
+h.test("clicks open Blizzard's panels out of combat", function()
+  withMap({}, function(ns, client, _, _, _, r)
+    local spec = elements(ns)
+    spec.zoneButton._scripts.OnClick(spec.zoneButton, "LeftButton")
+    spec.clockButton._scripts.OnClick(spec.clockButton, "LeftButton")
+    h.eq(r.calls, { "worldmap", "load:Blizzard_TimeManager", "clock" })
+    client.setCombat(true)
+    spec.zoneButton._scripts.OnClick(spec.zoneButton, "LeftButton")
+    spec.clockButton._scripts.OnClick(spec.clockButton, "LeftButton")
+    h.eq(#r.calls, 3, "nothing in combat")
+  end)
+end)
+
+h.test("each element turns off on its own", function()
+  withMap({}, function(ns)
+    local spec = elements(ns)
+    for _, pair in ipairs({ { "showZone", spec.zone }, { "showClock", spec.clock },
+      { "showCalendar", spec.calendar.button } }) do
+      h.eq(pair[2]:IsShown(), true, pair[1] .. " on")
+      ns.Options.set("minimap", pair[1], false)
+      h.eq(pair[2]:IsShown(), false, pair[1] .. " off")
+    end
+    h.eq(spec.zoneButton:IsShown(), false, "zone click area off with it")
+    h.eq(spec.elements._scripts.OnUpdate, nil, "no clock, no coordinates: no OnUpdate")
+    ns.Options.set("minimap", "showCoords", true)
+    h.eq(type(spec.elements._scripts.OnUpdate), "function", "coordinates on: OnUpdate back")
+    ns.EditMode.Checklist.toggle("minimap", false)
+    h.eq(spec.elements._scripts.OnUpdate, nil, "module off: no OnUpdate")
+  end)
+end)
+
+h.test("texts and badge follow the frame at any size", function()
+  withMap({}, function(ns)
+    local spec = elements(ns)
+    ns.Options.set("minimap", "size", 240)
+    h.eq(lastPoint(spec.zone), { "SetPoint", "BOTTOM", spec.frame, "TOP", 0, 4 })
+    h.eq(lastPoint(spec.clock), { "SetPoint", "TOP", spec.frame, "BOTTOM", -14, -4 })
+    h.eq(lastPoint(spec.calendar.button), { "SetPoint", "CENTER", spec.frame, "BOTTOM", 20, -11 })
+    h.eq(spec.zone._font[2], 12)
+    h.eq(spec.clock._font[2], 11)
+    h.eq(spec.calendar.button._width, 18)
   end)
 end)

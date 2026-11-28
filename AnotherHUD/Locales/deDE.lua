@@ -161,4 +161,13 @@ ns.Locale.register("deDE", {
   ["Round"] = "Rund",
   ["Mouse wheel zoom"] = "Mausrad-Zoom",
   ["Zoom the map with the mouse wheel."] = "Zoomt die Karte mit dem Mausrad.",
+  ["Elements"] = "Elemente",
+  ["Zone name"] = "Zonenname",
+  ["Show the zone name above the map."] = "Zeigt den Zonennamen über der Karte.",
+  ["Clock"] = "Uhr",
+  ["Show the clock below the map."] = "Zeigt die Uhr unter der Karte.",
+  ["Calendar"] = "Kalender",
+  ["Show the calendar button below the map."] = "Zeigt den Kalenderknopf unter der Karte.",
+  ["Coordinates"] = "Koordinaten",
+  ["Show your coordinates below the map."] = "Zeigt deine Koordinaten unter der Karte.",
 })

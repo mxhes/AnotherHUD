@@ -51,6 +51,7 @@ Units/Pet.lua
 Units/Party.lua
 Units/Boss.lua
 Bars/Tracking.lua
+Map/Badge.lua
 Map/Minimap.lua
 Core/Core.lua
 Boot.lua

@@ -17,6 +17,7 @@ origin):
   RoleTank / RoleHealer / RoleDamage.tga  32 x 32  colored role glyphs
   Crown.tga       32 x 24   gold leader crown
   Glow.tga        32 x 32   white frame: 2 px line, 8 px glow outside, cut-out middle
+  Calendar.tga    32 x 32   white calendar page (minimap calendar badge)
 
 The bar files are normalized to their brightest stop: the game multiplies the
 file by the bar color, so Theme.barColor multiplies the color by that stop
@@ -297,6 +298,25 @@ def crown():
     return glyph([("fill", p, gold), ("stroke", p, hexc("#3a2600"), 1.5)], 32, 24, 24, 18)
 
 
+def calendar():
+    """White 32 x 32 calendar page (mockup 7's calendar badge symbol, tinted
+    gold in code): a 2 px page outline with two binder rings, a filled top
+    band and two rows of three day squares."""
+    white = (1.0, 1.0, 1.0)
+    return glyph([
+        ("stroke", "M4 6 H20 V20 H4 Z", white, 2.0),
+        ("fill", "M4 6 H20 V10 H4 Z", white),
+        ("stroke", "M8 3 V7", white, 2.0),
+        ("stroke", "M16 3 V7", white, 2.0),
+        ("fill", "M6 12 H9 V14 H6 Z", white),
+        ("fill", "M10.5 12 H13.5 V14 H10.5 Z", white),
+        ("fill", "M15 12 H18 V14 H15 Z", white),
+        ("fill", "M6 16 H9 V18 H6 Z", white),
+        ("fill", "M10.5 16 H13.5 V18 H10.5 Z", white),
+        ("fill", "M15 16 H18 V18 H15 Z", white),
+    ], 32, 32, 24, 24)
+
+
 def smoothstep(t):
     t = max(0.0, min(1.0, t))
     return t * t * (3 - 2 * t)
@@ -334,7 +354,7 @@ def main():
     images = {"Disc": disc(), "BarSmooth": bar_smooth(), "BarGloss": bar_gloss(),
               "Spark": spark(), "Shield": shield(), "RoleTank": role_tank(),
               "RoleHealer": role_healer(), "RoleDamage": role_damage(),
-              "Crown": crown(), "Glow": glow()}
+              "Crown": crown(), "Glow": glow(), "Calendar": calendar()}
     for name, (rows, w, h) in images.items():
         save_tga(rows, w, h, os.path.join(out, name + ".tga"))
         print("wrote %s.tga %dx%d" % (name, w, h))

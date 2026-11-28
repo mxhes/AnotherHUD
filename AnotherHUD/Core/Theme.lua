@@ -32,6 +32,8 @@ Theme.textures = {
     DAMAGER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleDamage",
   },
   crown = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Crown",
+  -- Minimap calendar badge: a white calendar page (tinted gold in code).
+  calendar = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Calendar",
   glow = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Glow",
   -- A plain white tile for 1 px lines (unit frame edges and dividers).
   line = "Interface\\Buttons\\WHITE8X8",

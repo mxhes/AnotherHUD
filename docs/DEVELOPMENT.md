@@ -86,9 +86,10 @@ PowerShell; nothing here is done by the build.
 | `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`; `Segments.paintDivider(d, groove, lines)`, the skin-line divider painter the XP / Reputation bar shares) |
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
 | `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, honor row (Show honor), dividers, texts, click to open the reputation / PvP pane; hides Blizzard's status tracking bars |
+| `Map/Badge.lua` | `ns.Map.Badge`: a small round minimap button in the level badge look (skin line discs, panel fill, gold icon, optional gold glow); `Badge.create(parent)`, `badge:layout(size, skin)`, `setIcon(file)`, `setGlow(on)` |
 | `Map/Minimap.lua` | `minimap`: the minimap frame (`AnotherHUDMinimap` on `UIParent`) holding Blizzard's `Minimap` (re-parented, masked by Shape, wheel zoom), the skin panel for Square, `GetMinimapShape`; hides `MinimapCluster` |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
-| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
+| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow, Calendar); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
 
 `tools/render_units.py` (repo root, not packaged) draws the `Media/Units`

@@ -233,7 +233,8 @@ Client APIs (`Core/Tracking.lua`, `Bars/Tracking.lua`, `UNVERIFIED (check in cli
 - Blizzard's bars live in `StatusTrackingBarManager` (its children
   `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`
   hide with it; only the manager is re-parented). Closing Edit Mode (also
-  with Escape) gives no Lua warning from `StatusTrackingManager.lua`.
+  with Escape) gives no Lua warning from `StatusTrackingManager.lua`
+  (confirmed in the client 2026-11-28).
 
 In the client:
 

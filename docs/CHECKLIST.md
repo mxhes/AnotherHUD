@@ -304,7 +304,9 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
   `MinimapBackdrop`); fixed. Second run 2026-11-28: square, no Blizzard
   ring, looks right. Third run 2026-11-28: Round broken (fixed: Blizzard's
   round mask atlas); the AnotherHUD box was hidden under the action bar
-  overlays (fixed: now right of the Edit Mode window). The taint steps
+  overlays (fixed: now right of the Edit Mode window). The group finder
+  eye works but hangs below left of our map, where Blizzard anchors it
+  (its badge spot top right comes in Plan 3). The taint steps
   below are still open.
 - Libraries placing minimap buttons read the global `GetMinimapShape()`.
 - `IsLoggedIn()` exists.

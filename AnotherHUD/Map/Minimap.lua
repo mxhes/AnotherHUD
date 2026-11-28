@@ -99,11 +99,23 @@ local function apply(spec)
 end
 
 -- UNVERIFIED (check in client): Minimap:GetZoom / SetZoom / GetZoomLevels
--- (levels 0 .. GetZoomLevels() - 1) and OnMouseWheel on the map.
-local function onWheel(m, delta)
-  if opt("wheelZoom") ~= true or not ns.Modules.isEnabled(ID) then return end
-  local z = Rules.zoom(m:GetZoom(), delta, m:GetZoomLevels())
-  if z then m:SetZoom(z) end
+-- (levels 0 .. GetZoomLevels() - 1) and OnMouseWheel on the map. When
+-- Blizzard's map already has a wheel handler (`own`), that one zooms and the
+-- setting only turns it on or off; turned off, the module leaves it alone.
+local function wheelHandler(own)
+  return function(m, delta, ...)
+    if not ns.Modules.isEnabled(ID) then
+      if own then own(m, delta, ...) end
+      return
+    end
+    if opt("wheelZoom") ~= true then return end
+    if own then
+      own(m, delta, ...)
+      return
+    end
+    local z = Rules.zoom(m:GetZoom(), delta, m:GetZoomLevels())
+    if z then m:SetZoom(z) end
+  end
 end
 
 -- UNVERIFIED (check in client): libraries that place minimap buttons call
@@ -127,7 +139,7 @@ local function hookMap(spec, m)
     place(spec)
   end)
   m:EnableMouseWheel(true)
-  m:SetScript("OnMouseWheel", onWheel)
+  m:SetScript("OnMouseWheel", wheelHandler(m:GetScript("OnMouseWheel")))
 end
 
 local function slider(key, label, tooltip, min, max, step)

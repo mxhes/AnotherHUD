@@ -42,6 +42,7 @@ local function withMap(opts, fn)
     health = 100, healthMax = 100, isPlayer = true } })
   local cluster = fakes.frame("MinimapCluster")
   local map = fakeMinimap(cluster)
+  if opts.wheel then map._scripts.OnMouseWheel = opts.wheel end
   local globals = {
     LibStub = fakes.libstub({ LibEditMode = fakeLem() }),
     AnotherHUDDB = fakes.NIL, AnotherHUDCharDB = fakes.NIL, EditModeManagerFrame = fakes.NIL,
@@ -164,6 +165,23 @@ h.test("the wheel zooms within range", function()
     map._zoom = 2
     wheel(map, 1)
     h.eq(map._zoom, 2, "off: nothing")
+  end)
+end)
+
+h.test("Blizzard's own wheel handler zooms instead of ours", function()
+  local calls = 0
+  withMap({ wheel = function() calls = calls + 1 end }, function(ns, _, map)
+    local wheel = map._scripts.OnMouseWheel
+    wheel(map, 1)
+    h.eq(calls, 1, "Blizzard's handler ran")
+    h.eq(map._zoom, 0, "no second step of ours")
+    ns.Options.set("minimap", "wheelZoom", false)
+    wheel(map, 1)
+    h.eq(calls, 1, "off: nothing")
+    ns.Options.set("minimap", "wheelZoom", true)
+    ns.EditMode.Checklist.toggle("minimap", false)
+    wheel(map, 1)
+    h.eq(calls, 2, "module off: Blizzard's wheel as before")
   end)
 end)
 

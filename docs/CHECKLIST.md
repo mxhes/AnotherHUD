@@ -282,7 +282,9 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
 - `Minimap:SetMaskTexture` with `Interface\Buttons\WHITE8x8` gives a square
   map, with `Textures\MinimapMask` a round one.
 - `Minimap:GetZoom`, `SetZoom` and `GetZoomLevels` (levels 0 .. levels - 1);
-  `OnMouseWheel` on `Minimap` fires over the map.
+  `OnMouseWheel` on `Minimap` fires over the map. Whether Blizzard's
+  `Minimap` has its own `OnMouseWheel` (then that one zooms and ours only
+  turns it on or off): the wheel zooms one step per notch, not two.
 - Blizzard's minimap cluster is `MinimapCluster`; hiding it after the map
   moved out leaves the map working.
 - The map (strata LOW) draws above our skin panel.

@@ -8,7 +8,7 @@ Docs:
 - `README.md`: player guide (keep it free of texture paths, API names and pixel sizes).
 - `docs/DEVELOPMENT.md`: code layout, module registry, Edit Mode glue, secret values, taint rules, saved state, packaging.
 - `docs/CHECKLIST.md`: what still has to be confirmed in the client, and release steps.
-- `docs/BACKLOG.md`: ideas not built yet (raid frames, shared suite core, ...).
+- `docs/BACKLOG.md`: ideas not built yet (raid frames, ...).
 - `docs/superpowers/`: design specs and plans per feature (history, not kept in sync).
 
 ## Working with the player

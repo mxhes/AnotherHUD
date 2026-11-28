@@ -11,8 +11,19 @@ h.test("clock text, 24 h and 12 h", function()
   h.eq(R.clockText(14, 5, false), "2:05 PM")
   h.eq(R.clockText(0, 0, false), "12:00 AM")
   h.eq(R.clockText(12, 0, false), "12:00 PM")
-  h.eq(R.clockText(0, 7, true), "0:07")
+  -- Blizzard's 24 h clock pads the hour
+  h.eq(R.clockText(0, 7, true), "00:07")
+  h.eq(R.clockText(9, 5, true), "09:05")
   h.eq(R.clockText(nil, 5, true), "")
+end)
+
+h.test("AM and PM have German texts", function()
+  local strings
+  local fake = { Locale = { register = function(_, s) strings = s end } }
+  local chunk = assert(loadfile("AnotherHUD/Locales/deDE.lua"))
+  chunk("AnotherHUD", fake)
+  h.eq(type(strings["AM"]), "string", "AM")
+  h.eq(type(strings["PM"]), "string", "PM")
 end)
 
 h.test("coordinate text", function()

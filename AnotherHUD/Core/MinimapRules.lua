@@ -34,10 +34,10 @@ function MinimapRules.zoom(current, delta, levels)
   return z
 end
 
--- "14:05" (military) or "2:05 PM"; "" without plain numbers.
+-- "14:05" / "09:05" (military) or "2:05 PM"; "" without plain numbers.
 function MinimapRules.clockText(hour, minute, military)
   if not plain(hour) or not plain(minute) then return "" end
-  if military then return string.format("%d:%02d", hour, minute) end
+  if military then return string.format("%02d:%02d", hour, minute) end
   local suffix = hour < 12 and ns.L["AM"] or ns.L["PM"]
   local h = hour % 12
   if h == 0 then h = 12 end

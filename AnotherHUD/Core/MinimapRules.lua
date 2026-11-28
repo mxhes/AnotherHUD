@@ -5,10 +5,12 @@ local ADDON, ns = ...
 local MinimapRules = {}
 local Util = ns.Util
 
--- UNVERIFIED (check in client): Minimap:SetMaskTexture takes these paths and
--- gives a square / round map.
+-- Square: a plain white texture (square confirmed in the client 2026-11-28).
+-- Round: Blizzard's own round mask atlas, the one Forever's minimap sets
+-- itself (Textures\MinimapMask gave a broken map on Forever, 2026-11-28).
+-- UNVERIFIED (check in client): the atlas gives a round map.
 local MASKS = { Square = "Interface\\Buttons\\WHITE8x8" }
-local ROUND_MASK = "Textures\\MinimapMask"
+local ROUND_MASK = "ui-hud-minimap-frame-generic-mask"
 
 function MinimapRules.mask(shape)
   return MASKS[shape] or ROUND_MASK

@@ -171,7 +171,7 @@ With LibEditMode, `Core.init` then attaches the checklist toggles (taint
 test results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
 `EditModeManagerFrame` with `HookScript("OnShow")` and `HookScript("OnHide")`
 (no writes into Blizzard tables or frames); on the first show it builds a
-small box on `UIParent`, anchored under the window, with one checkbox per
+small box on `UIParent` (strata DIALOG), anchored to the right of the window, with one checkbox per
 module (`Checklist.entries()`: define order, `Modules.isEnabled`); the box
 shows (re-reading the checks) and hides with the window. A click runs
 `Checklist.toggle`: `Modules.setEnabled`, then the module's `apply` (which
@@ -312,7 +312,7 @@ size are kept in `spec.original`. `hooksecurefunc` on `Minimap:SetParent` /
 (`spec.placing` guards our own calls); `PLAYER_ENTERING_WORLD` and Edit
 Mode open / close re-queue it too. The mask (`MinimapRules.mask`, under
 `"minimap:mask"`) is `Interface\Buttons\WHITE8x8` for Square and
-`Textures\MinimapMask` for Round; a hook on `Minimap:SetMaskTexture` puts
+Blizzard's round mask atlas `ui-hud-minimap-frame-generic-mask` for Round; a hook on `Minimap:SetMaskTexture` puts
 ours back when Blizzard sets its own (Forever's
 `MinimapCluster:UpdateMinimapConfig` does, after login). Blizzard's art and
 buttons that travel with the map (children of `Minimap` and

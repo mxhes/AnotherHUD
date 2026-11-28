@@ -283,7 +283,7 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
 - `Minimap` can be re-parented, anchored and sized from addon code out of
   combat without taint, and keeps drawing, pinging and tracking in our frame.
 - `Minimap:SetMaskTexture` with `Interface\Buttons\WHITE8x8` gives a square
-  map, with `Textures\MinimapMask` a round one.
+  map, with the atlas `ui-hud-minimap-frame-generic-mask` a round one.
 - `Minimap:GetZoom`, `SetZoom` and `GetZoomLevels` (levels 0 .. levels - 1);
   `OnMouseWheel` on `Minimap` fires over the map. Whether Blizzard's
   `Minimap` has its own `OnMouseWheel` (then that one zooms and ours only
@@ -297,12 +297,15 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
   zoom buttons).
 - Square stays square after login and after a /reload (Blizzard re-sets its
   round mask; our `SetMaskTexture` hook puts ours back). Round looks round
-  with `Textures\MinimapMask` (else use Blizzard's
-  `ui-hud-minimap-frame-generic-mask`).
+  with Blizzard's `ui-hud-minimap-frame-generic-mask` (`Textures\MinimapMask`
+  gave a broken, faint map on Forever, 2026-11-28).
 - First run 2026-11-28: the map moved into our frame, but was round with
   Blizzard's ring around it (mask re-set by Blizzard, ring on
   `MinimapBackdrop`); fixed. Second run 2026-11-28: square, no Blizzard
-  ring, looks right. The taint steps below are still open.
+  ring, looks right. Third run 2026-11-28: Round broken (fixed: Blizzard's
+  round mask atlas); the AnotherHUD box was hidden under the action bar
+  overlays (fixed: now right of the Edit Mode window). The taint steps
+  below are still open.
 - Libraries placing minimap buttons read the global `GetMinimapShape()`.
 - `IsLoggedIn()` exists.
 

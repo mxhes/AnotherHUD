@@ -7,8 +7,8 @@ end
 h.test("minimap mask follows the shape", function()
   local R = load().MinimapRules
   h.eq(R.mask("Square"), "Interface\\Buttons\\WHITE8x8")
-  h.eq(R.mask("Round"), "Textures\\MinimapMask")
-  h.eq(R.mask(nil), "Textures\\MinimapMask")
+  h.eq(R.mask("Round"), "ui-hud-minimap-frame-generic-mask")
+  h.eq(R.mask(nil), "ui-hud-minimap-frame-generic-mask")
 end)
 
 h.test("shape name for GetMinimapShape", function()

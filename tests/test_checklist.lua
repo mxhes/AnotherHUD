@@ -133,7 +133,7 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
       -- parented to UIParent (not Blizzard's window), anchored under it
       h.eq(box.parent, UIParent)
       h.eq(rawget(box.frame, "ignoreInLayout"), nil)
-      h.eq(lastPoint(box.frame), { "SetPoint", "TOPLEFT", manager, "BOTTOMLEFT", 0, -4 })
+      h.eq(lastPoint(box.frame), { "SetPoint", "TOPLEFT", manager, "TOPRIGHT", 4, 0 })
       h.eq(box.frame:IsShown(), true)
       hooked.OnHide(manager)
       h.eq(box.frame:IsShown(), false)

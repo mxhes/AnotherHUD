@@ -6,7 +6,7 @@ AnotherHUD replaces the default unit frames of WoW Forever with its own, and plu
 
 ## Unit frames
 
-AnotherHUD draws seven unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box under the Edit Mode window: the frame goes away at once and stays away until you turn it back on. Getting Blizzard's frame back in its place needs a /reload.
+AnotherHUD draws seven unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box to the right of the Edit Mode window: the frame goes away at once and stays away until you turn it back on. Getting Blizzard's frame back in its place needs a /reload.
 
 | Frame | Shows | Replaces |
 | --- | --- | --- |

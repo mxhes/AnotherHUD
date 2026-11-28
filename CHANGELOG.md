@@ -11,5 +11,7 @@
 - Class resource bar under the Player frame (combo points, holy power, runes, soul shards, chi, arcane charges, essence); it can be detached and moved on its own.
 - Dead and offline units show a grey bar and grey text on every unit frame.
 - XP / Reputation bar at the bottom of the screen: XP with rested XP and the watched faction's reputation, numbers on mouse-over; replaces Blizzard's bars.
+- XP / Reputation bar: "Show honor" adds an honor bar (off by default).
+- XP / Reputation bar: clicking the reputation or honor bar opens the reputation or PvP pane (out of combat).
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
 - A frame turned off in the Edit Mode box goes away at once and stays off.

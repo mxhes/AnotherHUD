@@ -1,9 +1,11 @@
 local ADDON, ns = ...
 
 -- The XP / Reputation bar: a plain frame (AnotherHUDTrackingBar, child of
--- UIParent, the Edit Mode frame) holding the skin's panel and up to two bars
--- in the unit frame look: XP on top (with the rested band under its fill),
--- reputation below, a 1 px divider in the skin's Lines pick between them.
+-- UIParent, the Edit Mode frame) holding the skin's panel and up to three
+-- bars in the unit frame look: XP on top (with the rested band under its
+-- fill), reputation, then honor (Show honor, off by default), a 1 px divider
+-- in the skin's Lines pick between neighbours. Out of combat a left click
+-- on the reputation / honor bar opens the reputation / PvP pane.
 -- A bar shows while it has something to show (Core/Tracking.lua); with
 -- none the frame hides, Edit Mode shows a sample of both. Texts show on
 -- mouse-over by default. Client numbers only travel into SetMinMaxValues /
@@ -63,40 +65,56 @@ local function readReputation()
   return Tracking.reputation({ legacy = { name = name, reaction = reaction, min = min, max = max, value = value } })
 end
 
+-- The honor row from the client; nil without the honor API.
+-- UNVERIFIED (check in client): UnitHonor / UnitHonorMax("player") answer
+-- the honor toward the next honor level and its maximum, UnitHonorLevel the
+-- honor level.
+local function readHonor()
+  if type(_G.UnitHonor) ~= "function" or type(_G.UnitHonorMax) ~= "function" then return nil end
+  return Tracking.honor({ value = UnitHonor("player"), max = UnitHonorMax("player"),
+    level = call("UnitHonorLevel", "player") })
+end
+
 -- The Edit Mode sample: XP 60% with rested to 80%, reputation halfway
--- through Friendly.
+-- through Friendly, honor level 12 at 31%.
 local function sampleData()
   return {
     xp = { value = 600, max = 1000, restedEnd = 800, text = Tracking.xpText(42, 600, 1000, 200) },
     rep = Tracking.reputation({ legacy = { name = ns.L["Sample Faction"], reaction = 5, min = 3000, max = 9000,
       value = 6000 } }),
+    honor = Tracking.honor({ value = 1240, max = 4000, level = 12 }),
   }
 end
 
--- What the bars show now: { xp, rep } (each nil when that bar is off).
+-- What the bars show now: { xp, rep, honor } (each nil when that bar is off).
 local function current(spec)
   if editing(spec) then
-    -- A sample row whose option is off is left out; with both off both stay,
-    -- so the frame remains selectable.
+    -- A sample row whose option is off is left out; with all three off XP and
+    -- reputation stay, so the frame remains selectable.
     local d = sampleData()
     local xp, rep = opt("showXP") == true, opt("showReputation") == true
-    if xp or rep then
+    if xp or rep or opt("showHonor") == true then
       if not xp then d.xp = nil end
       if not rep then d.rep = nil end
     end
+    if opt("showHonor") ~= true then d.honor = nil end
     return d
   end
   local d = {}
   if opt("showXP") == true then d.xp = readXP() end
   if opt("showReputation") == true then d.rep = readReputation() end
+  if opt("showHonor") == true then d.honor = readHonor() end
   return d
 end
+
+local KEYS = { "xp", "rep", "honor" }
 
 -- The rows in order (XP on top) and a key telling the layouts apart.
 local function rowsOf(d)
   local rows = {}
   if d.xp then rows[#rows + 1] = "xp" end
   if d.rep then rows[#rows + 1] = "rep" end
+  if d.honor then rows[#rows + 1] = "honor" end
   return rows, table.concat(rows, ",")
 end
 
@@ -116,7 +134,7 @@ end
 
 local function refreshText(spec)
   local on = textShown(spec)
-  for _, key in ipairs({ "xp", "rep" }) do
+  for _, key in ipairs(KEYS) do
     local row = spec[key]
     if on and spec.shownRows[key] then row.text:Show() else row.text:Hide() end
   end
@@ -161,6 +179,13 @@ local function setValues(spec, d)
     row.bg:SetVertexColor(cr, cg, cb, T.sizes.unit.barBgAlpha)
     row.text:SetText(r.text or "")
   end
+  local o = d.honor
+  if o then
+    local row = spec.honor
+    row.bar:SetMinMaxValues(0, o.max)
+    row.bar:SetValue(o.value)
+    row.text:SetText(o.text or "")
+  end
 end
 
 -- Reads every option: sizes the frame to the rows shown, lays out the panel,
@@ -190,8 +215,11 @@ local function apply(spec)
   local iw = w - 2 * e
   local xr, xg, xb = T.barColor(T.trackingColors.xp, texture)
   local rr, rg, rb = T.barColor(T.trackingColors.rested, texture)
+  local hr, hg, hb = T.barColor(T.trackingColors.honor, texture)
   spec.shownRows = {}
-  for _, k in ipairs({ "xp", "rep" }) do hideRow(spec[k]) end
+  -- the shown rows and the edge, for the click's row hit test
+  spec.rowKeys, spec.rowEdge = rows, e
+  for _, k in ipairs(KEYS) do hideRow(spec[k]) end
   for i, k in ipairs(rows) do
     local row = spec[k]
     local y = -(e + (i - 1) * (hgt + gap))
@@ -212,6 +240,10 @@ local function apply(spec)
       row.bar:SetStatusBarColor(xr, xg, xb)
       row.bg:SetVertexColor(xr, xg, xb, T.sizes.unit.barBgAlpha)
     end
+    if k == "honor" then
+      row.bar:SetStatusBarColor(hr, hg, hb)
+      row.bg:SetVertexColor(hr, hg, hb, T.sizes.unit.barBgAlpha)
+    end
     row.text:ClearAllPoints()
     row.text:SetPoint("CENTER", row.bg, "CENTER", 0, 0)
     -- the row's inner width: a long name is cut by the client, not run over
@@ -221,26 +253,30 @@ local function apply(spec)
     spec.shownRows[k] = true
   end
 
-  local div, groove = spec.divider, spec.groove
-  if #rows == 2 then
-    -- painted like the segment dividers (shared painter)
-    local second = ns.Bars.Segments.paintDivider(div, groove, skin.lines)
-    local y = -(e + hgt)
-    div:ClearAllPoints()
-    div:SetPoint("TOPLEFT", frame, "TOPLEFT", e, y)
-    div:SetSize(iw, gap)
-    div:Show()
-    if second then
-      groove:ClearAllPoints()
-      groove:SetPoint("TOPLEFT", frame, "TOPLEFT", e, y - gap)
-      groove:SetSize(iw, 1)
-      groove:Show()
+  -- one divider under every row but the last
+  local dividers = { { spec.divider, spec.groove }, { spec.divider2, spec.groove2 } }
+  for j, pair in ipairs(dividers) do
+    local div, groove = pair[1], pair[2]
+    if j < #rows then
+      -- painted like the segment dividers (shared painter)
+      local second = ns.Bars.Segments.paintDivider(div, groove, skin.lines)
+      local y = -(e + j * hgt + (j - 1) * gap)
+      div:ClearAllPoints()
+      div:SetPoint("TOPLEFT", frame, "TOPLEFT", e, y)
+      div:SetSize(iw, gap)
+      div:Show()
+      if second then
+        groove:ClearAllPoints()
+        groove:SetPoint("TOPLEFT", frame, "TOPLEFT", e, y - gap)
+        groove:SetSize(iw, 1)
+        groove:Show()
+      else
+        groove:Hide()
+      end
     else
+      div:Hide()
       groove:Hide()
     end
-  else
-    div:Hide()
-    groove:Hide()
   end
 
   setValues(spec, d)
@@ -279,6 +315,32 @@ local function row(spec, withRested)
   return r
 end
 
+-- The pane a row opens (XP: none).
+-- UNVERIFIED (check in client): ToggleCharacter("ReputationFrame") opens the
+-- character window on the reputation tab and TogglePVPUI() the PvP window,
+-- both from addon code out of combat without taint.
+local PANES = {
+  rep = function() call("ToggleCharacter", "ReputationFrame") end,
+  honor = function() call("TogglePVPUI") end,
+}
+
+-- A left click out of combat and outside Edit Mode opens the clicked row's
+-- pane. The row comes from the cursor's height in the frame.
+-- UNVERIFIED (check in client): GetCursorPosition() answers screen pixels;
+-- divided by the frame's effective scale they match GetTop().
+local function onClick(spec, button)
+  if button ~= "LeftButton" or editing(spec) or InCombatLockdown() then return end
+  local rows, frame = spec.rowKeys or {}, spec.frame
+  -- a press on the bar released beside it opens nothing
+  if not frame:IsMouseOver() then return end
+  local _, y = GetCursorPosition()
+  local top, scale = frame:GetTop(), frame:GetEffectiveScale()
+  if not y or not top or not scale or scale == 0 then return end
+  local i = Tracking.rowAt(top - y / scale, opt("height"), ns.Theme.sizes.tracking.gap, spec.rowEdge or 0, #rows)
+  local open = i and PANES[rows[i]]
+  if open then open() end
+end
+
 local function onEvent(spec, event)
   if event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
     spec.combat = event == "PLAYER_REGEN_DISABLED"
@@ -291,8 +353,11 @@ end
 -- UNVERIFIED (check in client): these fire on Forever for XP, rested XP,
 -- level, XP gain on / off and the watched faction (UPDATE_FACTION also
 -- when another faction is watched).
+-- UNVERIFIED (check in client): HONOR_XP_UPDATE and HONOR_LEVEL_UPDATE fire
+-- when the honor or the honor level changes.
 local EVENTS = { "PLAYER_ENTERING_WORLD", "UPDATE_EXHAUSTION", "PLAYER_LEVEL_UP", "ENABLE_XP_GAIN",
-  "DISABLE_XP_GAIN", "UPDATE_FACTION", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }
+  "DISABLE_XP_GAIN", "UPDATE_FACTION", "HONOR_XP_UPDATE", "HONOR_LEVEL_UPDATE",
+  "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }
 
 local function slider(key, label, tooltip, min, max, step)
   return { key = key, type = "slider", label = label, tooltip = tooltip, min = min, max = max, step = step }
@@ -312,7 +377,7 @@ ns.Modules.define({
   id = ID, label = "XP / Reputation", kind = "bar",
   defaults = {
     width = S.width, height = S.height, text = "Hover", fontSize = S.textFont,
-    skin = "Classic", barTexture = "Smooth", showXP = true, showReputation = true,
+    skin = "Classic", barTexture = "Smooth", showXP = true, showReputation = true, showHonor = false,
     outOfCombat = 100, mouseover = true,
   },
   settings = {
@@ -331,6 +396,7 @@ ns.Modules.define({
     { section = "Behaviour", controls = {
       checkbox("showXP", "Show XP", "Show the experience bar while you can gain XP."),
       checkbox("showReputation", "Show reputation", "Show the reputation of the faction you watch."),
+      checkbox("showHonor", "Show honor", "Show your honor and honor level."),
     } },
     { section = "Fading", controls = {
       slider("outOfCombat", "Out of combat opacity", "Opacity of the bars out of combat, in percent.", 0, 100, 5),
@@ -360,10 +426,12 @@ ns.Modules.define({
     spec.top = top
     spec.xp = row(spec, true)
     spec.rep = row(spec, false)
+    spec.honor = row(spec, false)
     spec.divider = top:CreateTexture(nil, "OVERLAY")
     spec.groove = top:CreateTexture(nil, "OVERLAY")
-    spec.divider:Hide()
-    spec.groove:Hide()
+    spec.divider2 = top:CreateTexture(nil, "OVERLAY")
+    spec.groove2 = top:CreateTexture(nil, "OVERLAY")
+    for _, t in ipairs({ spec.divider, spec.groove, spec.divider2, spec.groove2 }) do t:Hide() end
     spec.sampling, spec.hover, spec.combat, spec.shownRows = false, false, false, {}
     frame:EnableMouse(true)
     frame:SetScript("OnEnter", function()
@@ -371,6 +439,7 @@ ns.Modules.define({
       refreshText(spec)
       fade(spec)
     end)
+    frame:SetScript("OnMouseUp", function(_, button) onClick(spec, button) end)
     frame:SetScript("OnLeave", function()
       spec.hover = false
       refreshText(spec)

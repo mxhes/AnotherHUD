@@ -124,3 +124,12 @@ Shared rules (all mockups):
   action button look (skin border); time left in `gold` 11 pt at the bottom of
   the icon; a 3 px `goldLine` bar under each slot that drains with the time
   left; an empty slot is a faint panel (50%) with a dim 1 px edge.
+
+## 6. Honor row (`6-honor.html`)
+
+- Approved 2026-11-28: **A, orange-red** (1, 0.24, 0), over crimson and
+  bronze.
+- With "Show honor" on, honor is a third row under XP and reputation on the
+  XP / Reputation bar, built like the other rows (same panel, row height,
+  the skin's Lines pick between rows, text centered on mouse-over), text
+  "Honor level 12  1,240 / 4,000 (31%)".

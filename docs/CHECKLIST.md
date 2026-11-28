@@ -250,6 +250,18 @@ In the client:
   bar) and the sample shows both rows.
 - Texts show on mouse-over only (default), the mouse-over does not block
   clicks around the bar, the divider looks sharp between the two bars.
+- Honor (`Bars/Tracking.lua`, UNVERIFIED): `UnitHonor` / `UnitHonorMax("player")`
+  answer the honor toward the next honor level and its maximum,
+  `UnitHonorLevel("player")` the honor level; `HONOR_XP_UPDATE` and
+  `HONOR_LEVEL_UPDATE` fire when they change. With Show honor on, the honor
+  bar matches the PvP pane, and three bars look right (two dividers) in
+  every skin.
+- Click to open (UNVERIFIED): out of combat a left click on the reputation
+  bar opens the reputation pane (`ToggleCharacter("ReputationFrame")`), on
+  the honor bar the PvP pane (`TogglePVPUI()`), on the XP bar nothing;
+  `GetCursorPosition()` divided by the frame's effective scale matches
+  `GetTop()` (the right bar opens at every UI scale); no taint line and no
+  blocked-action message; a click in combat or in Edit Mode does nothing.
 
 Results:
 

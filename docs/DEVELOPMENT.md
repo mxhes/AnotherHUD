@@ -63,7 +63,7 @@ PowerShell; nothing here is done by the build.
 | `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, studs, aura rows |
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
-| `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
+| `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the honor row (`honor`, `honorText`), the row a click hits (`rowAt`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
@@ -84,7 +84,7 @@ PowerShell; nothing here is done by the build.
 | `Units/Boss.lua` | the boss block (`defineGroup`): boss1-5, mirrored, attached cast bars, my debuffs on the left; re-orders on `INSTANCE_ENCOUNTER_ENGAGE_UNIT` (`orderEvents`); hides `BossTargetFrameContainer` |
 | `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`; `Segments.paintDivider(d, groove, lines)`, the skin-line divider painter the XP / Reputation bar shares) |
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
-| `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, divider, texts; hides Blizzard's status tracking bars |
+| `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, honor row (Show honor), dividers, texts, click to open the reputation / PvP pane; hides Blizzard's status tracking bars |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
 | `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
@@ -303,16 +303,16 @@ at 55% with "2"), also while the resource is inactive.
 `bar`, no parent, listed in the checklist). Own bars, not Blizzard's
 re-skinned: the frame `AnotherHUDTrackingBar` is a plain frame on
 `UIParent` (the Edit Mode frame) holding the skin's panel
-(`Units/Parts/Panel`, no studs), up to two rows (`spec.xp`, `spec.rep`:
+(`Units/Parts/Panel`, no studs), up to three rows (`spec.xp`, `spec.rep`, `spec.honor`:
 `bg` texture, `bar` StatusBar, `text`; XP also a `rested` StatusBar under
-its fill) and a divider in the skin's Lines pick. Apply sizes the frame to
+its fill) and a divider in the skin's Lines pick under every row but the last (`spec.divider` / `spec.groove`, `spec.divider2` / `spec.groove2`). Apply sizes the frame to
 `width x (rows * height + (rows - 1) * gap + 2 * edge)`, lays the rows out
-(XP on top) and shows the frame only with a row; nothing in it is secure,
+(XP, reputation, honor) and shows the frame only with a row; nothing in it is secure,
 so it runs at once, also in combat. Values: `Tracking.xp` of `UnitXP`,
 `UnitXPMax`, `GetXPExhaustion`, `UnitLevel`, `IsPlayerAtEffectiveMaxLevel`,
 `IsXPUserDisabled` (no XP row without `UnitXP` / `UnitXPMax`) and
 `Tracking.reputation` of `C_Reputation.GetWatchedFactionData()` or, without
-it, `GetWatchedFactionInfo()`. Secret values: XP and reputation numbers
+it, `GetWatchedFactionInfo()`, and with Show honor (`showHonor`, off by default) `Tracking.honor` of `UnitHonor`, `UnitHonorMax`, `UnitHonorLevel` (no honor row without `UnitHonor` / `UnitHonorMax`; events `HONOR_XP_UPDATE`, `HONOR_LEVEL_UPDATE`). Secret values: XP and reputation numbers
 only go into `SetMinMaxValues` / `SetValue`; the rules read them only when
 plain, so a secret XP leaves the text `""` and the rested band hidden. A
 change in which rows show (level cap, a faction watched, Show XP / Show
@@ -321,7 +321,7 @@ reputation) re-runs apply; otherwise events only set the values. Texts:
 `OnLeave`) or in Edit Mode, `Always` / `Never`. Fading through
 `UnitState.alpha` with `PLAYER_REGEN_DISABLED` / `_ENABLED`. Edit Mode
 shows a sample of both rows (XP 600 / 1,000 with rested to 800, Sample
-Faction halfway through Friendly) and the frame.
+Faction halfway through Friendly, honor level 12 at 1,240 / 4,000 with Show honor) and the frame. Click: `OnMouseUp` with the left button, out of combat and outside Edit Mode, finds the row with `Tracking.rowAt` from `GetCursorPosition()` / `GetEffectiveScale()` against `GetTop()` and the last layout's rows (`spec.rowKeys`, `spec.rowEdge`); the reputation row calls `ToggleCharacter("ReputationFrame")`, the honor row `TogglePVPUI()`, each only when it exists.
 
 **Group modules (Party, Boss).** `ns.Units.defineGroup{...}` (`Units/Group.lua`) builds
 one module of several unit frames. The module's frame is a plain holder

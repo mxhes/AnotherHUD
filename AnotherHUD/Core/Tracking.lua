@@ -66,6 +66,39 @@ function Tracking.xp(s)
   return r
 end
 
+-- "Honor level 12  1,240 / 4,000 (31%)". Plain numbers only; with max <= 0
+-- there is no percent part.
+function Tracking.honorText(level, value, max)
+  local text = string.format("%s %d  %s / %s", L["Honor level"], level or 0, Tracking.number(value),
+    Tracking.number(max))
+  if max > 0 then
+    text = text .. string.format(" (%d%%)", math.floor(value * 100 / max))
+  end
+  return text
+end
+
+-- s = { value, max, level } -> nil | { value, max, text }. A secret value or
+-- max goes to the bar unread (no text).
+function Tracking.honor(s)
+  if not s or s.value == nil or s.max == nil then return nil end
+  local r = { value = s.value, max = s.max }
+  if plain(s.value) and plain(s.max) and s.max > 0 then
+    r.text = Tracking.honorText(plain(s.level) and s.level or 0, s.value, s.max)
+  end
+  return r
+end
+
+-- Which row (1..count) a point `offset` px down from the frame's top edge is
+-- on: rows start at `edge`, each `height` tall with `gap` between; nil on the
+-- edge, in a gap or past the last row.
+function Tracking.rowAt(offset, height, gap, edge, count)
+  local y = offset - edge
+  if y < 0 then return nil end
+  local i = math.floor(y / (height + gap))
+  if i >= count or y - i * (height + gap) >= height then return nil end
+  return i + 1
+end
+
 -- d = C_Reputation.GetWatchedFactionData() or { legacy = { name, reaction, min,
 -- max, value } } from GetWatchedFactionInfo() -> nil | { name, min, max, value,
 -- reaction, text }.

@@ -301,7 +301,8 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
   `ui-hud-minimap-frame-generic-mask`).
 - First run 2026-11-28: the map moved into our frame, but was round with
   Blizzard's ring around it (mask re-set by Blizzard, ring on
-  `MinimapBackdrop`); fixed, check again.
+  `MinimapBackdrop`); fixed. Second run 2026-11-28: square, no Blizzard
+  ring, looks right. The taint steps below are still open.
 - Libraries placing minimap buttons read the global `GetMinimapShape()`.
 - `IsLoggedIn()` exists.
 

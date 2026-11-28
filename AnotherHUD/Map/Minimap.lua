@@ -1,9 +1,9 @@
 local ADDON, ns = ...
 
--- The minimap (spike): a plain frame (AnotherHUDMinimap on UIParent, the Edit
--- Mode frame) holding Blizzard's Minimap, inset by the skin border. Square
--- shows the skin panel around a square-masked map; Round masks the map round
--- (its ring comes later). The mouse wheel zooms (Mouse wheel zoom). Blizzard's
+-- The minimap: a plain frame (AnotherHUDMinimap on UIParent, the Edit Mode
+-- frame) holding Blizzard's Minimap, inset by the skin border. Square shows
+-- the skin panel around a square-masked map; Round masks the map round inside
+-- the skin ring (Units/Parts/Ring). The mouse wheel zooms (Mouse wheel zoom). Blizzard's
 -- MinimapCluster (border, zone text, clock, buttons) is hidden.
 -- Every change to Blizzard's frames runs out of combat (Combat.after); hooks
 -- on Minimap:SetParent / SetPoint put the map back when Blizzard moves it.
@@ -130,7 +130,14 @@ local function apply(spec)
   local skin = ns.Units.Base.skinOf(frame)
   spec.edge = ns.UnitLayout.edgeWidth(skin.border)
   spec.panel:layout({ skin = skin })
-  if opt("shape") == "Square" then spec.panel.frame:Show() else spec.panel.frame:Hide() end
+  spec.ring:layout({ ring = { cx = size / 2, cy = size / 2, dia = size } }, { skin = skin })
+  if opt("shape") == "Square" then
+    spec.panel.frame:Show()
+    spec.ring.frame:Hide()
+  else
+    spec.panel.frame:Hide()
+    spec.ring.frame:Show()
+  end
   frame:Show()
   place(spec)
   mask(spec)
@@ -228,6 +235,11 @@ ns.Modules.define({
     spec.frame = frame
     spec.panel = ns.Units.Parts.Panel.create(frame)
     spec.panel.frame:SetFrameLevel(frame:GetFrameLevel() or 0)
+    -- Round: the skin ring (the portrait ring's lines, no portrait, no
+    -- badge), below the map like the panel.
+    spec.ring = ns.Units.Parts.Ring.create(frame)
+    spec.ring.frame:SetFrameLevel(frame:GetFrameLevel() or 0)
+    spec.ring.portrait:Hide()
     spec.placing = false
     local m = blizzardMap()
     if m then

@@ -95,6 +95,9 @@ function methods.GetBottom(self) return self._bottom end
 function methods.GetWidth(self) return self._width end
 function methods.GetHeight(self) return self._height end
 function methods.GetScale(self) return self._scale or 1 end
+-- Frame level: kept as set (nil until set, as before).
+function methods.SetFrameLevel(self, l) self._level = l end
+function methods.GetFrameLevel(self) return self._level end
 
 function fakes.frame(name)
   local f = { calls = {}, _scripts = {}, _events = {}, _attrs = {}, _shown = true, _name = name }

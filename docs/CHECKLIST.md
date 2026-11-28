@@ -331,7 +331,11 @@ for blocked-action messages after each step):
 - Turn Minimap off in the AnotherHUD box and /reload: Blizzard's minimap
   is back where it was, working; turn it on and /reload: ours is back.
 
-Results: (not run yet)
+Results: 2026-11-28, **pass**. After the fixes above: square and round
+masks right, no Blizzard ring, wheel zooms, map stays in our frame through
+Edit Mode, layout switches, combat, zoning and /reload; no taint line and no
+blocked action (also queueing from the group finder); turned off, Blizzard's
+minimap comes back after /reload. The gate is open: Plan 2 may start.
 
 ## Edit Mode spike (Plan 1, Task 7)
 

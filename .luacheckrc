@@ -45,4 +45,6 @@ read_globals = {
   "C_Reputation", "GetWatchedFactionInfo",
   "StatusTrackingBarManager", "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer",
   "Minimap", "MinimapCluster", "IsLoggedIn",
+  -- WoW's global date(); the other minimap element APIs are read through _G
+  "date",
 }

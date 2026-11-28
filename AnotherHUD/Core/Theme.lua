@@ -32,6 +32,8 @@ Theme.textures = {
     DAMAGER = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\RoleDamage",
   },
   crown = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Crown",
+  -- Minimap calendar badge: a white calendar page (tinted gold in code).
+  calendar = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Calendar",
   glow = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Glow",
   -- A plain white tile for 1 px lines (unit frame edges and dividers).
   line = "Interface\\Buttons\\WHITE8X8",
@@ -90,6 +92,8 @@ Theme.colors = {
   tipNote = { 0.68, 0.63, 0.55, 1 },
   tipWarn = { 0.95, 0.38, 0.32, 1 },
   tipHint = { 0.25, 0.90, 0.25, 1 },
+  -- Minimap coordinates (quiet grey, mockup 7).
+  coords = { 0.85, 0.85, 0.85, 1 },
 }
 
 -- Unit frame colors (approved art). Elite uses colors.gold and normal uses
@@ -171,8 +175,26 @@ Theme.sizes = {
   -- XP / Reputation bar: width and height of one bar, the gap between the two,
   -- the alpha of the rested XP band and the text font size.
   tracking = { width = 500, height = 10, gap = 1, restedAlpha = 0.4, textFont = 10 },
-  -- Minimap: the default width and height of the map frame.
-  minimap = { size = 180 },
+  -- Minimap (approved mockup 7): the default map size; the zone, clock and
+  -- coordinate fonts; the gap of the zone / clock to the map; the clock's
+  -- shift left of the middle; the calendar badge, its shift right and its
+  -- drop below the map; the coordinates' drop; the icon share of a badge;
+  -- the badge glow; the clock and coordinate update intervals (s).
+  minimap = { size = 180, zoneFont = 12, clockFont = 11, coordFont = 10, textGap = 4, clockShift = 14,
+    calendarBadge = 18, calendarShift = 20, calendarDrop = 11, coordDrop = 22, badgeIcon = 0.6, glow = 8,
+    clockTick = 1, coordTick = 0.2 },
+}
+
+-- Minimap zone name colors by PvP type, {r, g, b} (the game's zone text
+-- colors); `normal` for any other zone.
+Theme.minimapZoneColors = {
+  sanctuary = { 0.41, 0.80, 0.94 },
+  friendly = { 0.10, 1.00, 0.10 },
+  hostile = { 1.00, 0.10, 0.10 },
+  arena = { 1.00, 0.10, 0.10 },
+  combat = { 1.00, 0.10, 0.10 },
+  contested = { 1.00, 0.70, 0.00 },
+  normal = { 1.00, 0.82, 0.00 },
 }
 
 -- XP / Reputation bar colors, {r, g, b}: the game's usual XP purple and

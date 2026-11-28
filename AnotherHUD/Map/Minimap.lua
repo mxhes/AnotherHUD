@@ -1,9 +1,9 @@
 local ADDON, ns = ...
 
--- The minimap (spike): a plain frame (AnotherHUDMinimap on UIParent, the Edit
--- Mode frame) holding Blizzard's Minimap, inset by the skin border. Square
--- shows the skin panel around a square-masked map; Round masks the map round
--- (its ring comes later). The mouse wheel zooms (Mouse wheel zoom). Blizzard's
+-- The minimap: a plain frame (AnotherHUDMinimap on UIParent, the Edit Mode
+-- frame) holding Blizzard's Minimap, inset by the skin border. Square shows
+-- the skin panel around a square-masked map; Round masks the map round inside
+-- the skin ring (Units/Parts/Ring). The mouse wheel zooms (Mouse wheel zoom). Blizzard's
 -- MinimapCluster (border, zone text, clock, buttons) is hidden.
 -- Every change to Blizzard's frames runs out of combat (Combat.after); hooks
 -- on Minimap:SetParent / SetPoint put the map back when Blizzard moves it.
@@ -117,11 +117,196 @@ local function hideMapArt(m)
   end)
 end
 
+local function call(name, ...)
+  local f = _G[name]
+  if type(f) == "function" then return f(...) end
+  return nil
+end
+
+local function flag(v)
+  return not ns.Util.isSecret(v) and v == true
+end
+
+local function plainNumber(v)
+  return not ns.Util.isSecret(v) and ns.Util.isNumber(v)
+end
+
+-- UNVERIFIED (check in client): GetMinimapZoneText() answers the zone /
+-- subzone name the minimap shows; C_PvP.GetZonePVPInfo() (or the older
+-- GetZonePVPInfo()) answers the PvP type first ("sanctuary", "friendly",
+-- "hostile", "contested", "arena", "combat" or nil).
+local function updateZone(spec)
+  spec.zone:SetText(ns.Util.plainString(call("GetMinimapZoneText")) or "")
+  local pvp
+  local C = _G.C_PvP
+  if type(C) == "table" and type(C.GetZonePVPInfo) == "function" then
+    pvp = C.GetZonePVPInfo()
+  else
+    pvp = call("GetZonePVPInfo")
+  end
+  local c = Rules.zoneColor(ns.Util.plainString(pvp))
+  spec.zone:SetTextColor(c[1], c[2], c[3])
+end
+
+-- UNVERIFIED (check in client): Blizzard's clock settings are the CVars
+-- timeMgrUseLocalTime and timeMgrUseMilitaryTime (GetCVarBool); realm time
+-- from GetGameTime() (hour, minute).
+local function updateClock(spec)
+  local hour, minute
+  if flag(call("GetCVarBool", "timeMgrUseLocalTime")) then
+    local t = date("*t")
+    hour, minute = t.hour, t.min
+  else
+    hour, minute = call("GetGameTime")
+  end
+  spec.clock:SetText(Rules.clockText(hour, minute, flag(call("GetCVarBool", "timeMgrUseMilitaryTime"))))
+end
+
+-- UNVERIFIED (check in client): C_Map.GetBestMapForUnit("player") and
+-- C_Map.GetPlayerMapPosition(id, "player") (nil in instances) with :GetXY().
+local function updateCoords(spec)
+  local text = ""
+  local C = _G.C_Map
+  if type(C) == "table" and type(C.GetBestMapForUnit) == "function" then
+    local id = C.GetBestMapForUnit("player")
+    local pos = id ~= nil and C.GetPlayerMapPosition(id, "player") or nil
+    if type(pos) == "table" and type(pos.GetXY) == "function" then
+      text = Rules.coordText(pos:GetXY())
+    end
+  end
+  spec.coords:SetText(text)
+end
+
+-- UNVERIFIED (check in client): C_Calendar.GetNumPendingInvites() answers
+-- the number of invites waiting.
+local function updateCalendar(spec)
+  local C = _G.C_Calendar
+  local n = type(C) == "table" and type(C.GetNumPendingInvites) == "function" and C.GetNumPendingInvites() or nil
+  spec.calendar:setGlow(plainNumber(n) and n > 0)
+end
+
+local function updateAll(spec)
+  updateZone(spec)
+  updateClock(spec)
+  updateCoords(spec)
+  updateCalendar(spec)
+end
+
+-- One OnUpdate for the clock and the coordinates, only while one of them shows.
+local function ticker(spec, on)
+  if not on then
+    spec.elements:SetScript("OnUpdate", nil)
+    return
+  end
+  local S = ns.Theme.sizes.minimap
+  spec.clockAcc, spec.coordAcc = 0, 0
+  spec.elements:SetScript("OnUpdate", function(_, elapsed)
+    if opt("showClock") == true then
+      spec.clockAcc = spec.clockAcc + elapsed
+      if spec.clockAcc >= S.clockTick then
+        spec.clockAcc = 0
+        updateClock(spec)
+      end
+    end
+    if opt("showCoords") == true then
+      spec.coordAcc = spec.coordAcc + elapsed
+      if spec.coordAcc >= S.coordTick then
+        spec.coordAcc = 0
+        updateCoords(spec)
+      end
+    end
+  end)
+end
+
+local function showIf(on, ...)
+  for i = 1, select("#", ...) do
+    local f = select(i, ...)
+    if on then f:Show() else f:Hide() end
+  end
+end
+
+-- The elements around the map: anchors on the frame edges, fixed sizes
+-- (mockup 7); each shown by its option.
+local function layoutElements(spec, skin)
+  local T = ns.Theme
+  local S = T.sizes.minimap
+  local frame = spec.frame
+  spec.zone:ClearAllPoints()
+  spec.zone:SetPoint("BOTTOM", frame, "TOP", 0, S.textGap)
+  spec.zone:SetFont(T.fonts.file, S.zoneFont, "OUTLINE")
+  spec.clock:ClearAllPoints()
+  spec.clock:SetPoint("TOP", frame, "BOTTOM", -S.clockShift, -S.textGap)
+  spec.clock:SetFont(T.fonts.file, S.clockFont, "OUTLINE")
+  spec.coords:ClearAllPoints()
+  spec.coords:SetPoint("TOP", frame, "BOTTOM", 0, -S.coordDrop)
+  spec.coords:SetFont(T.fonts.file, S.coordFont, "OUTLINE")
+  spec.calendar:layout(S.calendarBadge, skin)
+  spec.calendar.button:ClearAllPoints()
+  spec.calendar.button:SetPoint("CENTER", frame, "BOTTOM", S.calendarShift, -S.calendarDrop)
+  showIf(opt("showZone") == true, spec.zone, spec.zoneButton)
+  showIf(opt("showClock") == true, spec.clock, spec.clockButton)
+  showIf(opt("showCalendar") == true, spec.calendar.button)
+  showIf(opt("showCoords") == true, spec.coords)
+  updateAll(spec)
+  ticker(spec, opt("showClock") == true or opt("showCoords") == true)
+end
+
+-- A click opens a Blizzard panel, out of combat only.
+-- UNVERIFIED (check in client): ToggleWorldMap(), ToggleCalendar() and,
+-- after C_AddOns.LoadAddOn("Blizzard_TimeManager"), TimeManager_Toggle()
+-- open their panels from addon code without taint.
+local function onClick(open)
+  return function()
+    if InCombatLockdown() then return end
+    open()
+  end
+end
+
+local function openClock()
+  local C = _G.C_AddOns
+  if type(C) == "table" and type(C.LoadAddOn) == "function" then pcall(C.LoadAddOn, "Blizzard_TimeManager") end
+  call("TimeManager_Toggle")
+end
+
+local function createElements(spec)
+  local T = ns.Theme
+  local frame = spec.frame
+  local el = CreateFrame("Frame", nil, frame)
+  el:SetAllPoints(frame)
+  -- above the map (it sits one level over our frame)
+  el:SetFrameLevel((frame:GetFrameLevel() or 0) + 10)
+  spec.elements = el
+  local function text(color)
+    local fs = el:CreateFontString(nil, "OVERLAY")
+    -- a font before any SetText: the client errors on a font string without one
+    fs:SetFont(T.fonts.file, T.sizes.minimap.clockFont, "OUTLINE")
+    fs:SetText("")
+    fs:SetTextColor(color[1], color[2], color[3], color[4])
+    return fs
+  end
+  spec.zone = text(T.colors.gold)
+  spec.zone:SetWordWrap(false)
+  spec.clock = text(T.colors.ink)
+  spec.coords = text(T.colors.coords)
+  local function clickArea(fs, open)
+    local b = CreateFrame("Button", nil, el)
+    b:SetAllPoints(fs)
+    b:SetScript("OnClick", onClick(open))
+    return b
+  end
+  spec.zoneButton = clickArea(spec.zone, function() call("ToggleWorldMap") end)
+  spec.clockButton = clickArea(spec.clock, openClock)
+  spec.calendar = ns.Map.Badge.create(el)
+  spec.calendar:setIcon(T.textures.calendar)
+  spec.calendar.button:SetScript("OnClick", onClick(function() call("ToggleCalendar") end))
+end
+
 local function apply(spec)
   local frame = spec.frame
   if not frame then return end
   if not ns.Modules.isEnabled(ID) then
     frame:Hide()
+    ticker(spec, false)
     place(spec)
     return
   end
@@ -130,7 +315,15 @@ local function apply(spec)
   local skin = ns.Units.Base.skinOf(frame)
   spec.edge = ns.UnitLayout.edgeWidth(skin.border)
   spec.panel:layout({ skin = skin })
-  if opt("shape") == "Square" then spec.panel.frame:Show() else spec.panel.frame:Hide() end
+  spec.ring:layout({ ring = { cx = size / 2, cy = size / 2, dia = size } }, { skin = skin })
+  if opt("shape") == "Square" then
+    spec.panel.frame:Show()
+    spec.ring.frame:Hide()
+  else
+    spec.panel.frame:Hide()
+    spec.ring.frame:Show()
+  end
+  layoutElements(spec, skin)
   frame:Show()
   place(spec)
   mask(spec)
@@ -186,6 +379,11 @@ local function hookMap(spec, m)
   m:SetScript("OnMouseWheel", wheelHandler(m:GetScript("OnMouseWheel")))
 end
 
+-- UNVERIFIED (check in client): the zone events fire on zone / subzone /
+-- indoor changes and CALENDAR_UPDATE_PENDING_INVITES when invites change.
+local EVENTS = { "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS",
+  "ZONE_CHANGED_NEW_AREA", "CALENDAR_UPDATE_PENDING_INVITES" }
+
 local function slider(key, label, tooltip, min, max, step)
   return { key = key, type = "slider", label = label, tooltip = tooltip, min = min, max = max, step = step }
 end
@@ -200,7 +398,8 @@ end
 
 ns.Modules.define({
   id = ID, label = "Minimap", kind = "misc",
-  defaults = { size = ns.Theme.sizes.minimap.size, skin = "Classic", shape = "Square", wheelZoom = true },
+  defaults = { size = ns.Theme.sizes.minimap.size, skin = "Classic", shape = "Square", wheelZoom = true,
+    showZone = true, showClock = true, showCalendar = true, showCoords = false },
   settings = {
     { section = "Size", controls = {
       slider("size", "Map size", "Width and height of the map.", 120, 320, 1),
@@ -208,6 +407,12 @@ ns.Modules.define({
     { section = "Look", controls = {
       dropdown("skin", "Skin", "Border and decoration style of the frame.", { "Classic", "Forge", "Slate" }),
       dropdown("shape", "Shape", "Square or round map.", { "Square", "Round" }),
+    } },
+    { section = "Elements", controls = {
+      checkbox("showZone", "Zone name", "Show the zone name above the map."),
+      checkbox("showClock", "Clock", "Show the clock below the map."),
+      checkbox("showCalendar", "Calendar", "Show the calendar button below the map."),
+      checkbox("showCoords", "Coordinates", "Show your coordinates below the map."),
     } },
     { section = "Behaviour", controls = {
       checkbox("wheelZoom", "Mouse wheel zoom", "Zoom the map with the mouse wheel."),
@@ -228,17 +433,33 @@ ns.Modules.define({
     spec.frame = frame
     spec.panel = ns.Units.Parts.Panel.create(frame)
     spec.panel.frame:SetFrameLevel(frame:GetFrameLevel() or 0)
+    -- Round: the skin ring (the portrait ring's lines, no portrait, no
+    -- badge), below the map like the panel.
+    spec.ring = ns.Units.Parts.Ring.create(frame)
+    spec.ring.frame:SetFrameLevel(frame:GetFrameLevel() or 0)
+    spec.ring.portrait:Hide()
     spec.placing = false
+    createElements(spec)
     local m = blizzardMap()
     if m then
       hookMap(spec, m)
       hideMapArt(m)
     end
-    frame:RegisterEvent("PLAYER_LOGIN")
-    frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    for _, ev in ipairs(EVENTS) do frame:RegisterEvent(ev) end
     frame:SetScript("OnEvent", function(_, event)
-      if event == "PLAYER_LOGIN" then defineShape() end
-      place(spec)
+      if event == "PLAYER_LOGIN" then
+        defineShape()
+        place(spec)
+      elseif event == "PLAYER_ENTERING_WORLD" then
+        place(spec)
+        if ns.Modules.isEnabled(ID) then updateAll(spec) end
+      elseif not ns.Modules.isEnabled(ID) then
+        return
+      elseif event == "CALENDAR_UPDATE_PENDING_INVITES" then
+        updateCalendar(spec)
+      else
+        updateZone(spec)
+      end
     end)
     if type(_G.IsLoggedIn) == "function" and IsLoggedIn() then defineShape() end
     apply(spec)

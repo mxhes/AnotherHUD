@@ -64,7 +64,7 @@ PowerShell; nothing here is done by the build.
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
 | `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the honor row (`honor`, `honorText`), the row a click hits (`rowAt`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
-| `Core/MinimapRules.lua` | pure minimap rules: the mask texture of a Shape (`mask`), the `GetMinimapShape` answer (`shapeName`), the mouse wheel zoom step within the zoom levels (`zoom`) |
+| `Core/MinimapRules.lua` | pure minimap rules: the mask texture of a Shape (`mask`), the `GetMinimapShape` answer (`shapeName`), the mouse wheel zoom step within the zoom levels (`zoom`), the clock text in 24 h / 12 h (`clockText`), the coordinate text (`coordText`), the zone name color of a PvP type (`zoneColor`, a copy of `Theme.minimapZoneColors`) |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
@@ -86,9 +86,10 @@ PowerShell; nothing here is done by the build.
 | `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`; `Segments.paintDivider(d, groove, lines)`, the skin-line divider painter the XP / Reputation bar shares) |
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
 | `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, honor row (Show honor), dividers, texts, click to open the reputation / PvP pane; hides Blizzard's status tracking bars |
-| `Map/Minimap.lua` | `minimap`: the minimap frame (`AnotherHUDMinimap` on `UIParent`) holding Blizzard's `Minimap` (re-parented, masked by Shape, wheel zoom), the skin panel for Square, `GetMinimapShape`; hides `MinimapCluster` |
+| `Map/Badge.lua` | `ns.Map.Badge`: a small round minimap button in the level badge look (skin line discs, panel fill, gold icon, optional gold glow); `Badge.create(parent)`, `badge:layout(size, skin)`, `setIcon(file)`, `setGlow(on)` |
+| `Map/Minimap.lua` | `minimap`: the minimap frame (`AnotherHUDMinimap` on `UIParent`) holding Blizzard's `Minimap` (re-parented, masked by Shape, wheel zoom), the skin panel for Square, the skin ring for Round, the zone name, clock, calendar badge and coordinates, `GetMinimapShape`; hides `MinimapCluster` |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
-| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
+| `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow, Calendar); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
 
 `tools/render_units.py` (repo root, not packaged) draws the `Media/Units`
@@ -253,7 +254,7 @@ flags), `defaults` (overrides), `blizzard`, `defaultPosition`, optional
 | `focus` | `AnotherHUDFocusFrame` | focus, badge 14 | as Target | 160 x 40, power 8, 10 pt, health Percent, power None | `FocusFrame` |
 | `pet` | `AnotherHUDPetFrame` | pet | Size (portrait, power), Text, Look, Auras, Fading | 120 x 34, power 6, 10 pt, health Percent, power None | `PetFrame` |
 | `tracking` (kind `bar`) | `AnotherHUDTrackingBar` | (plain frame; `Bars/Tracking.lua`, loaded after `Units/Boss.lua`) | Size, Text, Look, Behaviour, Fading (own controls) | none | `StatusTrackingBarManager` (its two bar containers stay its children: Blizzard calls their `GetParent():CheckForLayoutChange()` when Edit Mode closes) |
-| `minimap` (kind `misc`) | `AnotherHUDMinimap` | (plain frame; `Map/Minimap.lua`, loaded after `Bars/Tracking.lua`) | Size, Look (Skin, Shape), Behaviour (Mouse wheel zoom) | 180 x 180, Square, wheel zoom on | `MinimapCluster` |
+| `minimap` (kind `misc`) | `AnotherHUDMinimap` | (plain frame; `Map/Minimap.lua`, loaded after `Bars/Tracking.lua`) | Size, Look (Skin, Shape), Elements (Zone name, Clock, Calendar, Coordinates), Behaviour (Mouse wheel zoom) | 180 x 180, Square, all elements on but Coordinates, wheel zoom on | `MinimapCluster` |
 
 `targettarget` has no `blizzard` list (nil, not `{}`), so turning it off
 needs no `/reload`. The detached cast bar: `playercast` is a plain frame on
@@ -303,8 +304,9 @@ at 55% with "2"), also while the resource is inactive.
 
 **Minimap.** `Map/Minimap.lua` defines `minimap` (kind `misc`, listed in
 the checklist). The frame `AnotherHUDMinimap` (strata LOW) is a plain frame
-on `UIParent`, `size x size`, holding the skin panel (shown for Square only;
-the round ring comes later). Blizzard's `Minimap` is re-parented into it,
+on `UIParent`, `size x size`, holding the skin panel (shown for Square) and the skin ring
+(`ns.Units.Parts.Ring` at the frame's level, portrait hidden, shown for
+Round). Blizzard's `Minimap` is re-parented into it,
 anchored `TOPLEFT` at the skin's edge width and sized `size - 2 * edge`,
 always through `Combat.after("minimap:map")`; its first parent, anchors and
 size are kept in `spec.original`. `hooksecurefunc` on `Minimap:SetParent` /
@@ -327,6 +329,20 @@ steps `SetZoom` through `MinimapRules.zoom`. `MinimapCluster` is hidden with
 combat). `GetMinimapShape` is defined at `PLAYER_LOGIN` (or at create when
 already logged in) only when it is nil; it answers `"SQUARE"` / `"ROUND"`
 from the Shape setting on every call, `"ROUND"` while the module is off.
+
+The elements live on `spec.elements`, a frame over the map (frame level
++ 10): `spec.zone` (anchored `BOTTOM` to the frame's `TOP`), `spec.clock`
+and `spec.calendar` (a `Map/Badge.lua` badge) below the map, `spec.coords`
+under them; offsets and font sizes are `Theme.sizes.minimap` and do not
+scale with Map size. `spec.zoneButton` / `spec.clockButton` cover their
+texts; clicks open `ToggleWorldMap`, `TimeManager_Toggle` (after loading
+`Blizzard_TimeManager`) and `ToggleCalendar`, out of combat only. The zone
+updates on the `ZONE_CHANGED*` events, the badge glow on
+`CALENDAR_UPDATE_PENDING_INVITES`. Clock and coordinates share one
+`OnUpdate` on `spec.elements` (clock every `clockTick` s, coordinates
+every `coordTick` s), set only while the module is on and one of the two
+shows. The client values pass `Util.plainString` / plain-number checks
+before `MinimapRules.clockText` / `coordText` / `zoneColor` see them.
 Turned off live, the map goes back to `spec.original` with the round mask;
 the cluster stays hidden until /reload (as the checklist says). Off at
 login, nothing is built and nothing of Blizzard's is touched.

@@ -52,7 +52,7 @@ The numbers (level, XP and percent, rested XP; faction, standing and progress; h
 
 The minimap sits in an AnotherHUD frame at the top right of the screen, in the same skin as the unit frames. "Shape" in the Look section makes it square (inside the skin's border) or round, and "Map size" sets its size. The mouse wheel over the map zooms in and out; turn "Mouse wheel zoom" off in the Behaviour section and the wheel does nothing there. Move it in Edit Mode like the other frames.
 
-For now Blizzard's mail, tracking, clock, calendar and zone name around the map are hidden with Blizzard's minimap border; they come back on the AnotherHUD map in the next step. Turned off in the AnotherHUD box, Blizzard's minimap comes back after a /reload.
+Round maps sit in the skin's ring, like the portraits. Around the map: the zone name above it, colored like Blizzard's (sanctuary, friendly, contested, hostile), opens the world map on a click; the clock below it follows Blizzard's clock settings (local or realm time, 24-hour) and opens Blizzard's clock on a click; the calendar button next to it opens the calendar and glows while an invite is waiting; coordinates below the clock are off by default. Each one is a setting in the Elements section. Clicks do nothing in combat. Mail, tracking and the group finder eye get their spots on the AnotherHUD map in the next step; until then mail and tracking stay hidden. Turned off in the AnotherHUD box, Blizzard's minimap comes back after a /reload.
 
 ## Known gaps
 

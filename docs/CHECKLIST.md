@@ -337,6 +337,37 @@ Edit Mode, layout switches, combat, zoning and /reload; no taint line and no
 blocked action (also queueing from the group finder); turned off, Blizzard's
 minimap comes back after /reload. The gate is open: Plan 2 may start.
 
+## Minimap Plan 2 (ring and elements)
+
+Client APIs (`Map/Minimap.lua`, `UNVERIFIED (check in client)`):
+
+- `GetMinimapZoneText()` answers the name the minimap shows;
+  `C_PvP.GetZonePVPInfo()` (or `GetZonePVPInfo()`) the PvP type first.
+- `ZONE_CHANGED`, `ZONE_CHANGED_INDOORS`, `ZONE_CHANGED_NEW_AREA` fire on
+  zone changes, `CALENDAR_UPDATE_PENDING_INVITES` when invites change.
+- The CVars `timeMgrUseLocalTime` / `timeMgrUseMilitaryTime` via
+  `GetCVarBool`; `GetGameTime()` answers realm hour and minute.
+- `C_Map.GetBestMapForUnit("player")` and
+  `C_Map.GetPlayerMapPosition(id, "player"):GetXY()` (nil in instances).
+- `C_Calendar.GetNumPendingInvites()`.
+- `ToggleWorldMap()`, `ToggleCalendar()` and, after
+  `C_AddOns.LoadAddOn("Blizzard_TimeManager")`, `TimeManager_Toggle()` open
+  their panels from addon code without taint.
+
+In game:
+
+- Zone name and its color in a sanctuary, a friendly, a contested and a
+  hostile zone; it changes on entering a subzone.
+- The clock matches Blizzard's clock with local time on and off, and with
+  24-hour on and off.
+- The calendar button opens the calendar and glows with a pending invite.
+- Coordinates (turned on) match the world map's and are empty in an
+  instance.
+- The round ring looks like the mockup in all three skins.
+- Clicks on the zone name, clock and calendar do nothing in combat; no
+  taint line, no blocked action.
+- Each Elements setting hides its element at once.
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

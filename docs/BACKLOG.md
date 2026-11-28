@@ -11,3 +11,4 @@ Ideas not built yet.
 - Raid target icon on unit frames.
 - Turned-off unit frames could unregister their events.
 - Detached resource bar (and detached cast bar) hide in pet battles and vehicles like the Player frame.
+- Minimap (part of AnotherHUD, not an addon of its own).

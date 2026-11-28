@@ -1,8 +1,8 @@
 # AnotherHUD
 
-WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Cast Bar) and adds a class resource bar and XP / Reputation, plugged into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`), an action bar addon (Action Bars 1-8, Stance, Pet Bar, totem bar; not built yet) and a minimap addon (not built yet). AnotherHUD does not touch Blizzard's action bars. The addon folder is `AnotherHUD/` inside the repo.
+WoW **Forever** (retail engine, Interface 16001) addon in Lua 5.1: replaces the unit frames (Player, Target, Target of Target, Focus, Pet, Party, Boss, Cast Bar) and adds a class resource bar and XP / Reputation (and later the minimap, see `docs/BACKLOG.md`), plugged into Blizzard's **Edit Mode**. Part of the player's own UI suite with **AnotherLedger** (`D:\GitRepos\LootLedger`) and **AnotherBars** (`D:\GitRepos\AnotherBars`: Action Bars 1-8, Stance, Pet Bar, totem bar). The minimap is part of AnotherHUD, not an addon of its own (decided 2026-11-28). AnotherHUD does not touch Blizzard's action bars. The addon folder is `AnotherHUD/` inside the repo.
 
-**Status:** Plans 1-6 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss; class resource bar; XP / Reputation bar); Plan 4 checked in the client. Next: the suite's action bar addon (or raid frames, see `docs/BACKLOG.md`; action bars, stance, pet and totem bars moved to their own addon on 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+**Status:** Plans 1-6 built (foundation, mockups, unit frames: Player with cast bar, Target, Target of Target, Focus, Pet, Party, Boss; class resource bar; XP / Reputation bar); Plans 4-6 checked in the client. Next: `docs/BACKLOG.md` from top to bottom, starting with raid frames (action bars, stance, pet and totem bars live in AnotherBars since 2026-11-25). See `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
 Docs:
 - `README.md`: player guide (keep it free of texture paths, API names and pixel sizes).

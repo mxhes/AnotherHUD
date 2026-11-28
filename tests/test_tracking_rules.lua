@@ -160,3 +160,43 @@ h.test("theme carries the tracking colors and sizes", function()
   h.eq(T.trackingColors.reaction[3], { 0.75, 0.27, 0 })
   h.eq(T.sizes.tracking, { width = 500, height = 10, gap = 1, restedAlpha = 0.4, textFont = 10 })
 end)
+
+h.test("honor text", function()
+  local T = load().Tracking
+  h.eq(T.honorText(12, 1240, 4000), "Honor level 12  1,240 / 4,000 (31%)")
+  h.eq(T.honorText(3, 0, 0), "Honor level 3  0 / 0")
+end)
+
+h.test("honor row", function()
+  local T = load().Tracking
+  local r = T.honor({ value = 1240, max = 4000, level = 12 })
+  h.eq(r.value, 1240); h.eq(r.max, 4000)
+  h.eq(r.text, "Honor level 12  1,240 / 4,000 (31%)")
+  h.eq(T.honor(nil), nil)
+  h.eq(T.honor({ max = 10 }), nil)
+  h.eq(T.honor({ value = 1 }), nil)
+end)
+
+h.test("secret honor fills without text", function()
+  withSecrets(function()
+    local T = load().Tracking
+    local s = fakes.secret(500)
+    local r = T.honor({ value = s, max = 1000, level = 3 })
+    h.eq(r.value, s); h.eq(r.max, 1000); h.eq(r.text, nil)
+    local m = fakes.secret(1000)
+    local r2 = T.honor({ value = 500, max = m, level = 3 })
+    h.eq(r2.max, m); h.eq(r2.text, nil)
+  end)
+end)
+
+h.test("row hit test", function()
+  local T = load().Tracking
+  local function at(o) return T.rowAt(o, 10, 1, 4, 3) end
+  h.eq(at(4), 1); h.eq(at(13), 1); h.eq(at(14), nil); h.eq(at(15), 2)
+  h.eq(at(35), 3); h.eq(at(2), nil); h.eq(at(36), nil)
+end)
+
+h.test("honor color", function()
+  local ns = load()
+  h.eq(ns.Theme.trackingColors.honor, { 1, 0.24, 0 })
+end)

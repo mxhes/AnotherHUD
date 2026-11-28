@@ -148,5 +148,6 @@ ns.Locale.register("deDE", {
   ["Exalted"] = "Ehrfürchtig",
   ["Level"] = "Stufe",
   ["rested"] = "erholt",
+  ["Honor level"] = "Ehrenstufe",
   ["Sample Faction"] = "Beispielfraktion",
 })

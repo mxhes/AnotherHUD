@@ -185,6 +185,8 @@ Theme.sizes = {
 Theme.trackingColors = {
   xp = { 0.58, 0, 0.55 },
   rested = { 0, 0.39, 0.88 },
+  -- the approved honor row color (mockup 6)
+  honor = { 1, 0.24, 0 },
   reaction = {
     [1] = { 0.8, 0.3, 0.22 }, [2] = { 0.8, 0.3, 0.22 }, [3] = { 0.75, 0.27, 0 },
     [4] = { 0.9, 0.7, 0 }, [5] = { 0, 0.6, 0.1 }, [6] = { 0, 0.6, 0.1 },

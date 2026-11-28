@@ -48,6 +48,12 @@ A bar at the bottom of the screen shows your experience while you can still gain
 
 The numbers (level, XP and percent, rested XP; faction, standing and progress; honor level and honor) show while the mouse is over the bar; "Show text" in the Text section makes them show always or never. In Edit Mode the bar shows a sample of both, so you can move it, and its panel sets the width, bar height, text size, skin, bar texture, which bars to show and the fading. It replaces Blizzard's experience and reputation bars; turned off in the AnotherHUD box, Blizzard's come back after a /reload.
 
+## Minimap
+
+The minimap sits in an AnotherHUD frame at the top right of the screen, in the same skin as the unit frames. "Shape" in the Look section makes it square (inside the skin's border) or round, and "Map size" sets its size. The mouse wheel over the map zooms in and out; turn "Mouse wheel zoom" off in the Behaviour section and the wheel does nothing there. Move it in Edit Mode like the other frames.
+
+For now Blizzard's mail, tracking, clock, calendar and zone name around the map are hidden with Blizzard's minimap border; they come back on the AnotherHUD map in the next step. Turned off in the AnotherHUD box, Blizzard's minimap comes back after a /reload.
+
 ## Known gaps
 
 - Totems and the extra power bar of some fights are not shown while the AnotherHUD Player frame is on. Totems come back with the suite's action bar addon.

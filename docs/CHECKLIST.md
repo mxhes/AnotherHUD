@@ -269,6 +269,48 @@ Results:
   Forever works. Forever has no renown, friendship or paragon factions, so
   the "Renown / friendship factions" line above cannot be checked there.
 
+## Minimap spike (gate)
+
+The hard gate of the minimap (spec `docs/superpowers/specs/2026-11-28-minimap-design.md`):
+any taint or blocked action from AnotherHUD here stops the minimap work
+until it is rethought. Record the result here (date, pass / fail, what was seen).
+
+Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in client)`):
+
+- `Minimap` can be re-parented, anchored and sized from addon code out of
+  combat without taint, and keeps drawing, pinging and tracking in our frame.
+- `Minimap:SetMaskTexture` with `Interface\Buttons\WHITE8x8` gives a square
+  map, with `Textures\MinimapMask` a round one.
+- `Minimap:GetZoom`, `SetZoom` and `GetZoomLevels` (levels 0 .. levels - 1);
+  `OnMouseWheel` on `Minimap` fires over the map.
+- Blizzard's minimap cluster is `MinimapCluster`; hiding it after the map
+  moved out leaves the map working.
+- The map (strata LOW) draws above our skin panel.
+- Libraries placing minimap buttons read the global `GetMinimapShape()`.
+- `IsLoggedIn()` exists.
+
+In the client (`/console taintLog 1`, then check `Logs\taint.log` and the chat
+for blocked-action messages after each step):
+
+- After /reload the map shows in the AnotherHUD frame, top right, square,
+  with the skin border; Blizzard's cluster art, zone text and clock are gone.
+- Shape Round: the map is round; back to Square: square again. Both look
+  right at the edge (no black corners, no bleeding past the border).
+- The map pings on a click, shows the player arrow, nodes and quest blips.
+- The wheel zooms in and out over the map and stops at both ends; with
+  Mouse wheel zoom off it does nothing.
+- Map size slider: the map grows and shrinks with the frame.
+- Open and close Edit Mode, move the frame, switch layouts and reset one:
+  the map stays in our frame, no taint line.
+- Enter and leave combat (also /reload in combat): no error, the map stays.
+- Change zones (a portal, an instance) and /reload: the map stays in place.
+- Queue for a dungeon from the group finder and accept the queue: no
+  blocked action, no taint line from AnotherHUD.
+- Turn Minimap off in the AnotherHUD box and /reload: Blizzard's minimap
+  is back where it was, working; turn it on and /reload: ours is back.
+
+Results: (not run yet)
+
 ## Edit Mode spike (Plan 1, Task 7)
 
 Setup first: link the addon and copy the libraries as in

@@ -169,7 +169,7 @@ h.test("Core.init attaches the checklist and adds no action bar setting", functi
     local ok2, err2 = pcall(function()
       local ns = h.load(h.toc())
       ns.Core.init()
-      h.eq(lem.frames, 10) -- the unit frames, the player cast bar and resource bar holders, Party, Boss and XP / Reputation
+      h.eq(lem.frames, 11) -- the unit frames, the player cast bar and resource bar holders, Party, Boss, XP / Reputation and the minimap
       h.eq(ns.Modules.get("player").frame ~= nil, true)
       h.eq(#lem.added, 0) -- action bars are another addon's
       h.eq(hooked, true)

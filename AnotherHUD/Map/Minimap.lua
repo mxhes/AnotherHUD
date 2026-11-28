@@ -75,7 +75,45 @@ end
 local function mask(spec)
   ns.Combat.after("minimap:mask", function()
     local m = blizzardMap()
-    if m and spec.frame and ns.Modules.isEnabled(ID) then m:SetMaskTexture(Rules.mask(opt("shape"))) end
+    if not m or not spec.frame or not ns.Modules.isEnabled(ID) then return end
+    spec.masking = true
+    local ok, err = pcall(m.SetMaskTexture, m, Rules.mask(opt("shape")))
+    spec.masking = false
+    if not ok then error(err, 0) end
+  end)
+end
+
+-- Blizzard's art and buttons that travel with the map (children of Minimap
+-- and of MinimapBackdrop, Minimap.xml), seen on Forever 2026-11-28: the ring
+-- (MinimapCompassTexture and its underlay), the zoom buttons and their hover
+-- area, the expansion and event buttons.
+-- The ring and the zoom buttons only go invisible and mouse-less: Blizzard's
+-- wheel zooms through Minimap.ZoomIn:Click() / ZoomOut:Click().
+-- UNVERIFIED (check in client): Click() on them still zooms at alpha 0.
+local function keepHidden(f)
+  if type(f) ~= "table" then return end
+  f:Hide()
+  local function hide(self) self:Hide() end
+  hooksecurefunc(f, "Show", hide)
+  hooksecurefunc(f, "SetShown", hide)
+end
+
+local function unseen(f)
+  if type(f) ~= "table" then return end
+  f:SetAlpha(0)
+  if f.EnableMouse then f:EnableMouse(false) end
+end
+
+local function hideMapArt(m)
+  ns.Combat.after("minimap:art", function()
+    unseen(_G.MinimapCompassTexture)
+    unseen(_G.MinimapCompassTextureUnderlay)
+    unseen(m.ZoomIn)
+    unseen(m.ZoomOut)
+    unseen(m.ZoomHitArea)
+    keepHidden(_G.ExpansionLandingPageMinimapButton)
+    local backdrop = _G.MinimapBackdrop
+    keepHidden(type(backdrop) == "table" and backdrop.ExternalEventURLButton or nil)
   end)
 end
 
@@ -138,6 +176,12 @@ local function hookMap(spec, m)
     if spec.placing or not ns.Modules.isEnabled(ID) then return end
     place(spec)
   end)
+  -- Blizzard sets its own (round) mask on Forever after we set ours
+  -- (MinimapCluster:UpdateMinimapConfig): ours goes back on.
+  hooksecurefunc(m, "SetMaskTexture", function()
+    if spec.masking or not ns.Modules.isEnabled(ID) then return end
+    mask(spec)
+  end)
   m:EnableMouseWheel(true)
   m:SetScript("OnMouseWheel", wheelHandler(m:GetScript("OnMouseWheel")))
 end
@@ -186,7 +230,10 @@ ns.Modules.define({
     spec.panel.frame:SetFrameLevel(frame:GetFrameLevel() or 0)
     spec.placing = false
     local m = blizzardMap()
-    if m then hookMap(spec, m) end
+    if m then
+      hookMap(spec, m)
+      hideMapArt(m)
+    end
     frame:RegisterEvent("PLAYER_LOGIN")
     frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     frame:SetScript("OnEvent", function(_, event)

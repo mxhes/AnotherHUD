@@ -29,7 +29,26 @@ local function fakeMinimap(cluster)
   m.GetZoom = function(self) return self._zoom end
   m.SetZoom = function(self, z) self._zoom = z end
   m.GetZoomLevels = function() return 6 end
+  -- Blizzard's children of the map (Minimap.xml): zoom buttons and their
+  -- hover area; EnableMouse is recorded.
+  for _, key in ipairs({ "ZoomIn", "ZoomOut", "ZoomHitArea" }) do
+    local c = fakes.frame()
+    c.EnableMouse = function(self, on) self._mouse = on end
+    m[key] = c
+  end
   return m
+end
+
+-- Blizzard's art and buttons on MinimapBackdrop (a child of the map).
+local function fakeBackdrop()
+  local backdrop = fakes.frame("MinimapBackdrop")
+  backdrop.ExternalEventURLButton = fakes.frame()
+  return {
+    MinimapBackdrop = backdrop,
+    MinimapCompassTexture = fakes.frame("MinimapCompassTexture"),
+    MinimapCompassTextureUnderlay = fakes.frame("MinimapCompassTextureUnderlay"),
+    ExpansionLandingPageMinimapButton = fakes.frame("ExpansionLandingPageMinimapButton"),
+  }
 end
 
 -- Runs fn(ns, client, map, cluster) after Core.init. opts.shape: a
@@ -49,6 +68,8 @@ local function withMap(opts, fn)
     Minimap = map, MinimapCluster = cluster,
     GetMinimapShape = opts.shape or fakes.NIL,
   }
+  local backdrop = fakeBackdrop()
+  for k, v in pairs(backdrop) do globals[k] = v end
   if opts.off then
     globals.AnotherHUDDB = { profileKeys = {}, profiles = { Default = { modules = { minimap = { enabled = false } } } } }
   end
@@ -57,7 +78,7 @@ local function withMap(opts, fn)
     local ns = h.load(h.toc())
     ns.Util.say = function() end
     ns.Core.init()
-    fn(ns, client, map, cluster)
+    fn(ns, client, map, cluster, backdrop)
   end)
   units.restore()
   client.restore()
@@ -118,6 +139,42 @@ h.test("the shape sets the mask", function()
     ns.Options.set("minimap", "shape", "Round")
     h.eq(map._mask, "Textures\\MinimapMask")
     h.eq(spec.panel.frame:IsShown(), false, "no square panel when round")
+  end)
+end)
+
+h.test("Blizzard setting its own mask is undone", function()
+  withMap({}, function(ns, client, map)
+    map:SetMaskTexture("ui-hud-minimap-frame-generic-mask")
+    h.eq(map._mask, "Interface\\Buttons\\WHITE8x8", "ours again at once")
+    client.setCombat(true)
+    map:SetMaskTexture("ui-hud-minimap-frame-generic-mask")
+    h.eq(map._mask, "ui-hud-minimap-frame-generic-mask", "nothing in combat")
+    client.setCombat(false)
+    client.fire("PLAYER_REGEN_ENABLED")
+    h.eq(map._mask, "Interface\\Buttons\\WHITE8x8", "ours after combat")
+    ns.EditMode.Checklist.toggle("minimap", false)
+    map:SetMaskTexture("ui-hud-minimap-frame-generic-mask")
+    h.eq(map._mask, "ui-hud-minimap-frame-generic-mask", "off: Blizzard's stays")
+  end)
+end)
+
+h.test("Blizzard's ring and buttons on the map are hidden", function()
+  withMap({}, function(_, _, map, _, b)
+    h.eq(b.MinimapCompassTexture._alpha, 0, "ring art")
+    h.eq(b.MinimapCompassTextureUnderlay._alpha, 0, "ring underlay")
+    -- the zoom buttons stay shown (Blizzard's wheel clicks them) but unseen
+    -- and not clickable
+    for _, key in ipairs({ "ZoomIn", "ZoomOut", "ZoomHitArea" }) do
+      h.eq(map[key]._alpha, 0, key .. " unseen")
+      h.eq(map[key]._mouse, false, key .. " no mouse")
+    end
+    for _, f in ipairs({ b.ExpansionLandingPageMinimapButton, b.MinimapBackdrop.ExternalEventURLButton }) do
+      h.eq(f:IsShown(), false, "button hidden")
+      f:Show()
+      h.eq(f:IsShown(), false, "stays hidden")
+      f:SetShown(true)
+      h.eq(f:IsShown(), false, "stays hidden after SetShown")
+    end
   end)
 end)
 

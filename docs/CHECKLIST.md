@@ -291,6 +291,17 @@ Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in c
 - Blizzard's minimap cluster is `MinimapCluster`; hiding it after the map
   moved out leaves the map working.
 - The map (strata LOW) draws above our skin panel.
+- Blizzard's ring around the map (`MinimapCompassTexture` and its underlay),
+  the zoom buttons, the expansion button and the event button don't show on
+  our map; the wheel still zooms (Blizzard's handler clicks the invisible
+  zoom buttons).
+- Square stays square after login and after a /reload (Blizzard re-sets its
+  round mask; our `SetMaskTexture` hook puts ours back). Round looks round
+  with `Textures\MinimapMask` (else use Blizzard's
+  `ui-hud-minimap-frame-generic-mask`).
+- First run 2026-11-28: the map moved into our frame, but was round with
+  Blizzard's ring around it (mask re-set by Blizzard, ring on
+  `MinimapBackdrop`); fixed, check again.
 - Libraries placing minimap buttons read the global `GetMinimapShape()`.
 - `IsLoggedIn()` exists.
 

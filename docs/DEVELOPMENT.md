@@ -312,7 +312,16 @@ size are kept in `spec.original`. `hooksecurefunc` on `Minimap:SetParent` /
 (`spec.placing` guards our own calls); `PLAYER_ENTERING_WORLD` and Edit
 Mode open / close re-queue it too. The mask (`MinimapRules.mask`, under
 `"minimap:mask"`) is `Interface\Buttons\WHITE8x8` for Square and
-`Textures\MinimapMask` for Round. The wheel (`OnMouseWheel` on `Minimap`)
+`Textures\MinimapMask` for Round; a hook on `Minimap:SetMaskTexture` puts
+ours back when Blizzard sets its own (Forever's
+`MinimapCluster:UpdateMinimapConfig` does, after login). Blizzard's art and
+buttons that travel with the map (children of `Minimap` and
+`MinimapBackdrop`): the ring `MinimapCompassTexture` /
+`MinimapCompassTextureUnderlay` and `Minimap.ZoomIn` / `ZoomOut` /
+`ZoomHitArea` go to alpha 0 without mouse (Blizzard's own wheel handler
+clicks the zoom buttons), `ExpansionLandingPageMinimapButton` and
+`MinimapBackdrop.ExternalEventURLButton` are hidden with `Show` /
+`SetShown` hooks. The wheel (`OnMouseWheel` on `Minimap`)
 steps `SetZoom` through `MinimapRules.zoom`. `MinimapCluster` is hidden with
 `Base.hideBlizzard` after the map moved out (queued in that order in
 combat). `GetMinimapShape` is defined at `PLAYER_LOGIN` (or at create when

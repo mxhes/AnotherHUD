@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnotherHUD mockup 7: Minimap</title>
+<link rel="stylesheet" href="kit.css"></head>
+<body>
+<h1>Mockup 7: Minimap</h1>
+<p class="lead">Skins: Classic, Forge, Slate (Gilded is gone from all Another addons). Blizzard's map inside an AnotherHUD frame, square or round (the Shape setting), in the skin's border. Zone name above, clock and calendar below. Mail and the dungeon queue on the top corners (only when needed), the addon container bottom left, tracking bottom right. No zoom buttons: the mouse wheel zooms (the Mouse wheel zoom setting). Small round buttons use the level badge look (ring lines, panel fill, gold symbol). Coordinates (off by default) under the clock line.</p>
+<div id="skins"></div>
+<div id="cells"></div>
+
+<div class="pick" id="pick">
+  <b>Approved (2026-11-28):</b> as shown, square and round (the Shape setting), without zoom buttons.
+</div>
+
+<script src="kit.js"></script>
+<script>
+const { C, css, sc } = K;
+const MAP = 180;
+// A placeholder map: terrain blobs, a road, the player arrow. No game art.
+function terrain(w, h, round) {
+  const clip = round ? 'border-radius:50%;' : '';
+  return `<i class="abs" style="left:0;top:0;width:${w}px;height:${h}px;${clip}overflow:hidden;background:
+    radial-gradient(ellipse 30% 22% at 28% 30%, #4f7a3e 0 60%, transparent 62%),
+    radial-gradient(ellipse 26% 30% at 72% 64%, #3f6a8a 0 55%, transparent 57%),
+    linear-gradient(115deg, transparent 47%, #b59a63 47% 50%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 60% 25%, #6f7d45 0 60%, transparent 62%),
+    linear-gradient(#5d6b3c, #4a5a33)"></i>
+    <i class="abs" style="left:${w / 2 - 6}px;top:${h / 2 - 7}px;width:12px;height:14px;background:#ffd94a;clip-path:polygon(50% 0,100% 100%,50% 75%,0 100%)"></i>
+    <i class="abs" style="left:${w * 0.7}px;top:${h * 0.35}px;width:6px;height:6px;border-radius:50%;background:#ffd100;box-shadow:0 0 0 1px #000"></i>`;
+}
+// A small round badge (level badge look) with a symbol.
+function badge(skin, cx, cy, sym, o = {}) {
+  const d = o.d || 20;
+  const ring = K.ring(skin, cx, cy, d, { studs: false });
+  return `<i class="portrait" style="left:${cx - d / 2}px;top:${cy - d / 2}px;width:${d}px;height:${d}px;background:${css(C.panel, 0.95)}"></i>` +
+    ring.html + K.text(cx, cy - 7, sym, { size: o.size || 10, align: 'center', color: o.color || C.gold });
+}
+// The map with its border: square (panel edge) or round (portrait ring).
+function map(skin, x, y, round, opts = {}) {
+  const e = K.edgeWidth(K.SKINS[skin].border);
+  let html = '';
+  if (round) {
+    html += `<div class="abs" style="left:${e}px;top:${e}px;width:${MAP - 2 * e}px;height:${MAP - 2 * e}px">${terrain(MAP - 2 * e, MAP - 2 * e, true)}</div>`;
+    html += K.ring(skin, MAP / 2, MAP / 2, MAP, { thick: false }).html;
+  } else {
+    html += K.panel(skin, { w: MAP, h: MAP, x: 0, y: 0, studs: false });
+    html += `<div class="abs" style="left:${e}px;top:${e}px;width:${MAP - 2 * e}px;height:${MAP - 2 * e}px">${terrain(MAP - 2 * e, MAP - 2 * e, false)}</div>`;
+  }
+  // corner buttons: on the rim for round, inside the corners for square
+  const inset = round ? 22 : 16;
+  if (opts.mail !== false) html += badge(skin, inset, inset, '✉');
+  if (opts.queue !== false) html += badge(skin, MAP - inset, inset, '◉', { color: [0.45, 0.85, 1] });
+  html += badge(skin, inset, MAP - inset, '▦');
+  html += badge(skin, MAP - inset, MAP - inset, '⌖', { size: 12 });
+  // texts: zone above, clock + calendar below, coordinates under them
+  html += K.text(MAP / 2, -18, 'Elwynn Forest', { size: 12, align: 'center', color: [0.3, 0.95, 0.3] });
+  html += K.text(MAP / 2 - 14, MAP + 4, '14:32', { size: 11, align: 'center' });
+  html += badge(skin, MAP / 2 + 20, MAP + 11, '▤', { d: 18, size: 10 });
+  if (opts.coords) html += K.text(MAP / 2, MAP + 22, '42.1, 65.8', { size: 10, align: 'center', color: [0.85, 0.85, 0.85] });
+  return `<div class="unit" style="left:${x}px;top:${y}px;width:${MAP}px;height:${MAP}px">${html}</div>`;
+}
+// The open container: a skinned panel of addon buttons beside the map.
+function container(skin, x, y) {
+  const s = 26, gap = 4, cols = 4, n = 7;
+  const rows = Math.ceil(n / cols), e = K.edgeWidth(K.SKINS[skin].border);
+  const w = cols * s + (cols - 1) * gap + 2 * e + 8, h = rows * s + (rows - 1) * gap + 2 * e + 8;
+  let html = K.panel(skin, { w, h, x: 0, y: 0 });
+  const hues = [30, 200, 120, 280, 0, 50, 160];
+  for (let i = 0; i < n; i++) {
+    const cx = e + 4 + (i % cols) * (s + gap) + s / 2, cy = e + 4 + Math.floor(i / cols) * (s + gap) + s / 2;
+    html += `<i class="portrait" style="left:${cx - s / 2 + 3}px;top:${cy - s / 2 + 3}px;width:${s - 6}px;height:${s - 6}px;background:radial-gradient(circle at 40% 35%, hsl(${hues[i]},80%,70%), hsl(${hues[i]},60%,30%))"></i>`;
+    html += K.ring(skin, cx, cy, s, { studs: false }).html;
+  }
+  return `<div class="unit" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${html}</div>`;
+}
+K.page({ zoom: 1.5, variants: [
+  { title: 'A. Square', note: 'The map fills the skin panel (inset by the border); corner buttons sit inside the corners.',
+    w: 260, h: 250, render: s => map(s, 40, 28, false, {}) },
+  { title: 'B. Round', note: 'The map is masked to a circle with the skin ring (like the portrait ring); corner buttons sit on the rim.',
+    w: 260, h: 250, render: s => map(s, 40, 28, true, {}) },
+  { title: 'C. Container open (square) and a quiet map (round)', note: 'Left: a click on the container button opens a panel of addon buttons to the left of the map, in the skin\'s look (round buttons with the ring), 4 per row. Right: no mail, no queue, coordinates on.',
+    w: 640, h: 270, render: s => container(s, 10, 160) + map(s, 160, 28, false, {}) + map(s, 420, 28, true, { mail: false, queue: false, coords: true }) },
+]});
+</script>
+</body></html>

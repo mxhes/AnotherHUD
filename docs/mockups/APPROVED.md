@@ -138,3 +138,19 @@ Shared rules (all mockups):
   XP / Reputation bar, built like the other rows (same panel, row height,
   the skin's Lines pick between rows, text centered on mouse-over), text
   "Honor level 12  1,240 / 4,000 (31%)".
+
+## 7. Minimap (`7-minimap.html`)
+
+- Approved 2026-11-28: **as shown**, both shapes (a Shape setting: Square
+  or Round), no zoom buttons (the mouse wheel zooms, a setting).
+- Map 180 x 180. Square: the map fills the skin panel inset by the border.
+  Round: the map masked to a circle with the skin ring (portrait ring look).
+- Zone name above the map (12 pt, the zone's PvP color); clock (11 pt) and a
+  calendar badge below it; coordinates (10 pt, light grey, off by default)
+  under them.
+- Buttons as 20 px round badges in the level badge look (ring lines, panel
+  fill, gold symbol): mail top left and dungeon queue top right (only when
+  needed), addon container bottom left, tracking bottom right; inside the
+  corners on Square, on the rim on Round.
+- Container: a click opens a skinned panel left of the map with the addon
+  buttons as 26 px round buttons with the ring, 4 per row, 4 px apart.

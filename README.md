@@ -44,9 +44,9 @@ Target, Target of Target and Focus only show while you have that unit, and Pet o
 
 ## XP and reputation
 
-A bar at the bottom of the screen shows your experience while you can still gain XP (not at the level cap, not with XP gain turned off), with your rested XP as a lighter band ahead of it, and the reputation of the faction you watch in its standing's color. With both, XP is on top. Watch a faction in the reputation pane and its bar appears at once; reach the level cap and the XP bar goes away. With nothing to show the bar hides.
+A bar at the bottom of the screen shows your experience while you can still gain XP (not at the level cap, not with XP gain turned off), with your rested XP as a lighter band ahead of it, and the reputation of the faction you watch in its standing's color. With both, XP is on top. Watch a faction in the reputation pane and its bar appears at once; reach the level cap and the XP bar goes away. With nothing to show the bar hides. Turn on "Show honor" in the Behaviour section for a third bar under them with your honor and honor level. Out of combat, a click on the reputation bar opens the reputation pane and a click on the honor bar opens the PvP pane.
 
-The numbers (level, XP and percent, rested XP; faction, standing and progress) show while the mouse is over the bar; "Show text" in the Text section makes them show always or never. In Edit Mode the bar shows a sample of both, so you can move it, and its panel sets the width, bar height, text size, skin, bar texture, which bars to show and the fading. It replaces Blizzard's experience and reputation bars; turned off in the AnotherHUD box, Blizzard's come back after a /reload.
+The numbers (level, XP and percent, rested XP; faction, standing and progress; honor level and honor) show while the mouse is over the bar; "Show text" in the Text section makes them show always or never. In Edit Mode the bar shows a sample of both, so you can move it, and its panel sets the width, bar height, text size, skin, bar texture, which bars to show and the fading. It replaces Blizzard's experience and reputation bars; turned off in the AnotherHUD box, Blizzard's come back after a /reload.
 
 ## Known gaps
 

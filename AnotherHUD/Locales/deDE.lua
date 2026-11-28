@@ -136,6 +136,8 @@ ns.Locale.register("deDE", {
   ["Show the experience bar while you can gain XP."] = "Zeigt die Erfahrungsleiste, solange du EP sammeln kannst.",
   ["Show reputation"] = "Ruf zeigen",
   ["Show the reputation of the faction you watch."] = "Zeigt den Ruf der Fraktion, die du beobachtest.",
+  ["Show honor"] = "Ehre zeigen",
+  ["Show your honor and honor level."] = "Zeigt deine Ehre und Ehrenstufe.",
   ["Opacity of the bars out of combat, in percent."] = "Deckkraft der Leisten außerhalb des Kampfes, in Prozent.",
   ["Show the bars fully while the mouse is over them."] = "Zeigt die Leisten voll, solange die Maus darüber ist.",
   ["Hated"] = "Hasserfüllt",

@@ -39,6 +39,7 @@ read_globals = {
   "GetSpecialization", "GetRuneCooldown", "UnitPartialPower", "GetPowerRegenForPowerType",
   "UnitPowerDisplayMod", "GetTime", "BreakUpLargeNumbers", "FACTION_BAR_COLORS",
   "UnitXP", "UnitXPMax", "GetXPExhaustion", "IsXPUserDisabled", "IsPlayerAtEffectiveMaxLevel",
+  "UnitHonor", "UnitHonorMax", "UnitHonorLevel", "GetCursorPosition",
   "C_Reputation", "GetWatchedFactionInfo",
   "StatusTrackingBarManager", "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer",
 }

@@ -133,7 +133,7 @@ h.test("checklist attach waits for Blizzard's Edit Mode window", function()
       -- parented to UIParent (not Blizzard's window), anchored under it
       h.eq(box.parent, UIParent)
       h.eq(rawget(box.frame, "ignoreInLayout"), nil)
-      h.eq(lastPoint(box.frame), { "SetPoint", "TOPLEFT", manager, "BOTTOMLEFT", 0, -4 })
+      h.eq(lastPoint(box.frame), { "SetPoint", "TOPLEFT", manager, "TOPRIGHT", 4, 0 })
       h.eq(box.frame:IsShown(), true)
       hooked.OnHide(manager)
       h.eq(box.frame:IsShown(), false)
@@ -169,7 +169,7 @@ h.test("Core.init attaches the checklist and adds no action bar setting", functi
     local ok2, err2 = pcall(function()
       local ns = h.load(h.toc())
       ns.Core.init()
-      h.eq(lem.frames, 10) -- the unit frames, the player cast bar and resource bar holders, Party, Boss and XP / Reputation
+      h.eq(lem.frames, 11) -- the unit frames, the player cast bar and resource bar holders, Party, Boss, XP / Reputation and the minimap
       h.eq(ns.Modules.get("player").frame ~= nil, true)
       h.eq(#lem.added, 0) -- action bars are another addon's
       h.eq(hooked, true)

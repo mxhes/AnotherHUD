@@ -171,6 +171,8 @@ Theme.sizes = {
   -- XP / Reputation bar: width and height of one bar, the gap between the two,
   -- the alpha of the rested XP band and the text font size.
   tracking = { width = 500, height = 10, gap = 1, restedAlpha = 0.4, textFont = 10 },
+  -- Minimap: the default width and height of the map frame.
+  minimap = { size = 180 },
 }
 
 -- XP / Reputation bar colors, {r, g, b}: the game's usual XP purple and

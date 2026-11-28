@@ -74,6 +74,9 @@ local function withBar(state, fn)
     blizzard[name] = fakes.frame(name)
     globals[name] = blizzard[name]
   end
+  -- as in Blizzard's XML: the bar containers are children of the manager
+  blizzard.MainStatusTrackingBarContainer._parent = blizzard.StatusTrackingBarManager
+  blizzard.SecondaryStatusTrackingBarContainer._parent = blizzard.StatusTrackingBarManager
   local ok, err = pcall(fakes.withGlobals, globals, function()
     local ns = h.load(h.toc())
     ns.Util.say = function() end
@@ -297,11 +300,13 @@ end)
 
 h.test("Blizzard's status tracking bars are hidden", function()
   withBar({}, function(_, _, _, _, blizzard)
-    for _, name in ipairs({ "StatusTrackingBarManager", "MainStatusTrackingBarContainer",
-      "SecondaryStatusTrackingBarContainer" }) do
-      local f = blizzard[name]
-      h.eq(f:GetParent() ~= nil and f:GetParent() ~= UIParent, true, name .. " reparented")
-      h.eq(f:IsShown(), false, name .. " hidden")
+    local manager = blizzard.StatusTrackingBarManager
+    h.eq(manager:GetParent() ~= nil and manager:GetParent() ~= UIParent, true, "manager reparented")
+    h.eq(manager:IsShown(), false, "manager hidden")
+    -- Blizzard's containers call self:GetParent():CheckForLayoutChange() when
+    -- Edit Mode closes: they stay inside the (hidden) manager.
+    for _, name in ipairs({ "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer" }) do
+      h.eq(blizzard[name]:GetParent(), manager, name .. " still in the manager")
     end
   end)
 end)

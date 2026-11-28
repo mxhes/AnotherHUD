@@ -151,4 +151,14 @@ ns.Locale.register("deDE", {
   ["rested"] = "erholt",
   ["Honor level"] = "Ehrenstufe",
   ["Sample Faction"] = "Beispielfraktion",
+  -- Minimap (Map/Minimap.lua)
+  ["Minimap"] = "Minikarte",
+  ["Map size"] = "Kartengröße",
+  ["Width and height of the map."] = "Breite und Höhe der Karte.",
+  ["Shape"] = "Form",
+  ["Square or round map."] = "Eckige oder runde Karte.",
+  ["Square"] = "Eckig",
+  ["Round"] = "Rund",
+  ["Mouse wheel zoom"] = "Mausrad-Zoom",
+  ["Zoom the map with the mouse wheel."] = "Zoomt die Karte mit dem Mausrad.",
 })

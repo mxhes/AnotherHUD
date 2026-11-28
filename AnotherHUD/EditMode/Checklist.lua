@@ -66,13 +66,16 @@ local function refresh()
   end
 end
 
--- UNVERIFIED (check in client): a BackdropTemplate box on UIParent anchored
--- under EditModeManagerFrame, with UICheckButtonTemplate rows.
+-- A BackdropTemplate box on UIParent beside (right of) EditModeManagerFrame,
+-- in the DIALOG strata, with UICheckButtonTemplate rows. Under the window
+-- it was covered by the action bar overlays and ran off the screen when
+-- Advanced Options make the window tall (seen in the client 2026-11-28).
 local function build(manager)
   local T = ns.Theme
   local entries = Checklist.entries()
   box = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-  box:SetPoint("TOPLEFT", manager, "BOTTOMLEFT", 0, -4)
+  box:SetFrameStrata("DIALOG")
+  box:SetPoint("TOPLEFT", manager, "TOPRIGHT", 4, 0)
   box:SetSize(BOX_WIDTH, T.sizes.padding * 2 + ROW_HEIGHT * (#entries + 1))
   box:SetBackdrop(T.backdropSpec("round"))
   local fill, edge = T.colors.panelTint, T.colors.panelBorder

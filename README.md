@@ -6,7 +6,7 @@ AnotherHUD replaces the default unit frames of WoW Forever with its own, and plu
 
 ## Unit frames
 
-AnotherHUD draws seven unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box under the Edit Mode window: the frame goes away at once and stays away until you turn it back on. Getting Blizzard's frame back in its place needs a /reload.
+AnotherHUD draws seven unit frames and hides Blizzard's in their place. Turn single frames off in the AnotherHUD box to the right of the Edit Mode window: the frame goes away at once and stays away until you turn it back on. Getting Blizzard's frame back in its place needs a /reload.
 
 | Frame | Shows | Replaces |
 | --- | --- | --- |
@@ -47,6 +47,12 @@ Target, Target of Target and Focus only show while you have that unit, and Pet o
 A bar at the bottom of the screen shows your experience while you can still gain XP (not at the level cap, not with XP gain turned off), with your rested XP as a lighter band ahead of it, and the reputation of the faction you watch in its standing's color. With both, XP is on top. Watch a faction in the reputation pane and its bar appears at once; reach the level cap and the XP bar goes away. With nothing to show the bar hides. Turn on "Show honor" in the Behaviour section for a third bar under them with your honor and honor level. Out of combat, a click on the reputation bar opens the reputation pane and a click on the honor bar opens the PvP pane.
 
 The numbers (level, XP and percent, rested XP; faction, standing and progress; honor level and honor) show while the mouse is over the bar; "Show text" in the Text section makes them show always or never. In Edit Mode the bar shows a sample of both, so you can move it, and its panel sets the width, bar height, text size, skin, bar texture, which bars to show and the fading. It replaces Blizzard's experience and reputation bars; turned off in the AnotherHUD box, Blizzard's come back after a /reload.
+
+## Minimap
+
+The minimap sits in an AnotherHUD frame at the top right of the screen, in the same skin as the unit frames. "Shape" in the Look section makes it square (inside the skin's border) or round, and "Map size" sets its size. The mouse wheel over the map zooms in and out; turn "Mouse wheel zoom" off in the Behaviour section and the wheel does nothing there. Move it in Edit Mode like the other frames.
+
+For now Blizzard's mail, tracking, clock, calendar and zone name around the map are hidden with Blizzard's minimap border; they come back on the AnotherHUD map in the next step. Turned off in the AnotherHUD box, Blizzard's minimap comes back after a /reload.
 
 ## Known gaps
 

@@ -20,6 +20,8 @@ ignore = {
 -- Globals the addon sets: its saved variables.
 globals = {
   "AnotherHUDDB", "AnotherHUDCharDB",
+  -- defined by Map/Minimap.lua only when no other addon did
+  "GetMinimapShape",
 }
 
 -- WoW API the addon reads.
@@ -42,4 +44,5 @@ read_globals = {
   "UnitHonor", "UnitHonorMax", "UnitHonorLevel", "GetCursorPosition",
   "C_Reputation", "GetWatchedFactionInfo",
   "StatusTrackingBarManager", "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer",
+  "Minimap", "MinimapCluster", "IsLoggedIn",
 }

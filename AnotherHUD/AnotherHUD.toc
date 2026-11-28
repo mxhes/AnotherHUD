@@ -24,6 +24,7 @@ Core/UnitLayout.lua
 Core/GroupLayout.lua
 Core/Resource.lua
 Core/Tracking.lua
+Core/MinimapRules.lua
 EditMode/Snap.lua
 EditMode/Panel.lua
 EditMode/Glue.lua
@@ -50,5 +51,6 @@ Units/Pet.lua
 Units/Party.lua
 Units/Boss.lua
 Bars/Tracking.lua
+Map/Minimap.lua
 Core/Core.lua
 Boot.lua

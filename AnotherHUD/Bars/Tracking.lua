@@ -403,9 +403,12 @@ ns.Modules.define({
       checkbox("mouseover", "Show on mouseover", "Show the bars fully while the mouse is over them."),
     } },
   },
-  -- UNVERIFIED (check in client): Forever's status tracking bars live in
-  -- these frames (the manager and its two bar containers).
-  blizzard = { "StatusTrackingBarManager", "MainStatusTrackingBarContainer", "SecondaryStatusTrackingBarContainer" },
+  -- Only the manager: its two bar containers (MainStatusTrackingBarContainer,
+  -- SecondaryStatusTrackingBarContainer) stay its children and hide with it.
+  -- Blizzard's containers call self:GetParent():CheckForLayoutChange() when
+  -- Edit Mode closes; re-parented to our hidden frame that call failed
+  -- (seen in the client, 2026-11-28).
+  blizzard = { "StatusTrackingBarManager" },
   defaultPosition = { point = "BOTTOM", x = 0, y = 2 },
   create = function(spec)
     local frame = CreateFrame("Frame", "AnotherHUDTrackingBar", UIParent)

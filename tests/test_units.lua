@@ -51,14 +51,14 @@ local function withInit(opts, fn)
   if not ok then error(err, 0) end
 end
 
-h.test("all ten modules register with Edit Mode", function()
+h.test("all eleven modules register with Edit Mode", function()
   withInit({}, function(ns, _, lem)
-    h.eq(lem.frames, 10)
+    h.eq(lem.frames, 11)
     for _, id in ipairs({ "player", "playercast", "resource", "tracking", "target", "targettarget", "focus", "pet",
-      "party", "boss" }) do
+      "party", "boss", "minimap" }) do
       h.eq(ns.Modules.get(id) ~= nil and ns.Modules.get(id).frame ~= nil, true, id .. " frame")
       local bar = id == "resource" or id == "tracking"
-      h.eq(ns.Modules.get(id).kind, bar and "bar" or "unit", id .. " kind")
+      h.eq(ns.Modules.get(id).kind, id == "minimap" and "misc" or bar and "bar" or "unit", id .. " kind")
     end
     h.eq(ns.Modules.get("resource").frame:GetName(), "AnotherHUDResourceBarHolder")
     h.eq(ns.Modules.get("tracking").frame:GetName(), "AnotherHUDTrackingBar")
@@ -71,11 +71,11 @@ h.test("all ten modules register with Edit Mode", function()
   end)
 end)
 
-h.test("checklist shows the unit frames and the XP / Reputation bar", function()
+h.test("checklist shows the unit frames, the XP / Reputation bar and the minimap", function()
   withInit({}, function(ns)
     local ids = {}
     for _, entry in ipairs(ns.EditMode.Checklist.entries()) do ids[#ids + 1] = entry.id end
-    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss", "tracking" })
+    h.eq(ids, { "player", "target", "targettarget", "focus", "pet", "party", "boss", "tracking", "minimap" })
   end)
 end)
 

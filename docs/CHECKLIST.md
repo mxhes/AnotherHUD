@@ -230,8 +230,11 @@ Client APIs (`Core/Tracking.lua`, `Bars/Tracking.lua`, `UNVERIFIED (check in cli
 - `PLAYER_XP_UPDATE` (unit event, player), `UPDATE_EXHAUSTION`,
   `PLAYER_LEVEL_UP`, `ENABLE_XP_GAIN`, `DISABLE_XP_GAIN`, `UPDATE_FACTION`
   fire for what they say.
-- Blizzard's bars live in `StatusTrackingBarManager`,
-  `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`.
+- Blizzard's bars live in `StatusTrackingBarManager` (its children
+  `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`
+  hide with it; only the manager is re-parented). Closing Edit Mode (also
+  with Escape) gives no Lua warning from `StatusTrackingManager.lua`
+  (confirmed in the client 2026-11-28).
 
 In the client:
 
@@ -268,6 +271,71 @@ Results:
 - 2026-11-26, run by the player: everything that can be checked on WoW
   Forever works. Forever has no renown, friendship or paragon factions, so
   the "Renown / friendship factions" line above cannot be checked there.
+
+## Minimap spike (gate)
+
+The hard gate of the minimap (spec `docs/superpowers/specs/2026-11-28-minimap-design.md`):
+any taint or blocked action from AnotherHUD here stops the minimap work
+until it is rethought. Record the result here (date, pass / fail, what was seen).
+
+Client APIs (`Core/MinimapRules.lua`, `Map/Minimap.lua`, `UNVERIFIED (check in client)`):
+
+- `Minimap` can be re-parented, anchored and sized from addon code out of
+  combat without taint, and keeps drawing, pinging and tracking in our frame.
+- `Minimap:SetMaskTexture` with `Interface\Buttons\WHITE8x8` gives a square
+  map, with the atlas `ui-hud-minimap-frame-generic-mask` a round one.
+- `Minimap:GetZoom`, `SetZoom` and `GetZoomLevels` (levels 0 .. levels - 1);
+  `OnMouseWheel` on `Minimap` fires over the map. Whether Blizzard's
+  `Minimap` has its own `OnMouseWheel` (then that one zooms and ours only
+  turns it on or off): the wheel zooms one step per notch, not two.
+- Blizzard's minimap cluster is `MinimapCluster`; hiding it after the map
+  moved out leaves the map working.
+- The map (strata LOW) draws above our skin panel.
+- Blizzard's ring around the map (`MinimapCompassTexture` and its underlay),
+  the zoom buttons, the expansion button and the event button don't show on
+  our map; the wheel still zooms (Blizzard's handler clicks the invisible
+  zoom buttons).
+- Square stays square after login and after a /reload (Blizzard re-sets its
+  round mask; our `SetMaskTexture` hook puts ours back). Round looks round
+  with Blizzard's `ui-hud-minimap-frame-generic-mask` (`Textures\MinimapMask`
+  gave a broken, faint map on Forever, 2026-11-28).
+- First run 2026-11-28: the map moved into our frame, but was round with
+  Blizzard's ring around it (mask re-set by Blizzard, ring on
+  `MinimapBackdrop`); fixed. Second run 2026-11-28: square, no Blizzard
+  ring, looks right. Third run 2026-11-28: Round broken (fixed: Blizzard's
+  round mask atlas); the AnotherHUD box was hidden under the action bar
+  overlays (fixed: now right of the Edit Mode window). The group finder
+  eye works but hangs below left of our map, where Blizzard anchors it
+  (its badge spot top right comes in Plan 3). The taint steps
+  below are still open.
+- Libraries placing minimap buttons read the global `GetMinimapShape()`.
+- `IsLoggedIn()` exists.
+
+In the client (`/console taintLog 1`, then check `Logs\taint.log` and the chat
+for blocked-action messages after each step):
+
+- After /reload the map shows in the AnotherHUD frame, top right, square,
+  with the skin border; Blizzard's cluster art, zone text and clock are gone.
+- Shape Round: the map is round; back to Square: square again. Both look
+  right at the edge (no black corners, no bleeding past the border).
+- The map pings on a click, shows the player arrow, nodes and quest blips.
+- The wheel zooms in and out over the map and stops at both ends; with
+  Mouse wheel zoom off it does nothing.
+- Map size slider: the map grows and shrinks with the frame.
+- Open and close Edit Mode, move the frame, switch layouts and reset one:
+  the map stays in our frame, no taint line.
+- Enter and leave combat (also /reload in combat): no error, the map stays.
+- Change zones (a portal, an instance) and /reload: the map stays in place.
+- Queue for a dungeon from the group finder and accept the queue: no
+  blocked action, no taint line from AnotherHUD.
+- Turn Minimap off in the AnotherHUD box and /reload: Blizzard's minimap
+  is back where it was, working; turn it on and /reload: ours is back.
+
+Results: 2026-11-28, **pass**. After the fixes above: square and round
+masks right, no Blizzard ring, wheel zooms, map stays in our frame through
+Edit Mode, layout switches, combat, zoning and /reload; no taint line and no
+blocked action (also queueing from the group finder); turned off, Blizzard's
+minimap comes back after /reload. The gate is open: Plan 2 may start.
 
 ## Edit Mode spike (Plan 1, Task 7)
 

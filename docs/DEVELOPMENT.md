@@ -64,6 +64,7 @@ PowerShell; nothing here is done by the build.
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
 | `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the honor row (`honor`, `honorText`), the row a click hits (`rowAt`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
+| `Core/MinimapRules.lua` | pure minimap rules: the mask texture of a Shape (`mask`), the `GetMinimapShape` answer (`shapeName`), the mouse wheel zoom step within the zoom levels (`zoom`) |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |
@@ -85,6 +86,7 @@ PowerShell; nothing here is done by the build.
 | `Bars/Segments.lua` | segmented bar widget: one panel in the skin border split into equal slots by skin-line dividers; per slot a background, a partial and a full `StatusBar` and a timer text (`Segments.create(parent)`, `seg:layout(o)`, `setPoints`, `setFragments`, `setPartial`, `setSlot`, `clearPartials`; `Segments.paintDivider(d, groove, lines)`, the skin-line divider painter the XP / Reputation bar shares) |
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
 | `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, honor row (Show honor), dividers, texts, click to open the reputation / PvP pane; hides Blizzard's status tracking bars |
+| `Map/Minimap.lua` | `minimap`: the minimap frame (`AnotherHUDMinimap` on `UIParent`) holding Blizzard's `Minimap` (re-parented, masked by Shape, wheel zoom), the skin panel for Square, `GetMinimapShape`; hides `MinimapCluster` |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
 | `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
@@ -169,7 +171,7 @@ With LibEditMode, `Core.init` then attaches the checklist toggles (taint
 test results in `docs/CHECKLIST.md`). `EditMode/Checklist.lua` hooks
 `EditModeManagerFrame` with `HookScript("OnShow")` and `HookScript("OnHide")`
 (no writes into Blizzard tables or frames); on the first show it builds a
-small box on `UIParent`, anchored under the window, with one checkbox per
+small box on `UIParent` (strata DIALOG), anchored to the right of the window, with one checkbox per
 module (`Checklist.entries()`: define order, `Modules.isEnabled`); the box
 shows (re-reading the checks) and hides with the window. A click runs
 `Checklist.toggle`: `Modules.setEnabled`, then the module's `apply` (which
@@ -250,7 +252,8 @@ flags), `defaults` (overrides), `blizzard`, `defaultPosition`, optional
 | `targettarget` | `AnotherHUDTargetTargetFrame` | targettarget, mirrored | Size (portrait), Text, Look, Fading | 120 x 26, 10 pt, health None | none (inside `TargetFrame`) |
 | `focus` | `AnotherHUDFocusFrame` | focus, badge 14 | as Target | 160 x 40, power 8, 10 pt, health Percent, power None | `FocusFrame` |
 | `pet` | `AnotherHUDPetFrame` | pet | Size (portrait, power), Text, Look, Auras, Fading | 120 x 34, power 6, 10 pt, health Percent, power None | `PetFrame` |
-| `tracking` (kind `bar`) | `AnotherHUDTrackingBar` | (plain frame; `Bars/Tracking.lua`, loaded after `Units/Boss.lua`) | Size, Text, Look, Behaviour, Fading (own controls) | none | `StatusTrackingBarManager`, `MainStatusTrackingBarContainer`, `SecondaryStatusTrackingBarContainer` |
+| `tracking` (kind `bar`) | `AnotherHUDTrackingBar` | (plain frame; `Bars/Tracking.lua`, loaded after `Units/Boss.lua`) | Size, Text, Look, Behaviour, Fading (own controls) | none | `StatusTrackingBarManager` (its two bar containers stay its children: Blizzard calls their `GetParent():CheckForLayoutChange()` when Edit Mode closes) |
+| `minimap` (kind `misc`) | `AnotherHUDMinimap` | (plain frame; `Map/Minimap.lua`, loaded after `Bars/Tracking.lua`) | Size, Look (Skin, Shape), Behaviour (Mouse wheel zoom) | 180 x 180, Square, wheel zoom on | `MinimapCluster` |
 
 `targettarget` has no `blizzard` list (nil, not `{}`), so turning it off
 needs no `/reload`. The detached cast bar: `playercast` is a plain frame on
@@ -297,6 +300,36 @@ regenerates, an `OnUpdate` on the bar refreshes every
 `UNIT_MAXPOWER` re-runs apply when the segment count changes. In Edit Mode
 the bar shows three points (and, for runes / essence, the fourth segment
 at 55% with "2"), also while the resource is inactive.
+
+**Minimap.** `Map/Minimap.lua` defines `minimap` (kind `misc`, listed in
+the checklist). The frame `AnotherHUDMinimap` (strata LOW) is a plain frame
+on `UIParent`, `size x size`, holding the skin panel (shown for Square only;
+the round ring comes later). Blizzard's `Minimap` is re-parented into it,
+anchored `TOPLEFT` at the skin's edge width and sized `size - 2 * edge`,
+always through `Combat.after("minimap:map")`; its first parent, anchors and
+size are kept in `spec.original`. `hooksecurefunc` on `Minimap:SetParent` /
+`SetPoint` re-queue the move when Blizzard (or another addon) moves it
+(`spec.placing` guards our own calls); `PLAYER_ENTERING_WORLD` and Edit
+Mode open / close re-queue it too. The mask (`MinimapRules.mask`, under
+`"minimap:mask"`) is `Interface\Buttons\WHITE8x8` for Square and
+Blizzard's round mask atlas `ui-hud-minimap-frame-generic-mask` for Round; a hook on `Minimap:SetMaskTexture` puts
+ours back when Blizzard sets its own (Forever's
+`MinimapCluster:UpdateMinimapConfig` does, after login). Blizzard's art and
+buttons that travel with the map (children of `Minimap` and
+`MinimapBackdrop`): the ring `MinimapCompassTexture` /
+`MinimapCompassTextureUnderlay` and `Minimap.ZoomIn` / `ZoomOut` /
+`ZoomHitArea` go to alpha 0 without mouse (Blizzard's own wheel handler
+clicks the zoom buttons), `ExpansionLandingPageMinimapButton` and
+`MinimapBackdrop.ExternalEventURLButton` are hidden with `Show` /
+`SetShown` hooks. The wheel (`OnMouseWheel` on `Minimap`)
+steps `SetZoom` through `MinimapRules.zoom`. `MinimapCluster` is hidden with
+`Base.hideBlizzard` after the map moved out (queued in that order in
+combat). `GetMinimapShape` is defined at `PLAYER_LOGIN` (or at create when
+already logged in) only when it is nil; it answers `"SQUARE"` / `"ROUND"`
+from the Shape setting on every call, `"ROUND"` while the module is off.
+Turned off live, the map goes back to `spec.original` with the round mask;
+the cluster stays hidden until /reload (as the checklist says). Off at
+login, nothing is built and nothing of Blizzard's is touched.
 
 **XP / Reputation bar.** `Bars/Tracking.lua` defines `tracking` (kind
 `bar`, no parent, listed in the checklist). Own bars, not Blizzard's

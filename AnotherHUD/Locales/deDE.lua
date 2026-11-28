@@ -51,7 +51,6 @@ ns.Locale.register("deDE", {
   ["Classic"] = "Klassisch",
   ["Forge"] = "Schmiede",
   ["Slate"] = "Schiefer",
-  ["Gilded"] = "Vergoldet",
   ["Class colors"] = "Klassenfarben",
   ["Color the health bar by class."] = "Färbt die Gesundheitsleiste nach Klasse.",
   ["Bar texture"] = "Balkentextur",

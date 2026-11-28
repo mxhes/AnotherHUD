@@ -369,3 +369,11 @@ h.test("Base exports skinOf", function()
     h.eq(ns.Units.Base.skinOf(ns.Modules.get("player").frame) ~= nil, true)
   end)
 end)
+
+h.test("a saved Gilded skin (removed) loads as Classic", function()
+  withBar({ class = "PALADIN" }, function(ns)
+    ns.DB.profile().modules.player = { skin = "Gilded" }
+    h.eq(ns.Options.get("player", "skin"), "Classic")
+    h.eq(ns.Units.Base.skinOf(ns.Modules.get("player").frame).id, "classic")
+  end)
+end)

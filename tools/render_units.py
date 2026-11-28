@@ -2,7 +2,7 @@
 shield, Theme.barTextures).
 
 Writes into AnotherHUD/Media/Units/ (uncompressed 32-bit TGA, bottom-left
-origin, like Media/Skins):
+origin):
 
   Disc.tga       256 x 256  white disc, anti-aliased edge (ring lines, portrait
                             and badge masks are stacked discs)

@@ -12,10 +12,24 @@ local function findControl(spec, key)
   end
 end
 
+local function allowed(control, value)
+  for _, v in ipairs(control.values or {}) do
+    if v == value then return true end
+  end
+  return false
+end
+
+-- A saved dropdown value that is no longer a choice (a removed skin such as
+-- Gilded) reads as the default.
 function Options.get(id, key)
   local saved = ns.DB.profile().modules[id]
-  if saved and saved[key] ~= nil then return saved[key] end
   local spec = ns.Modules.get(id)
+  if saved and saved[key] ~= nil then
+    local control = spec and findControl(spec, key)
+    if not (control and control.type == "dropdown" and not allowed(control, saved[key])) then
+      return saved[key]
+    end
+  end
   return spec and spec.defaults and spec.defaults[key]
 end
 
@@ -26,13 +40,6 @@ local function normalizeSlider(control, value)
   if step and step > 0 and min then value = min + math.floor((value - min) / step + 0.5) * step end
   if min and max then value = ns.Util.clamp(value, min, max) end
   return value
-end
-
-local function allowed(control, value)
-  for _, v in ipairs(control.values or {}) do
-    if v == value then return true end
-  end
-  return false
 end
 
 -- Validates and stores a setting, then runs the module's apply. Returns

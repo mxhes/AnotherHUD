@@ -522,7 +522,7 @@ function Base.applyFrame(frame)
     frame.L = L
     frame.hasPower = L.power ~= nil
     frame:SetSize(w, h)
-    frame.panel:layout(L, { skin = skin })
+    frame.panel:layout({ skin = skin })
     frame.ring:layout(L, { skin = skin })
     frame.bars:layout(L, { texture = opt(frame, "barTexture"), fontSize = opt(frame, "fontSize"),
       showName = opt(frame, "showName"), mirror = frame.mirror, skin = skin })

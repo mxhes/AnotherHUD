@@ -30,6 +30,15 @@ h.test("get falls back to default", function()
   h.eq(ns.Options.get("nope", "x"), nil)
 end)
 
+h.test("a saved dropdown value that is no longer a choice reads as the default", function()
+  local ns = load()
+  define(ns)
+  ns.DB.profile().modules.m = { mode = "gone" }
+  h.eq(ns.Options.get("m", "mode"), "a")
+  ns.DB.profile().modules.m = { mode = "b" }
+  h.eq(ns.Options.get("m", "mode"), "b")
+end)
+
 h.test("set clamps slider", function()
   local ns = load()
   define(ns)

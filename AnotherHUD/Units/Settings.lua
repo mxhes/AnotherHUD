@@ -67,7 +67,7 @@ builders["Look"] = function(d)
   d.skin, d.classColor, d.barTexture = "Classic", true, "Smooth"
   return {
     dropdown("skin", "Skin", "Border and decoration style of the frame.",
-      { "Classic", "Forge", "Slate", "Gilded" }),
+      { "Classic", "Forge", "Slate" }),
     checkbox("classColor", "Class colors", "Color the health bar by class."),
     dropdown("barTexture", "Bar texture", "Look of the bar fill.", { "Smooth", "Flat", "Gloss" }),
   }

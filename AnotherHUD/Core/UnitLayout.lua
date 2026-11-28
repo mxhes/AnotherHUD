@@ -27,11 +27,9 @@ function UnitLayout.frame(o)
   if o.mirror then
     bars = { left = edge + 1, right = w - cx - dia / 2 - 2 }
     L.ring = { dia = dia, cx = w - cx, cy = h / 2 }
-    L.studCorners = { "TOPLEFT", "BOTTOMLEFT" }
   else
     bars = { left = cx + dia / 2 + 2, right = w - edge - 1 }
     L.ring = { dia = dia, cx = cx, cy = h / 2 }
-    L.studCorners = { "TOPRIGHT", "BOTTOMRIGHT" }
   end
   L.bars = bars
 
@@ -55,7 +53,6 @@ function UnitLayout.frame(o)
   end
 
   if powerH >= 9 then L.powerText = { size = math.min(10, powerH - 3) } end
-  L.ringStuds = dia >= 40
   L.below = round(math.max(8, h / 2 + dia / 2 - h + 6))
   return L
 end

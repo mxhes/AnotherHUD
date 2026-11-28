@@ -20,7 +20,6 @@ const K = (() => {
     classic: { label: 'Classic', border: 'round', buttons: 'bronze', lines: 'gold' },
     forge: { label: 'Forge', border: 'bevel', buttons: 'raised', lines: 'groove' },
     slate: { label: 'Slate', border: 'thin', buttons: 'flat', lines: 'plain' },
-    gilded: { label: 'Gilded', border: 'gilded', buttons: 'bronze', lines: 'dotted' },
   };
   const d = S.edgeDark, l = S.edgeLight;
   // Theme.edgeRects: shades from the outside in.
@@ -28,7 +27,6 @@ const K = (() => {
     round: null,
     thin: [d, 1],
     bevel: [d, l, 1, 1, d],
-    gilded: [d, l, d, d, l, d],
   };
 
   // Inset box-shadow stack for a border (first entry is drawn on top).
@@ -50,14 +48,7 @@ const K = (() => {
     const s = SKINS[skin];
     const r = s.border === 'round' ? 5 : 0;
     const a = o.alpha == null ? 0.92 : o.alpha;
-    let studs = '';
-    if (s.border === 'gilded' && o.studs !== false) {
-      const L = o.corners !== 'right', R = o.corners !== 'left';
-      const X = o.x || 0, Y = o.y || 0;
-      if (L) studs += stud(X + 1, Y + 1) + stud(X + 1, Y + o.h - 1);
-      if (R) studs += stud(X + o.w - 1, Y + 1) + stud(X + o.w - 1, Y + o.h - 1);
-    }
-    return `<div class="panel ${o.cls || ''}" style="left:${o.x || 0}px;top:${o.y || 0}px;width:${o.w}px;height:${o.h}px;border-radius:${r}px;background:${css(C.panel, a)};box-shadow:${edgeShadow(s.border)}">${o.inner || ''}</div>${studs}`;
+    return `<div class="panel ${o.cls || ''}" style="left:${o.x || 0}px;top:${o.y || 0}px;width:${o.w}px;height:${o.h}px;border-radius:${r}px;background:${css(C.panel, a)};box-shadow:${edgeShadow(s.border)}">${o.inner || ''}</div>`;
   }
 
   // A styled line (Lines pick) of width w at x, y.
@@ -71,10 +62,6 @@ const K = (() => {
     }
     if (s.lines === 'plain') {
       return `<i style="${pos}${dim};background:${css(mix(mix(C.goldLine, [.5, .5, .5], .5), C.panel, .5))}"></i>`;
-    }
-    if (s.lines === 'dotted') {
-      const dir = vertical ? 'to bottom' : 'to right';
-      return `<i style="${pos}${dim};background:repeating-linear-gradient(${dir}, ${css(C.goldLine, .85)} 0 4px, transparent 4px 8px)"></i>`;
     }
     return `<i style="${pos}${dim};background:${css(C.goldLine, .85)}"></i>`;
   }
@@ -93,13 +80,6 @@ const K = (() => {
       const di = dia - i * 2;
       html += `<i class="ringline" style="left:${cx - di / 2}px;top:${cy - di / 2}px;width:${di}px;height:${di}px;border:1px solid ${css(sc(col, k))}"></i>`;
     });
-    if (s.border === 'gilded' && opts.studs !== false) {
-      const rr = dia / 2 - w / 2;
-      [45, 135, 225, 315].forEach(a => {
-        const t = a * Math.PI / 180;
-        html += stud(cx + rr * Math.cos(t), cy + rr * Math.sin(t), 9, col);
-      });
-    }
     return { html, width: w };
   }
 

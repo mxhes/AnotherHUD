@@ -7,6 +7,11 @@ from AnotherLedger's `Theme.lua` (`Theme.colors`, `Theme.edgeRects`,
 `Theme.skinScales`); every part is drawn in all four skins (Classic, Forge,
 Slate, Gilded) and tinted with the theme colors.
 
+**Gilded is removed** (2026-11-28): the player dropped the skin from every
+Another addon. `kit.js` no longer offers it in the skin picker; the Gilded
+parts below (studs, 6 px border, dotted lines) are history, not approved
+art.
+
 Shared rules (all mockups):
 
 - **Panel**: `panelTint` (0.15, 0.10, 0.06) fill; border = the skin's

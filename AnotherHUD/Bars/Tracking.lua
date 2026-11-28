@@ -208,7 +208,7 @@ local function apply(spec)
   local e = ns.UnitLayout.edgeWidth(skin.border)
   local w, hgt, gap = opt("width"), opt("height"), S.gap
   frame:SetSize(w, n * hgt + (n - 1) * gap + 2 * e)
-  spec.panel:layout({ studCorners = {} }, { skin = skin })
+  spec.panel:layout({ skin = skin })
 
   local texture = opt("barTexture")
   local file = (T.barTextures[texture] or T.barTextures.Smooth).file
@@ -390,7 +390,7 @@ ns.Modules.define({
       slider("fontSize", "Text size", "Size of the bar texts.", 8, 16, 1),
     } },
     { section = "Look", controls = {
-      dropdown("skin", "Skin", "Border and decoration style of the bars.", { "Classic", "Forge", "Slate", "Gilded" }),
+      dropdown("skin", "Skin", "Border and decoration style of the bars.", { "Classic", "Forge", "Slate" }),
       dropdown("barTexture", "Bar texture", "Look of the bar fill.", { "Smooth", "Flat", "Gloss" }),
     } },
     { section = "Behaviour", controls = {

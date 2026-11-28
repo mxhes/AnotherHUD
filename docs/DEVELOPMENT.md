@@ -64,7 +64,7 @@ PowerShell; nothing here is done by the build.
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
 | `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the honor row (`honor`, `honorText`), the row a click hits (`rowAt`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
-| `Core/MinimapRules.lua` | pure minimap rules: the mask texture of a Shape (`mask`), the `GetMinimapShape` answer (`shapeName`), the mouse wheel zoom step within the zoom levels (`zoom`) |
+| `Core/MinimapRules.lua` | pure minimap rules: the mask texture of a Shape (`mask`), the `GetMinimapShape` answer (`shapeName`), the mouse wheel zoom step within the zoom levels (`zoom`), the clock text in 24 h / 12 h (`clockText`), the coordinate text (`coordText`), the zone name color of a PvP type (`zoneColor`, a copy of `Theme.minimapZoneColors`) |
 | `Core/Core.lua` | `Core.init`: saved state, then Edit Mode registration |
 | `EditMode/Glue.lua` | registers modules with LibEditMode, positions per layout |
 | `EditMode/Panel.lua` | builds a module's settings sections for the Edit Mode panel |

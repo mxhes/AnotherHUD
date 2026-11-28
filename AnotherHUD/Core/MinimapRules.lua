@@ -34,4 +34,28 @@ function MinimapRules.zoom(current, delta, levels)
   return z
 end
 
+-- "14:05" (military) or "2:05 PM"; "" without plain numbers.
+function MinimapRules.clockText(hour, minute, military)
+  if not plain(hour) or not plain(minute) then return "" end
+  if military then return string.format("%d:%02d", hour, minute) end
+  local suffix = hour < 12 and ns.L["AM"] or ns.L["PM"]
+  local h = hour % 12
+  if h == 0 then h = 12 end
+  return string.format("%d:%02d %s", h, minute, suffix)
+end
+
+-- x, y in 0..1 -> "42.1, 65.8"; "" when either is not a plain number or both
+-- are 0 (the client's "no position").
+function MinimapRules.coordText(x, y)
+  if not plain(x) or not plain(y) or (x == 0 and y == 0) then return "" end
+  return string.format("%.1f, %.1f", x * 100, y * 100)
+end
+
+-- The zone name color of a PvP type (a copy), the normal gold for others.
+function MinimapRules.zoneColor(pvpType)
+  local colors = ns.Theme.minimapZoneColors
+  local c = (type(pvpType) == "string" and colors[pvpType]) or colors.normal
+  return { c[1], c[2], c[3] }
+end
+
 ns.MinimapRules = MinimapRules

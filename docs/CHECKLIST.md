@@ -230,8 +230,10 @@ Client APIs (`Core/Tracking.lua`, `Bars/Tracking.lua`, `UNVERIFIED (check in cli
 - `PLAYER_XP_UPDATE` (unit event, player), `UPDATE_EXHAUSTION`,
   `PLAYER_LEVEL_UP`, `ENABLE_XP_GAIN`, `DISABLE_XP_GAIN`, `UPDATE_FACTION`
   fire for what they say.
-- Blizzard's bars live in `StatusTrackingBarManager`,
-  `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`.
+- Blizzard's bars live in `StatusTrackingBarManager` (its children
+  `MainStatusTrackingBarContainer` and `SecondaryStatusTrackingBarContainer`
+  hide with it; only the manager is re-parented). Closing Edit Mode (also
+  with Escape) gives no Lua warning from `StatusTrackingManager.lua`.
 
 In the client:
 

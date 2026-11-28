@@ -14,6 +14,7 @@
 - XP / Reputation bar: "Show honor" adds an honor bar (off by default).
 - XP / Reputation bar: clicking the reputation or honor bar opens the reputation or PvP pane (out of combat).
 - Minimap in an AnotherHUD frame, square or round, with mouse wheel zoom (first step: Blizzard's mail, tracking, clock, calendar and zone name are hidden for now).
+- Closing Edit Mode no longer shows a Lua warning from Blizzard's XP bar.
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
 - A frame turned off in the Edit Mode box goes away at once and stays off.
 - Gilded skin removed; Gilded settings become Classic.

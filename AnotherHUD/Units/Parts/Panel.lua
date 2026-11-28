@@ -1,18 +1,14 @@
 local ADDON, ns = ...
 
 -- The unit frame panel: the leather fill and the skin's border. Round is the
--- backdrop's tooltip edge; Bevel / Thin / Gilded are 1 px line rectangles
--- (Theme.edgeRects), Gilded with studs on the corners the ring leaves free
--- (L.studCorners). Adapted from AnotherLedger UI/Widgets.lua (skinEdges /
+-- backdrop's tooltip edge; Bevel / Thin are 1 px line rectangles
+-- (Theme.edgeRects). Adapted from AnotherLedger UI/Widgets.lua (skinEdges /
 -- paintEdges). Plain frames and textures, nothing secure.
 ns.Units = ns.Units or {}
 ns.Units.Parts = ns.Units.Parts or {}
 
 local Panel = {}
 Panel.__index = Panel
-
-local CORNERS = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
-local STUD_OFFSET = { TOPLEFT = { 1, -1 }, TOPRIGHT = { -1, -1 }, BOTTOMLEFT = { 1, 1 }, BOTTOMRIGHT = { -1, 1 } }
 
 local function tint(tex, c, alpha)
   tex:SetVertexColor(c[1], c[2], c[3], alpha or c[4] or 1)
@@ -38,23 +34,12 @@ function Panel.create(parent)
   -- a secure unit button.
   local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
   frame:SetAllPoints(parent)
-  local self = setmetatable({ frame = frame, parent = parent, rects = {}, edges = {}, studs = {} }, Panel)
-  local T = ns.Theme
-  for _, corner in ipairs(CORNERS) do
-    local s = frame:CreateTexture(nil, "OVERLAY")
-    -- SetTexture returns false when the file cannot be loaded: no stud then.
-    s.loaded = s:SetTexture(T.textures.skinStud) ~= false
-    s:SetSize(T.sizes.studSize, T.sizes.studSize)
-    local off = STUD_OFFSET[corner]
-    s:SetPoint("CENTER", frame, corner, off[1], off[2])
-    s:Hide()
-    self.studs[corner] = s
-  end
+  local self = setmetatable({ frame = frame, parent = parent, rects = {}, edges = {} }, Panel)
   return self
 end
 
 -- opts = { skin } (a Theme.skins entry; Classic when missing).
-function Panel:layout(L, opts)
+function Panel:layout(opts)
   local T = ns.Theme
   local border = ((opts and opts.skin) or T.skins.classic).border
   local frame = self.frame
@@ -85,15 +70,6 @@ function Panel:layout(L, opts)
   end
   for i = #specs + 1, #self.rects do
     for _, t in ipairs(self.rects[i]) do t:Hide() end
-  end
-
-  local free = {}
-  if T.edgeStuds(border) then
-    for _, corner in ipairs(L.studCorners or {}) do free[corner] = true end
-  end
-  for corner, s in pairs(self.studs) do
-    tint(s, edge)
-    if free[corner] and s.loaded then s:Show() else s:Hide() end
   end
 end
 

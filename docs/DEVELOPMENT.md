@@ -60,7 +60,7 @@ PowerShell; nothing here is done by the build.
 | `Core/Modules.lua` | module registry |
 | `Core/Combat.lua` | combat-lockdown queue |
 | `Core/UnitText.lua`, `Core/UnitColor.lua`, `Core/UnitState.lua` | pure unit frame rules: bar / level texts, health / ring / power / cast colors, fading, visibility conditions |
-| `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, studs, aura rows |
+| `Core/UnitLayout.lua` | pure unit frame geometry from the approved mockups: ring, bars, badge, aura rows |
 | `Core/GroupLayout.lua` | pure group rules: member order, block offsets, holder visibility conditions |
 | `Core/Resource.lua` | pure class resource rules: the resource of a class / spec (`forPlayer`), Druid Cat Form (`active`), segment count, rune order, the regenerating essence segment, timer text, the attached box under the Player frame and the space it keeps |
 | `Core/Tracking.lua` | pure XP / reputation rules: the XP bar's range, rested end and text (`xp`, `xpText`), the honor row (`honor`, `honorText`), the row a click hits (`rowAt`), the watched faction's range and text in both client shapes (`reputation`), standing names, number grouping, reaction colors (`reactionColor`, a copy) |
@@ -70,7 +70,7 @@ PowerShell; nothing here is done by the build.
 | `EditMode/Snap.lua` | snapping to grid, screen and frames |
 | `EditMode/Checklist.lua` | module toggles in the Edit Mode window |
 | `Units/Settings.lua` | shared settings sections (`Settings.build(parts, defaults)`) the unit modules pick from |
-| `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring with studs and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
+| `Units/Parts/Panel.lua`, `Units/Parts/Ring.lua`, `Units/Parts/Bars.lua` | drawn unit frame parts: panel fill and skin border, portrait ring and level badge, health / power bars with divider and texts (`create(parent)`, `part:layout(L, opts)`) |
 | `Units/Parts/CastBar.lua` | unit cast bar: icon, panel, client-timed `StatusBar`, spark, name / time (client duration binding), shield and grey overlay from `notInterruptible`, interrupted hold; `create(parent, unit)`, `cast:update(event, ...)` for `CastBar.EVENTS`, `cast:layout(opts)`, `cast:sample(on)` |
 | `Units/Parts/Auras.lua` | unit aura rows: two client `AuraContainer`s (`CustomAuraContainerTemplate`), debuffs and buffs under them, each in a clip frame sized to its rows, mine first then others (desaturated, off with Only Mine), styled buttons; own placeholder icons in Edit Mode (also without the template); `available` false without the template; `create(parent, unit, mode)` (mode `"line"` for group frames: one container, debuffs then my buffs only, one line), `auras:layout(opts)`, `auras:sample(on)` |
 | `Units/Parts/Role.lua` | group frames: role badge (disc stack in the skin's line shades, panel fill, glyph at 72%) at the ring's lower left and the leader crown above the ring; a secret role or leader flag hides them; `create(parent)`, `role:layout(L, opts)`, `role:setRole(r)`, `role:setLeader(b)`, `role:setUnit(unit)` |
@@ -86,7 +86,6 @@ PowerShell; nothing here is done by the build.
 | `Bars/Resource.lua` | `resource`: the class resource bar (`AnotherHUDResourceBar`, a `Segments`) and its detached holder (`AnotherHUDResourceBarHolder`, child of `player`) |
 | `Bars/Tracking.lua` | `tracking`: the XP / Reputation bar (`AnotherHUDTrackingBar` on `UIParent`): panel, XP row (bar over the rested band), reputation row, honor row (Show honor), dividers, texts, click to open the reputation / PvP pane; hides Blizzard's status tracking bars |
 | `UI/Fonts.lua`, `UI/Widgets.lua`, `UI/Settings.lua` | widgets and the Settings window |
-| `Media/Skins/*.tga` | skin textures (Stud, Dotted; from AnotherLedger) |
 | `Media/Units/*.tga` | unit frame art (Disc, BarSmooth, BarGloss, Spark, Shield, RoleTank, RoleHealer, RoleDamage, Crown, Glow); generated, see below |
 | `Boot.lua` | last: `Core.init` on `ADDON_LOADED` |
 
@@ -303,7 +302,7 @@ at 55% with "2"), also while the resource is inactive.
 `bar`, no parent, listed in the checklist). Own bars, not Blizzard's
 re-skinned: the frame `AnotherHUDTrackingBar` is a plain frame on
 `UIParent` (the Edit Mode frame) holding the skin's panel
-(`Units/Parts/Panel`, no studs), up to three rows (`spec.xp`, `spec.rep`, `spec.honor`:
+(`Units/Parts/Panel`), up to three rows (`spec.xp`, `spec.rep`, `spec.honor`:
 `bg` texture, `bar` StatusBar, `text`; XP also a `rested` StatusBar under
 its fill) and a divider in the skin's Lines pick under every row but the last (`spec.divider` / `spec.groove`, `spec.divider2` / `spec.groove2`). Apply sizes the frame to
 `width x (rows * height + (rows - 1) * gap + 2 * edge)`, lays the rows out
@@ -392,6 +391,9 @@ Blizzard action buttons.
 - `AnotherHUDDB` (account): profiles (module settings, look), positions per
   Edit Mode layout.
 - `AnotherHUDCharDB` (character): chosen profile.
+- `Options.get` reads a saved dropdown value that is no longer one of the
+  control's values as the default (a saved `skin = "Gilded"`, a removed
+  skin, reads as Classic).
 
 ## Events
 

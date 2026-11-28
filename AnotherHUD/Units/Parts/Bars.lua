@@ -81,7 +81,7 @@ function Bars:paint()
 end
 
 -- The divider in the skin's Lines pick (docs/mockups/kit.js `rule`): Gold
--- and Dotted at the divider alpha, Groove a dark line (alpha 1) with a light
+-- at the divider alpha, Groove a dark line (alpha 1) with a light
 -- one under it (grooveLightAlpha), Plain greyed toward the panel (alpha 1).
 local function styleDivider(self, lines)
   local T = ns.Theme
@@ -89,12 +89,7 @@ local function styleDivider(self, lines)
   local alpha = 1
   if lines ~= "groove" and lines ~= "plain" then alpha = T.colors.divider[4] end
   local d = self.divider
-  local dotted = false
-  if lines == "dotted" then
-    dotted = d:SetTexture(T.textures.skinDotted, "REPEAT", "CLAMP") ~= false
-  end
-  if not dotted then d:SetTexture(T.textures.line) end
-  d:SetHorizTile(dotted)
+  d:SetTexture(T.textures.line)
   d:SetVertexColor(main[1], main[2], main[3], alpha)
   if second then
     self.groove:SetTexture(T.textures.line)

@@ -61,8 +61,8 @@ function Segments.create(parent)
 end
 
 -- Paints divider texture `d` (and `groove`, the second line) in the skin's
--- Lines pick `lines`, as in Units/Parts/Bars.lua: Gold and Dotted at the
--- divider alpha, Groove a dark line (alpha 1) with a light one next to it,
+-- Lines pick `lines`, as in Units/Parts/Bars.lua: Gold at the divider
+-- alpha, Groove a dark line (alpha 1) with a light one next to it,
 -- Plain greyed toward the panel (alpha 1). Returns true when the skin has a
 -- second line (the caller places and shows `groove`, else hides it). Shared
 -- with the XP / Reputation bar (Bars/Tracking.lua).
@@ -71,12 +71,7 @@ function Segments.paintDivider(d, groove, lines)
   local main, second = T.lineColors(lines, T.colors.goldLine, T.colors.panelTint)
   local alpha = 1
   if lines ~= "groove" and lines ~= "plain" then alpha = T.colors.divider[4] end
-  local dotted = false
-  if lines == "dotted" then
-    dotted = d:SetTexture(T.textures.skinDotted, "REPEAT", "CLAMP") ~= false
-  end
-  if not dotted then d:SetTexture(T.textures.line) end
-  d:SetHorizTile(dotted)
+  d:SetTexture(T.textures.line)
   d:SetVertexColor(main[1], main[2], main[3], alpha)
   if second then
     groove:SetTexture(T.textures.line)
@@ -104,7 +99,7 @@ function Segments:layout(o)
   local T = ns.Theme
   local skin = o.skin or T.skins.classic
   local frame = self.frame
-  self.panel:layout({ studCorners = {} }, { skin = skin })
+  self.panel:layout({ skin = skin })
 
   local e = ns.UnitLayout.edgeWidth(skin.border)
   local count = o.count

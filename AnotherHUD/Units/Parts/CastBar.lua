@@ -23,7 +23,6 @@ CastBar.EVENTS = {
 }
 
 local SAMPLE_FILL, SAMPLE_TIME = 0.62, "0.9"
-local ALL_CORNERS = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
 
 local function tint(region, c, alpha)
   region:SetVertexColor(c[1], c[2], c[3], alpha or c[4] or 1)
@@ -175,7 +174,7 @@ function CastBar:layout(opts)
   host:ClearAllPoints()
   host:SetPoint("TOPLEFT", frame, "TOPLEFT", ox, 0)
   host:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-  self.panel:layout({ studCorners = hgt >= 24 and ALL_CORNERS or {} }, { skin = skin })
+  self.panel:layout({ skin = skin })
 
   local e = ns.UnitLayout.edgeWidth(skin.border) + 1
   local bw, bh = w - ox - 2 * e, hgt - 2 * e

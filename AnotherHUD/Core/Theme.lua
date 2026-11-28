@@ -19,10 +19,6 @@ Theme.textures = {
   buttonHighlight = "Interface\\Buttons\\ButtonHilight-Square",
   -- A plain white triangle pointing right (turned by the widgets, tinted).
   arrow = "Interface\\ChatFrame\\ChatFrameExpandArrow",
-  -- Skins (Theme.skins): the addon's own textures; grey-scale, tinted with
-  -- the theme colors.
-  skinStud = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Stud",
-  skinDotted = "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Dotted",
   -- Unit frames (tools/render_units.py): a white anti-aliased disc (ring
   -- lines, portrait and badge masks), a soft vertical glow and a shield.
   disc = "Interface\\AddOns\\AnotherHUD\\Media\\Units\\Disc",
@@ -138,16 +134,14 @@ Theme.sizes = {
   backdropTile = 16,
   backdropEdge = 16,
   backdropInset = 5,
-  -- Skins: the Gilded corner studs, and how far a sunken list box reaches
-  -- past its list.
-  studSize = 10,
+  -- Skins: how far a sunken list box reaches past its list.
   listBoxPad = 3,
   -- How close (px) an edge or the center of a dragged AnotherHUD frame has
   -- to be to a screen line or another AnotherHUD frame to snap onto it.
   snapDistance = 8,
   -- Unit frames.
   unit = { badge = 18, focusBadge = 14, auraGap = 2, auraBelowCast = 6, castIcon = 18,
-    castIconEdge = 2, ringStud = 9, auraTextShare = 0.42, barBgAlpha = 0.18,
+    castIconEdge = 2, auraTextShare = 0.42, barBgAlpha = 0.18,
     interruptHold = 0.6, badgeFont = 10, glowSlice = 12,
     -- Bar texts: the font size before a layout sets one, and the share of
     -- the health bar width the name may take (the value text keeps the rest).
@@ -261,9 +255,9 @@ end
 
 -- The choices of each part, in option order.
 Theme.skinParts = {
-  border = { "round", "bevel", "thin", "gilded" },
+  border = { "round", "bevel", "thin" },
   buttons = { "bronze", "raised", "flat" },
-  lines = { "gold", "groove", "plain", "dotted" },
+  lines = { "gold", "groove", "plain" },
 }
 
 -- Skins by id; Theme.skinOrder is the order of the choice list. Classic is
@@ -275,10 +269,8 @@ Theme.skins = {
     lines = "groove", listBox = true },
   slate = { id = "slate", label = "Slate", border = "thin", buttons = "flat",
     lines = "plain", listBox = false },
-  gilded = { id = "gilded", label = "Gilded", border = "gilded", buttons = "bronze",
-    lines = "dotted", listBox = false },
 }
-Theme.skinOrder = { "classic", "forge", "slate", "gilded" }
+Theme.skinOrder = { "classic", "forge", "slate" }
 
 -- How the styles shade the theme colors: the dark edge lines, the groove's
 -- dark / light line, the raised buttons' light / dark edge, how far Plain
@@ -337,15 +329,7 @@ function Theme.edgeRects(border)
     return { { inset = 0, shade = d }, { inset = 1, shade = l }, { inset = 2, shade = 1 },
       { inset = 3, shade = 1 }, { inset = 4, shade = d } }
   end
-  if border == "gilded" then
-    return { { inset = 0, shade = d }, { inset = 1, shade = l }, { inset = 2, shade = d },
-      { inset = 3, shade = d }, { inset = 4, shade = l }, { inset = 5, shade = d } }
-  end
   return {}
-end
-
-function Theme.edgeStuds(border)
-  return border == "gilded"
 end
 
 -- Pure. `a` moved toward `b` by t (0..1); alpha of `a`.

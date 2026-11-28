@@ -4,12 +4,16 @@ local function load()
   return h.load({ "Core/Util.lua", "Core/Theme.lua" })
 end
 
-h.test("theme has all four skins", function()
+h.test("theme has the three skins, no Gilded", function()
   local Theme = load().Theme
-  for _, id in ipairs({ "classic", "forge", "slate", "gilded" }) do
+  for _, id in ipairs({ "classic", "forge", "slate" }) do
     h.eq(type(Theme.skins[id]), "table", id)
     h.eq(Theme.skins[id].id, id)
   end
+  h.eq(Theme.skins.gilded, nil)
+  h.eq(Theme.skinOrder, { "classic", "forge", "slate" })
+  h.eq(Theme.edgeStuds, nil)
+  h.eq(#Theme.edgeRects("gilded"), 0)
 end)
 
 h.test("every skin picks valid parts", function()
@@ -23,10 +27,10 @@ h.test("every skin picks valid parts", function()
   end
 end)
 
-h.test("textures point into the AnotherHUD folder", function()
+h.test("no Gilded textures", function()
   local Theme = load().Theme
-  h.eq(Theme.textures.skinStud, "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Stud")
-  h.eq(Theme.textures.skinDotted, "Interface\\AddOns\\AnotherHUD\\Media\\Skins\\Dotted")
+  h.eq(Theme.textures.skinStud, nil)
+  h.eq(Theme.textures.skinDotted, nil)
 end)
 
 h.test("setStyle accepts known values only", function()

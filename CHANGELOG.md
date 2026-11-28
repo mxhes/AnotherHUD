@@ -15,3 +15,4 @@
 - XP / Reputation bar: clicking the reputation or honor bar opens the reputation or PvP pane (out of combat).
 - All of them move and resize in Edit Mode and replace Blizzard's frames.
 - A frame turned off in the Edit Mode box goes away at once and stays off.
+- Gilded skin removed; Gilded settings become Classic.

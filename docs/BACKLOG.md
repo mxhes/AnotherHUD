@@ -1,11 +1,9 @@
 # AnotherHUD backlog
 
-Ideas not built yet.
+Ideas not built yet. (Not on Forever, so left out: Rogue charged combo points, Evoker empowered casts.)
 
 - Raid frames (a big project for later; Blizzard's raid frames are used until then).
-- Rogue charged combo points on the resource bar.
 - XP / Reputation bar: honor, click to open the reputation pane, hide in pet battles. (Renown, friendship and paragon don't exist on Forever.)
-- Evoker empowered casts on the cast bar.
 - Party Style.
 - Pets & Targets.
 - Raid target icon on unit frames.

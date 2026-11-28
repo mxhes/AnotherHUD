@@ -210,7 +210,8 @@ Results:
 - 2026-11-25, run by the player: everything that can be checked on WoW
   Forever works. Forever has no Death Knights, Demon Hunters or Monks, so
   the runes (and their API lines above) and Windwalker chi cannot be
-  checked there; that code stays, tested only in `tests/test_resource.lua`.
+  checked there. Forever has no Evokers either (said 2026-11-28), so the
+  essence lines cannot be checked; that code stays, tested only in `tests/test_resource.lua`.
 
 ## Plan 6: XP / reputation bar
 

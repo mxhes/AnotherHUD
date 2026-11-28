@@ -348,6 +348,7 @@ local function clickRow(ns, r, frame, i, button)
   local e = edge(ns)
   frame.GetTop = function() return 100 end
   frame.GetEffectiveScale = function() return 1 end
+  frame.IsMouseOver = function() return not r.mouseOff end
   r.cursorY = 100 - (e + (i - 1) * 11 + 5)
   frame._scripts.OnMouseUp(frame, button or "LeftButton")
 end
@@ -457,5 +458,28 @@ h.test("no pane opens in combat, in Edit Mode, or on a right click", function()
     lem.callbacks.enter()
     clickRow(ns, r, frame, 2)
     h.eq(r.opened, {})
+  end)
+end)
+
+h.test("a release off the bar opens nothing", function()
+  withBar({}, function(ns, r)
+    local _, frame = parts(ns)
+    r.mouseOff = true
+    clickRow(ns, r, frame, 2)
+    h.eq(r.opened, {})
+  end)
+end)
+
+h.test("the Edit Mode sample with only Show honor on shows only honor", function()
+  withBar({}, function(ns, _, _, lem)
+    local _, frame, xp, rep = parts(ns)
+    lem.callbacks.enter()
+    ns.Options.set("tracking", "showHonor", true)
+    ns.Options.set("tracking", "showXP", false)
+    ns.Options.set("tracking", "showReputation", false)
+    h.eq(xp.bar:IsShown(), false, "no xp sample")
+    h.eq(rep.bar:IsShown(), false, "no rep sample")
+    h.eq(honorRow(ns).bar:IsShown(), true, "honor sample")
+    h.eq(frame._height, 10 + 2 * edge(ns))
   end)
 end)

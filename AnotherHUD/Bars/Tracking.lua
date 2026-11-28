@@ -89,11 +89,11 @@ end
 -- What the bars show now: { xp, rep, honor } (each nil when that bar is off).
 local function current(spec)
   if editing(spec) then
-    -- A sample row whose option is off is left out; with both off both stay,
-    -- so the frame remains selectable.
+    -- A sample row whose option is off is left out; with all three off XP and
+    -- reputation stay, so the frame remains selectable.
     local d = sampleData()
     local xp, rep = opt("showXP") == true, opt("showReputation") == true
-    if xp or rep then
+    if xp or rep or opt("showHonor") == true then
       if not xp then d.xp = nil end
       if not rep then d.rep = nil end
     end
@@ -331,6 +331,8 @@ local PANES = {
 local function onClick(spec, button)
   if button ~= "LeftButton" or editing(spec) or InCombatLockdown() then return end
   local rows, frame = spec.rowKeys or {}, spec.frame
+  -- a press on the bar released beside it opens nothing
+  if not frame:IsMouseOver() then return end
   local _, y = GetCursorPosition()
   local top, scale = frame:GetTop(), frame:GetEffectiveScale()
   if not y or not top or not scale or scale == 0 then return end
